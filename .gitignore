@@ -4,3 +4,5 @@ target
 *.pyc
 .coverage
 .idea
+logs/
+*.log
