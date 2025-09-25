@@ -1,7 +1,6 @@
 # Viron
 
 [![CI](https://github.com/Preponderous-Software/Viron/actions/workflows/ci.yml/badge.svg)](https://github.com/Preponderous-Software/Viron/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/Preponderous-Software/Viron/branch/main/graph/badge.svg)](https://codecov.io/gh/Preponderous-Software/Viron)
 
 **Viron** is your **foundational spatial simulation service** — the bedrock on which worlds are built.  
 It manages **environments**, **grids**, **locations**, and **entities** through a clean REST API so you can skip the boilerplate and focus on *fun, emergent gameplay*.  
