@@ -1,0 +1,107 @@
+spring:
+  application:
+    name: viron
+  
+  profiles:
+    active: dev
+  
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/viron
+    username: viron
+    password: password
+    driver-class-name: org.postgresql.Driver
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  # API Documentation
+  springdoc:
+    api-docs:
+      path: /api-docs
+    swagger-ui:
+      path: /swagger-ui.html
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    preponderous.viron: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/viron.log
+
+# Management & Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/viron}
+    username: ${DATABASE_USERNAME:viron}
+    password: ${DATABASE_PASSWORD:password}
+
+logging:
+  level:
+    root: WARN
+    preponderous.viron: INFO
+  file:
+    name: /var/log/viron/viron.log
+
+---
+# Test Profile
+spring:
+  config:
+    activate:
+      on-profile: test
+  
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+
+logging:
+  level:
+    root: ERROR
+    preponderous.viron: DEBUG

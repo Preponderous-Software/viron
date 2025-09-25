@@ -1,0 +1,10 @@
+2025-09-25 13:46:28 [main] INFO  p.viron.VironApplicationTests - Starting VironApplicationTests using Java 17.0.16 with PID 3928 (started by runner in /home/runner/work/Viron/Viron)
+2025-09-25 13:46:28 [main] DEBUG p.viron.VironApplicationTests - Running with Spring Boot v3.3.4, Spring v6.1.13
+2025-09-25 13:46:28 [main] INFO  p.viron.VironApplicationTests - The following 1 profile is active: "test"
+2025-09-25 13:46:28 [main] DEBUG o.s.w.c.s.GenericWebApplicationContext - Refreshing org.springframework.web.context.support.GenericWebApplicationContext@544e3679
+2025-09-25 13:46:33 [main] DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping - 6 mappings in 'requestMappingHandlerMapping'
+2025-09-25 13:46:33 [main] DEBUG o.s.w.s.h.SimpleUrlHandlerMapping - Patterns [/webjars/**, /**, /swagger-ui*/*swagger-initializer.js, /swagger-ui*/**] in 'resourceHandlerMapping'
+2025-09-25 13:46:33 [main] DEBUG o.s.w.s.m.m.a.RequestMappingHandlerAdapter - ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-09-25 13:46:33 [main] DEBUG o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - ControllerAdvice beans: 2 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-09-25 13:46:34 [main] INFO  p.viron.VironApplicationTests - Started VironApplicationTests in 6.563 seconds (process running for 8.418)
+2025-09-25 13:46:35 [SpringApplicationShutdownHook] DEBUG o.s.w.c.s.GenericWebApplicationContext - Closing org.springframework.web.context.support.GenericWebApplicationContext@544e3679, started on Thu Sep 25 13:46:28 UTC 2025
