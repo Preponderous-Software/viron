@@ -6,3 +6,6 @@ target
 .idea
 logs/
 *.log
+
+# Maven wrapper jar (but keep properties)
+.mvn/wrapper/maven-wrapper.jar
