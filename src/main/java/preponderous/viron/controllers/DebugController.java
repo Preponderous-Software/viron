@@ -7,12 +7,8 @@ import java.util.List;
 import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import preponderous.viron.dto.EntityDto;
 import preponderous.viron.dto.EnvironmentDto;
@@ -58,7 +54,8 @@ public class DebugController {
      * It ensures the entities are properly created and assigned to valid locations in the grid.
      */
     @PostMapping("/create-sample-data")
-    public ResponseEntity<EnvironmentDto> createSampleData() {
+    @ResponseStatus(HttpStatus.CREATED)
+    public EnvironmentDto createSampleData() {
         // create an environment with one 10x10 grid
         Environment environment = environmentService.createEnvironment("Sample Environment", 1, 10);
         List<Grid> grids = gridService.getGridsInEnvironment(environment.getEnvironmentId());
@@ -85,7 +82,7 @@ public class DebugController {
             locationService.addEntityToLocation(entity.getEntityId(), location.getLocationId());
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(environmentMapper.toDto(environment));
+        return environmentMapper.toDto(environment);
     }
 
     /**
@@ -95,7 +92,8 @@ public class DebugController {
      * @param environmentName the name of the environment to be created
      */
     @PostMapping("/create-world-and-place-entity/{environmentName}")
-    public ResponseEntity<EntityDto> createWorldAndPlaceEntity(@PathVariable @NotBlank String environmentName) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public EntityDto createWorldAndPlaceEntity(@PathVariable @NotBlank String environmentName) {
         // create an environment
         int numGrids = 1;
         int gridSize = 5;
@@ -128,6 +126,6 @@ public class DebugController {
         }
         locationService.addEntityToLocation(entity.getEntityId(), location.getLocationId());
         log.info("Entity {} placed at location ({}, {})", entity.getName(), entityRow, entityColumn);
-        return ResponseEntity.status(HttpStatus.CREATED).body(entityMapper.toDto(entity));
+        return entityMapper.toDto(entity);
     }
 }

@@ -243,6 +243,7 @@ class LocationControllerTest {
 
     @Test
     void addEntityToLocation_Success() throws Exception {
+        when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
         when(locationRepository.addEntityToLocation(1, 2)).thenReturn(true);
 
         mockMvc.perform(put("/api/v1/locations/2/entity/1"))
@@ -253,16 +254,17 @@ class LocationControllerTest {
 
     @Test
     void addEntityToLocation_NotFound() throws Exception {
-        when(locationRepository.addEntityToLocation(1, 2)).thenReturn(false);
+        when(locationRepository.findById(2)).thenReturn(Optional.empty());
 
         mockMvc.perform(put("/api/v1/locations/2/entity/1"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("Location or entity not found"));
+                .andExpect(jsonPath("$.message").value("Location not found with id: 2"));
     }
 
     @Test
     void addEntityToLocation_RepositoryThrowsException() throws Exception {
+        when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
         when(locationRepository.addEntityToLocation(1, 2)).thenThrow(new RuntimeException("Database error"));
 
         mockMvc.perform(put("/api/v1/locations/2/entity/1"))
@@ -275,6 +277,7 @@ class LocationControllerTest {
 
     @Test
     void removeEntityFromLocation_Success() throws Exception {
+        when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
         when(locationRepository.removeEntityFromLocation(1, 2)).thenReturn(true);
 
         mockMvc.perform(delete("/api/v1/locations/2/entity/1"))
@@ -285,16 +288,17 @@ class LocationControllerTest {
 
     @Test
     void removeEntityFromLocation_NotFound() throws Exception {
-        when(locationRepository.removeEntityFromLocation(1, 2)).thenReturn(false);
+        when(locationRepository.findById(2)).thenReturn(Optional.empty());
 
         mockMvc.perform(delete("/api/v1/locations/2/entity/1"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("Location or entity not found"));
+                .andExpect(jsonPath("$.message").value("Location not found with id: 2"));
     }
 
     @Test
     void removeEntityFromLocation_RepositoryThrowsException() throws Exception {
+        when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
         when(locationRepository.removeEntityFromLocation(1, 2)).thenThrow(new RuntimeException("Database error"));
 
         mockMvc.perform(delete("/api/v1/locations/2/entity/1"))
@@ -307,6 +311,7 @@ class LocationControllerTest {
 
     @Test
     void removeEntityFromCurrentLocation_Success() throws Exception {
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.of(new Location(5, 10, 20)));
         when(locationRepository.removeEntityFromCurrentLocation(1)).thenReturn(true);
 
         mockMvc.perform(delete("/api/v1/locations/entity/1"))
@@ -317,7 +322,7 @@ class LocationControllerTest {
 
     @Test
     void removeEntityFromCurrentLocation_NotFound() throws Exception {
-        when(locationRepository.removeEntityFromCurrentLocation(999)).thenReturn(false);
+        when(locationRepository.findByEntityId(999)).thenReturn(Optional.empty());
 
         mockMvc.perform(delete("/api/v1/locations/entity/999"))
                 .andExpect(status().isNotFound())
@@ -327,6 +332,7 @@ class LocationControllerTest {
 
     @Test
     void removeEntityFromCurrentLocation_RepositoryThrowsException() throws Exception {
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.of(new Location(5, 10, 20)));
         when(locationRepository.removeEntityFromCurrentLocation(1)).thenThrow(new RuntimeException("Database error"));
 
         mockMvc.perform(delete("/api/v1/locations/entity/1"))

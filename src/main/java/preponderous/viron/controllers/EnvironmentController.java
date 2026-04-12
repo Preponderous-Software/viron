@@ -7,7 +7,6 @@ package preponderous.viron.controllers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import preponderous.viron.dto.EnvironmentDto;
@@ -33,43 +32,45 @@ public class EnvironmentController {
     private final EnvironmentMapper environmentMapper;
 
     @GetMapping
-    public ResponseEntity<List<EnvironmentDto>> getAllEnvironments() {
+    public List<EnvironmentDto> getAllEnvironments() {
         List<Environment> environments = environmentRepository.findAll();
-        return ResponseEntity.ok(environmentMapper.toDtoList(environments));
+        return environmentMapper.toDtoList(environments);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EnvironmentDto> getEnvironmentById(@PathVariable @Min(1) int id) {
+    public EnvironmentDto getEnvironmentById(@PathVariable @Min(1) int id) {
         Environment environment = environmentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Environment not found with id: " + id));
-        return ResponseEntity.ok(environmentMapper.toDto(environment));
+        return environmentMapper.toDto(environment);
     }
 
     @GetMapping("/name/{name}")
-    public ResponseEntity<EnvironmentDto> getEnvironmentByName(@PathVariable @NotBlank String name) {
+    public EnvironmentDto getEnvironmentByName(@PathVariable @NotBlank String name) {
         Environment environment = environmentRepository.findByName(name)
                 .orElseThrow(() -> new NotFoundException("Environment not found with name: " + name));
-        return ResponseEntity.ok(environmentMapper.toDto(environment));
+        return environmentMapper.toDto(environment);
     }
 
     @GetMapping("/entity/{entityId}")
-    public ResponseEntity<EnvironmentDto> getEnvironmentOfEntity(@PathVariable @Min(1) int entityId) {
+    public EnvironmentDto getEnvironmentOfEntity(@PathVariable @Min(1) int entityId) {
         Environment environment = environmentRepository.findByEntityId(entityId)
                 .orElseThrow(() -> new NotFoundException("Environment not found for entity: " + entityId));
-        return ResponseEntity.ok(environmentMapper.toDto(environment));
+        return environmentMapper.toDto(environment);
     }
 
     @PostMapping("/{name}/{numGrids}/{gridSize}")
-    public ResponseEntity<EnvironmentDto> createEnvironment(
+    @ResponseStatus(HttpStatus.CREATED)
+    public EnvironmentDto createEnvironment(
             @PathVariable @NotBlank String name,
             @PathVariable @Min(1) int numGrids,
             @PathVariable @Min(1) int gridSize) {
         Environment newEnvironment = environmentFactory.createEnvironment(name, numGrids, gridSize);
-        return ResponseEntity.status(HttpStatus.CREATED).body(environmentMapper.toDto(newEnvironment));
+        return environmentMapper.toDto(newEnvironment);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEnvironment(@PathVariable @Min(1) int id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteEnvironment(@PathVariable @Min(1) int id) {
         if (environmentRepository.findById(id).isEmpty()) {
             throw new NotFoundException("Environment not found with id: " + id);
         }
@@ -135,11 +136,10 @@ public class EnvironmentController {
         }
 
         log.info("Environment with id {} deleted", id);
-        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/name/{name}")
-    public ResponseEntity<Void> updateEnvironmentName(@PathVariable @Min(1) int id, @PathVariable @NotBlank String name) {
+    public void updateEnvironmentName(@PathVariable @Min(1) int id, @PathVariable @NotBlank String name) {
         if (environmentRepository.findById(id).isEmpty()) {
             throw new NotFoundException("Environment not found with id: " + id);
         }
@@ -149,6 +149,5 @@ public class EnvironmentController {
         }
 
         log.info("Updated name for environment {} to '{}'", id, name);
-        return ResponseEntity.ok().build();
     }
 }

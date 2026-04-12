@@ -259,6 +259,7 @@ class EntityControllerTest {
 
     @Test
     void deleteEntity_ReturnsNoContent() throws Exception {
+        when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "Entity1", "2024-01-01")));
         when(entityRepository.deleteById(1)).thenReturn(true);
 
         mockMvc.perform(delete("/api/v1/entities/1"))
@@ -267,7 +268,7 @@ class EntityControllerTest {
 
     @Test
     void deleteEntity_NotFound() throws Exception {
-        when(entityRepository.deleteById(999)).thenReturn(false);
+        when(entityRepository.findById(999)).thenReturn(Optional.empty());
 
         mockMvc.perform(delete("/api/v1/entities/999"))
                 .andExpect(status().isNotFound())
@@ -277,6 +278,7 @@ class EntityControllerTest {
 
     @Test
     void deleteEntity_RepositoryThrowsException() throws Exception {
+        when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "Entity1", "2024-01-01")));
         when(entityRepository.deleteById(1)).thenThrow(new RuntimeException("Database error"));
 
         mockMvc.perform(delete("/api/v1/entities/1"))
@@ -289,6 +291,7 @@ class EntityControllerTest {
 
     @Test
     void updateEntityName_Success() throws Exception {
+        when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "OldName", "2024-01-01")));
         when(entityRepository.updateName(1, "UpdatedName")).thenReturn(true);
 
         mockMvc.perform(patch("/api/v1/entities/1/name/UpdatedName"))
@@ -297,7 +300,7 @@ class EntityControllerTest {
 
     @Test
     void updateEntityName_NotFound() throws Exception {
-        when(entityRepository.updateName(999, "UpdatedName")).thenReturn(false);
+        when(entityRepository.findById(999)).thenReturn(Optional.empty());
 
         mockMvc.perform(patch("/api/v1/entities/999/name/UpdatedName"))
                 .andExpect(status().isNotFound())
@@ -307,6 +310,7 @@ class EntityControllerTest {
 
     @Test
     void updateEntityName_RepositoryThrowsException() throws Exception {
+        when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "OldName", "2024-01-01")));
         when(entityRepository.updateName(1, "Name")).thenThrow(new RuntimeException("Database error"));
 
         mockMvc.perform(patch("/api/v1/entities/1/name/Name"))

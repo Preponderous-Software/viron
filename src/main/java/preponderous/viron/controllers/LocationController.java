@@ -3,11 +3,11 @@ package preponderous.viron.controllers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import preponderous.viron.dto.LocationDto;
 import preponderous.viron.exceptions.NotFoundException;
+import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.mappers.LocationMapper;
 import preponderous.viron.models.Location;
 import preponderous.viron.repositories.LocationRepository;
@@ -25,58 +25,66 @@ public class LocationController {
     private final LocationMapper locationMapper;
 
     @GetMapping
-    public ResponseEntity<List<LocationDto>> getAllLocations() {
+    public List<LocationDto> getAllLocations() {
         List<Location> locations = locationRepository.findAll();
-        return ResponseEntity.ok(locationMapper.toDtoList(locations));
+        return locationMapper.toDtoList(locations);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<LocationDto> getLocationById(@PathVariable @Min(1) int id) {
+    public LocationDto getLocationById(@PathVariable @Min(1) int id) {
         Location location = locationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Location not found with id: " + id));
-        return ResponseEntity.ok(locationMapper.toDto(location));
+        return locationMapper.toDto(location);
     }
 
     @GetMapping("/environment/{environmentId}")
-    public ResponseEntity<List<LocationDto>> getLocationsInEnvironment(@PathVariable @Min(1) int environmentId) {
+    public List<LocationDto> getLocationsInEnvironment(@PathVariable @Min(1) int environmentId) {
         List<Location> locations = locationRepository.findByEnvironmentId(environmentId);
-        return ResponseEntity.ok(locationMapper.toDtoList(locations));
+        return locationMapper.toDtoList(locations);
     }
 
     @GetMapping("/grid/{gridId}")
-    public ResponseEntity<List<LocationDto>> getLocationsInGrid(@PathVariable @Min(1) int gridId) {
+    public List<LocationDto> getLocationsInGrid(@PathVariable @Min(1) int gridId) {
         List<Location> locations = locationRepository.findByGridId(gridId);
-        return ResponseEntity.ok(locationMapper.toDtoList(locations));
+        return locationMapper.toDtoList(locations);
     }
 
     @GetMapping("/entity/{entityId}")
-    public ResponseEntity<LocationDto> getLocationOfEntity(@PathVariable @Min(1) int entityId) {
+    public LocationDto getLocationOfEntity(@PathVariable @Min(1) int entityId) {
         Location location = locationRepository.findByEntityId(entityId)
                 .orElseThrow(() -> new NotFoundException("Location not found for entity: " + entityId));
-        return ResponseEntity.ok(locationMapper.toDto(location));
+        return locationMapper.toDto(location);
     }
 
     @PutMapping("/{locationId}/entity/{entityId}")
-    public ResponseEntity<Void> addEntityToLocation(@PathVariable @Min(1) int entityId, @PathVariable @Min(1) int locationId) {
-        if (!locationRepository.addEntityToLocation(entityId, locationId)) {
-            throw new NotFoundException("Location or entity not found");
+    public void addEntityToLocation(@PathVariable @Min(1) int entityId, @PathVariable @Min(1) int locationId) {
+        if (locationRepository.findById(locationId).isEmpty()) {
+            throw new NotFoundException("Location not found with id: " + locationId);
         }
-        return ResponseEntity.ok().build();
+        if (!locationRepository.addEntityToLocation(entityId, locationId)) {
+            throw new ServiceException("Failed to add entity " + entityId + " to location " + locationId);
+        }
     }
 
     @DeleteMapping("/{locationId}/entity/{entityId}")
-    public ResponseEntity<Void> removeEntityFromLocation(@PathVariable @Min(1) int entityId, @PathVariable @Min(1) int locationId) {
-        if (!locationRepository.removeEntityFromLocation(entityId, locationId)) {
-            throw new NotFoundException("Location or entity not found");
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeEntityFromLocation(@PathVariable @Min(1) int entityId, @PathVariable @Min(1) int locationId) {
+        if (locationRepository.findById(locationId).isEmpty()) {
+            throw new NotFoundException("Location not found with id: " + locationId);
         }
-        return ResponseEntity.noContent().build();
+        if (!locationRepository.removeEntityFromLocation(entityId, locationId)) {
+            throw new ServiceException("Failed to remove entity " + entityId + " from location " + locationId);
+        }
     }
 
     @DeleteMapping("/entity/{entityId}")
-    public ResponseEntity<Void> removeEntityFromCurrentLocation(@PathVariable @Min(1) int entityId) {
-        if (!locationRepository.removeEntityFromCurrentLocation(entityId)) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeEntityFromCurrentLocation(@PathVariable @Min(1) int entityId) {
+        if (locationRepository.findByEntityId(entityId).isEmpty()) {
             throw new NotFoundException("Entity not found with id: " + entityId);
         }
-        return ResponseEntity.noContent().build();
+        if (!locationRepository.removeEntityFromCurrentLocation(entityId)) {
+            throw new ServiceException("Failed to remove entity " + entityId + " from current location");
+        }
     }
 }

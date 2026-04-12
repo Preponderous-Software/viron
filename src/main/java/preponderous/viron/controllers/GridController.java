@@ -2,7 +2,6 @@ package preponderous.viron.controllers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import preponderous.viron.dto.GridDto;
@@ -24,28 +23,28 @@ public class GridController {
     private final GridMapper gridMapper;
 
     @GetMapping
-    public ResponseEntity<List<GridDto>> getAllGrids() {
+    public List<GridDto> getAllGrids() {
         List<Grid> grids = gridRepository.findAll();
-        return ResponseEntity.ok(gridMapper.toDtoList(grids));
+        return gridMapper.toDtoList(grids);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GridDto> getGridById(@PathVariable @Min(1) int id) {
+    public GridDto getGridById(@PathVariable @Min(1) int id) {
         Grid grid = gridRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Grid not found with id: " + id));
-        return ResponseEntity.ok(gridMapper.toDto(grid));
+        return gridMapper.toDto(grid);
     }
 
     @GetMapping("/environment/{environmentId}")
-    public ResponseEntity<List<GridDto>> getGridsInEnvironment(@PathVariable @Min(1) int environmentId) {
+    public List<GridDto> getGridsInEnvironment(@PathVariable @Min(1) int environmentId) {
         List<Grid> grids = gridRepository.findByEnvironmentId(environmentId);
-        return ResponseEntity.ok(gridMapper.toDtoList(grids));
+        return gridMapper.toDtoList(grids);
     }
 
     @GetMapping("/entity/{entityId}")
-    public ResponseEntity<GridDto> getGridOfEntity(@PathVariable @Min(1) int entityId) {
+    public GridDto getGridOfEntity(@PathVariable @Min(1) int entityId) {
         Grid grid = gridRepository.findByEntityId(entityId)
                 .orElseThrow(() -> new NotFoundException("Grid not found for entity: " + entityId));
-        return ResponseEntity.ok(gridMapper.toDto(grid));
+        return gridMapper.toDto(grid);
     }
 }
