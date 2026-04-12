@@ -57,7 +57,7 @@ public class LocationController {
     }
 
     @PutMapping("/{locationId}/entity/{entityId}")
-    public void addEntityToLocation(@PathVariable @Min(1) int entityId, @PathVariable @Min(1) int locationId) {
+    public void addEntityToLocation(@PathVariable("entityId") @Min(1) int entityId, @PathVariable("locationId") @Min(1) int locationId) {
         if (locationRepository.findById(locationId).isEmpty()) {
             throw new NotFoundException("Location not found with id: " + locationId);
         }
@@ -68,7 +68,7 @@ public class LocationController {
 
     @DeleteMapping("/{locationId}/entity/{entityId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeEntityFromLocation(@PathVariable @Min(1) int entityId, @PathVariable @Min(1) int locationId) {
+    public void removeEntityFromLocation(@PathVariable("entityId") @Min(1) int entityId, @PathVariable("locationId") @Min(1) int locationId) {
         if (locationRepository.findById(locationId).isEmpty()) {
             throw new NotFoundException("Location not found with id: " + locationId);
         }
