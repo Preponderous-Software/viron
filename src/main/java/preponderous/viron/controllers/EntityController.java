@@ -2,120 +2,88 @@ package preponderous.viron.controllers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import preponderous.viron.exceptions.EntityCreationException;
+import preponderous.viron.dto.EntityDto;
+import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.factories.EntityFactory;
+import preponderous.viron.mappers.EntityMapper;
 import preponderous.viron.models.Entity;
 import preponderous.viron.repositories.EntityRepository;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/entities")
 @Slf4j
 @RequiredArgsConstructor
+@Validated
 public class EntityController {
     private final EntityRepository entityRepository;
     private final EntityFactory entityFactory;
+    private final EntityMapper entityMapper;
 
     @GetMapping
-    public ResponseEntity<List<Entity>> getAllEntities() {
-        try {
-            return ResponseEntity.ok(entityRepository.findAll());
-        } catch (Exception e) {
-            log.error("Error fetching all entities: {}", e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<List<EntityDto>> getAllEntities() {
+        List<Entity> entities = entityRepository.findAll();
+        return ResponseEntity.ok(entityMapper.toDtoList(entities));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Entity> getEntityById(@PathVariable int id) {
-        try {
-            return entityRepository.findById(id)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (Exception e) {
-            log.error("Error fetching entity by id {}: {}", id, e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<EntityDto> getEntityById(@PathVariable @Min(1) int id) {
+        Entity entity = entityRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Entity not found with id: " + id));
+        return ResponseEntity.ok(entityMapper.toDto(entity));
     }
 
     @GetMapping("/environment/{environmentId}")
-    public ResponseEntity<List<Entity>> getEntitiesInEnvironment(@PathVariable int environmentId) {
-        try {
-            return ResponseEntity.ok(entityRepository.findByEnvironmentId(environmentId));
-        } catch (Exception e) {
-            log.error("Error fetching entities in environment {}: {}", environmentId, e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<List<EntityDto>> getEntitiesInEnvironment(@PathVariable @Min(1) int environmentId) {
+        List<Entity> entities = entityRepository.findByEnvironmentId(environmentId);
+        return ResponseEntity.ok(entityMapper.toDtoList(entities));
     }
 
     @GetMapping("/grid/{gridId}")
-    public ResponseEntity<List<Entity>> getEntitiesInGrid(@PathVariable int gridId) {
-        try {
-            return ResponseEntity.ok(entityRepository.findByGridId(gridId));
-        } catch (Exception e) {
-            log.error("Error fetching entities in grid {}: {}", gridId, e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<List<EntityDto>> getEntitiesInGrid(@PathVariable @Min(1) int gridId) {
+        List<Entity> entities = entityRepository.findByGridId(gridId);
+        return ResponseEntity.ok(entityMapper.toDtoList(entities));
     }
 
     @GetMapping("/location/{locationId}")
-    public ResponseEntity<List<Entity>> getEntitiesInLocation(@PathVariable int locationId) {
-        try {
-            return ResponseEntity.ok(entityRepository.findByLocationId(locationId));
-        } catch (Exception e) {
-            log.error("Error fetching entities in location {}: {}", locationId, e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<List<EntityDto>> getEntitiesInLocation(@PathVariable @Min(1) int locationId) {
+        List<Entity> entities = entityRepository.findByLocationId(locationId);
+        return ResponseEntity.ok(entityMapper.toDtoList(entities));
     }
 
     @GetMapping("/unassigned")
-    public ResponseEntity<List<Entity>> getEntitiesNotInAnyLocation() {
-        try {
-            return ResponseEntity.ok(entityRepository.findEntitiesNotInAnyLocation());
-        } catch (Exception e) {
-            log.error("Error fetching unassigned entities: {}", e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<List<EntityDto>> getEntitiesNotInAnyLocation() {
+        List<Entity> entities = entityRepository.findEntitiesNotInAnyLocation();
+        return ResponseEntity.ok(entityMapper.toDtoList(entities));
     }
 
     @PostMapping("/{name}")
-    public ResponseEntity<Entity> createEntity(@PathVariable String name) {
-        try {
-            Entity newEntity = entityFactory.createEntity(name);
-            return ResponseEntity.ok(newEntity);
-        } catch (EntityCreationException e) {
-            log.error("Error creating entity with name {}: {}", name, e.getMessage());
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            log.error("Unexpected error creating entity: {}", e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<EntityDto> createEntity(@PathVariable @NotBlank String name) {
+        Entity newEntity = entityFactory.createEntity(name);
+        return ResponseEntity.status(HttpStatus.CREATED).body(entityMapper.toDto(newEntity));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEntity(@PathVariable int id) {
-        try {
-            return entityRepository.deleteById(id)
-                    ? ResponseEntity.ok().build()
-                    : ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("Error deleting entity {}: {}", id, e.getMessage());
-            return ResponseEntity.internalServerError().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> deleteEntity(@PathVariable @Min(1) int id) {
+        if (!entityRepository.deleteById(id)) {
+            throw new NotFoundException("Entity not found with id: " + id);
         }
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/name/{name}")
-    public ResponseEntity<Void> updateEntityName(@PathVariable int id, @PathVariable String name) {
-        try {
-            return entityRepository.updateName(id, name)
-                    ? ResponseEntity.ok().build()
-                    : ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("Error updating name for entity {}: {}", id, e.getMessage());
-            return ResponseEntity.internalServerError().build();
+    public ResponseEntity<Void> updateEntityName(@PathVariable @Min(1) int id, @PathVariable @NotBlank String name) {
+        if (!entityRepository.updateName(id, name)) {
+            throw new NotFoundException("Entity not found with id: " + id);
         }
+        return ResponseEntity.ok().build();
     }
 }

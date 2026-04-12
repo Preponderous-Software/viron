@@ -4,14 +4,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import preponderous.viron.dto.EntityDto;
+import preponderous.viron.dto.EnvironmentDto;
+import preponderous.viron.exceptions.InvalidRequestException;
+import preponderous.viron.mappers.EntityMapper;
+import preponderous.viron.mappers.EnvironmentMapper;
 import preponderous.viron.models.Entity;
 import preponderous.viron.models.Environment;
 import preponderous.viron.models.Grid;
@@ -24,19 +31,26 @@ import preponderous.viron.services.LocationService;
 @RestController
 @RequestMapping("/api/v1/debug")
 @Slf4j
+@Validated
 public class DebugController {
     private final EntityService entityService;
     private final EnvironmentService environmentService;
     private final GridService gridService;
     private final LocationService locationService;
+    private final EntityMapper entityMapper;
+    private final EnvironmentMapper environmentMapper;
 
     List<String> entityNamePool = new ArrayList<>(Arrays.asList("Tom", "Jerry", "Spike", "Tyke", "Nibbles", "Butch", "Tuffy", "Lightning", "Mammy", "Quacker", "Toodles", "Droopy", "Screwy", "Meathead", "George", "Dripple", "McWolf"));
 
-    public DebugController(EntityService entityService, EnvironmentService environmentService, GridService gridService, LocationService locationService) {
+    public DebugController(EntityService entityService, EnvironmentService environmentService,
+                           GridService gridService, LocationService locationService,
+                           EntityMapper entityMapper, EnvironmentMapper environmentMapper) {
         this.entityService = entityService;
         this.environmentService = environmentService;
         this.gridService = gridService;
         this.locationService = locationService;
+        this.entityMapper = entityMapper;
+        this.environmentMapper = environmentMapper;
     }
 
     /**
@@ -44,7 +58,7 @@ public class DebugController {
      * It ensures the entities are properly created and assigned to valid locations in the grid.
      */
     @PostMapping("/create-sample-data")
-    public ResponseEntity<Environment> createSampleData() {
+    public ResponseEntity<EnvironmentDto> createSampleData() {
         // create an environment with one 10x10 grid
         Environment environment = environmentService.createEnvironment("Sample Environment", 1, 10);
         List<Grid> grids = gridService.getGridsInEnvironment(environment.getEnvironmentId());
@@ -66,12 +80,12 @@ public class DebugController {
                 }
             }
             if (location == null) {
-                return ResponseEntity.badRequest().body(null); // exit if no valid location found
+                throw new InvalidRequestException("No valid location found at coordinates (" + x + ", " + y + ")");
             }
             locationService.addEntityToLocation(entity.getEntityId(), location.getLocationId());
         }
 
-        return ResponseEntity.ok(environment);
+        return ResponseEntity.status(HttpStatus.CREATED).body(environmentMapper.toDto(environment));
     }
 
     /**
@@ -81,7 +95,7 @@ public class DebugController {
      * @param environmentName the name of the environment to be created
      */
     @PostMapping("/create-world-and-place-entity/{environmentName}")
-    public ResponseEntity<Entity> createWorldAndPlaceEntity(@PathVariable String environmentName) {
+    public ResponseEntity<EntityDto> createWorldAndPlaceEntity(@PathVariable @NotBlank String environmentName) {
         // create an environment
         int numGrids = 1;
         int gridSize = 5;
@@ -110,11 +124,10 @@ public class DebugController {
             }
         }
         if (location == null) {
-            log.error("No valid location found for entity at row {} and column {}", entityRow, entityColumn);
-            return ResponseEntity.badRequest().body(null);
+            throw new InvalidRequestException("No valid location found for entity at row " + entityRow + " and column " + entityColumn);
         }
         locationService.addEntityToLocation(entity.getEntityId(), location.getLocationId());
         log.info("Entity {} placed at location ({}, {})", entity.getName(), entityRow, entityColumn);
-        return ResponseEntity.ok(entity);
+        return ResponseEntity.status(HttpStatus.CREATED).body(entityMapper.toDto(entity));
     }
 }
