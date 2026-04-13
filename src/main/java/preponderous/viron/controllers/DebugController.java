@@ -106,7 +106,7 @@ public class DebugController {
         if (grids.isEmpty()) {
             throw new InvalidRequestException("No grids found in environment: " + environment.getEnvironmentId());
         }
-        Grid grid = grids.get(0);
+        Grid grid = grids.getFirst();
         log.info("Grid created: {} with size {}x{}", grid.getGridId(), grid.getRows(), grid.getColumns());
 
         // create an entity
