@@ -1,7 +1,5 @@
 package preponderous.viron.controllers;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import jakarta.validation.constraints.NotBlank;
@@ -36,7 +34,7 @@ public class DebugController {
     private final EntityMapper entityMapper;
     private final EnvironmentMapper environmentMapper;
 
-    List<String> entityNamePool = new ArrayList<>(Arrays.asList("Tom", "Jerry", "Spike", "Tyke", "Nibbles", "Butch", "Tuffy", "Lightning", "Mammy", "Quacker", "Toodles", "Droopy", "Screwy", "Meathead", "George", "Dripple", "McWolf"));
+    private final List<String> entityNamePool = List.of("Tom", "Jerry", "Spike", "Tyke", "Nibbles", "Butch", "Tuffy", "Lightning", "Mammy", "Quacker", "Toodles", "Droopy", "Screwy", "Meathead", "George", "Dripple", "McWolf");
 
     public DebugController(EntityService entityService, EnvironmentService environmentService,
                            GridService gridService, LocationService locationService,
@@ -59,6 +57,9 @@ public class DebugController {
         // create an environment with one 10x10 grid
         Environment environment = environmentService.createEnvironment("Sample Environment", 1, 10);
         List<Grid> grids = gridService.getGridsInEnvironment(environment.getEnvironmentId());
+        if (grids.isEmpty()) {
+            throw new InvalidRequestException("No grids found in environment: " + environment.getEnvironmentId());
+        }
         Grid grid = grids.getFirst();
         List<Location> locations = locationService.getLocationsInGrid(grid.getGridId());
 
@@ -102,6 +103,9 @@ public class DebugController {
 
         // get grid info
         List<Grid> grids = gridService.getGridsInEnvironment(environment.getEnvironmentId());
+        if (grids.isEmpty()) {
+            throw new InvalidRequestException("No grids found in environment: " + environment.getEnvironmentId());
+        }
         Grid grid = grids.get(0);
         log.info("Grid created: {} with size {}x{}", grid.getGridId(), grid.getRows(), grid.getColumns());
 

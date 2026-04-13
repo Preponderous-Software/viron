@@ -97,6 +97,19 @@ class DebugControllerTest {
         verify(environmentMapper).toDto(environment);
     }
 
+    @Test
+    void createSampleData_NoGrids_Returns400() throws Exception {
+        Environment environment = new Environment(5, "NoGridEnv", "2024-05-01");
+
+        when(environmentService.createEnvironment("Sample Environment", 1, 10)).thenReturn(environment);
+        when(gridService.getGridsInEnvironment(5)).thenReturn(List.of());
+
+        mockMvc.perform(post("/api/v1/debug/create-sample-data"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("No grids found in environment: 5"));
+    }
+
     // --- POST /api/v1/debug/create-world-and-place-entity/{environmentName} ---
 
     @Test
@@ -143,6 +156,19 @@ class DebugControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.message").value("Entity creation failed"));
+    }
+
+    @Test
+    void createWorldAndPlaceEntity_NoGrids_Returns400() throws Exception {
+        Environment environment = new Environment(6, "NoGridWorld", "2024-06-01");
+
+        when(environmentService.createEnvironment("NoGridWorld", 1, 5)).thenReturn(environment);
+        when(gridService.getGridsInEnvironment(6)).thenReturn(List.of());
+
+        mockMvc.perform(post("/api/v1/debug/create-world-and-place-entity/NoGridWorld"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("No grids found in environment: 6"));
     }
 
     @Test
