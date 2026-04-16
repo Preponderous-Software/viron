@@ -22,14 +22,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityCreationException.class)
     public ResponseEntity<ErrorResponse> handleEntityCreationException(EntityCreationException ex) {
-        log.error("Entity creation failed: {}", ex.getMessage());
+        log.warn("Entity creation failed: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(EnvironmentCreationException.class)
     public ResponseEntity<ErrorResponse> handleEnvironmentCreationException(EnvironmentCreationException ex) {
-        log.error("Environment creation failed: {}", ex.getMessage());
+        log.warn("Environment creation failed: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
@@ -61,14 +61,14 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .reduce((a, b) -> a + "; " + b)
                 .orElse("Validation failed");
-        log.error("Validation error: {}", message);
+        log.warn("Validation error: {}", message);
         ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ErrorResponse> handleHandlerMethodValidationException(HandlerMethodValidationException ex) {
-        log.error("Validation error during handler method validation", ex);
+        log.warn("Validation error during handler method validation: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Validation failed");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }

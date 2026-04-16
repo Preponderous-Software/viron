@@ -327,7 +327,7 @@ class LocationControllerTest {
         mockMvc.perform(delete("/api/v1/locations/entity/999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("Entity not found with id: 999"));
+                .andExpect(jsonPath("$.message").value("Location not found for entity: 999"));
     }
 
     @Test

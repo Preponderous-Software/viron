@@ -81,7 +81,7 @@ public class LocationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeEntityFromCurrentLocation(@PathVariable @Min(1) int entityId) {
         if (locationRepository.findByEntityId(entityId).isEmpty()) {
-            throw new NotFoundException("Entity not found with id: " + entityId);
+            throw new NotFoundException("Location not found for entity: " + entityId);
         }
         if (!locationRepository.removeEntityFromCurrentLocation(entityId)) {
             throw new ServiceException("Failed to remove entity " + entityId + " from current location");
