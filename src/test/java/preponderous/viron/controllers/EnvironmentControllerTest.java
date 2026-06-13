@@ -1,211 +1,240 @@
 package preponderous.viron.controllers;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.web.servlet.MockMvc;
+import preponderous.viron.config.DbConfig;
+import preponderous.viron.database.DbInteractions;
+import preponderous.viron.dto.EnvironmentDto;
 import preponderous.viron.exceptions.EnvironmentCreationException;
 import preponderous.viron.factories.EnvironmentFactory;
+import preponderous.viron.mappers.EnvironmentMapper;
 import preponderous.viron.models.Environment;
 import preponderous.viron.repositories.EnvironmentRepository;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@AutoConfigureMockMvc
+@DirtiesContext
 class EnvironmentControllerTest {
-    private EnvironmentRepository environmentRepository;
-    private EnvironmentFactory environmentFactory;
-    private EnvironmentController environmentController;
 
-    @BeforeEach
-    void setUp() {
-        environmentRepository = Mockito.mock(EnvironmentRepository.class);
-        environmentFactory = Mockito.mock(EnvironmentFactory.class);
-        environmentController = new EnvironmentController(environmentRepository, environmentFactory);
-    }
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private EnvironmentRepository environmentRepository;
+
+    @MockBean
+    private EnvironmentFactory environmentFactory;
+
+    @MockBean
+    private EnvironmentMapper environmentMapper;
+
+    @MockBean
+    private DbInteractions dbInteractions;
+
+    @MockBean
+    private DbConfig dbConfig;
 
     @Test
-    void getAllEnvironments_Success() {
-        // setup
+    void getAllEnvironments_Success() throws Exception {
         List<Environment> environments = Arrays.asList(
                 new Environment(1, "Env1", "2023-01-01"),
                 new Environment(2, "Env2", "2023-01-02")
         );
+        List<EnvironmentDto> dtos = Arrays.asList(
+                new EnvironmentDto(1, "Env1", "2023-01-01"),
+                new EnvironmentDto(2, "Env2", "2023-01-02")
+        );
         when(environmentRepository.findAll()).thenReturn(environments);
+        when(environmentMapper.toDtoList(environments)).thenReturn(dtos);
 
-        // execute
-        ResponseEntity<List<Environment>> response = environmentController.getAllEnvironments();
+        mockMvc.perform(get("/api/v1/environments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].environmentId", is(1)))
+                .andExpect(jsonPath("$[0].name", is("Env1")))
+                .andExpect(jsonPath("$[0].creationDate", is("2023-01-01")))
+                .andExpect(jsonPath("$[1].environmentId", is(2)))
+                .andExpect(jsonPath("$[1].name", is("Env2")));
 
-        // verify
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(2, response.getBody().size());
+        verify(environmentRepository).findAll();
+        verify(environmentMapper).toDtoList(environments);
+    }
+
+    @Test
+    void getAllEnvironments_EmptyList() throws Exception {
+        when(environmentRepository.findAll()).thenReturn(Collections.emptyList());
+        when(environmentMapper.toDtoList(Collections.emptyList())).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/v1/environments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
         verify(environmentRepository).findAll();
     }
 
     @Test
-    void getAllEnvironments_ThrowsException() {
-        // setup
+    void getAllEnvironments_ThrowsException() throws Exception {
         when(environmentRepository.findAll()).thenThrow(new RuntimeException("Database error"));
 
-        // execute
-        ResponseEntity<List<Environment>> response = environmentController.getAllEnvironments();
-
-        // verify
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertNull(response.getBody());
-        verify(environmentRepository).findAll();
+        mockMvc.perform(get("/api/v1/environments"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status", is(500)))
+                .andExpect(jsonPath("$.message", is("An unexpected error occurred")));
     }
 
     @Test
-    void getEnvironmentById_Success() {
-        // setup
+    void getEnvironmentById_Success() throws Exception {
         Environment environment = new Environment(1, "Env1", "2023-01-01");
+        EnvironmentDto dto = new EnvironmentDto(1, "Env1", "2023-01-01");
         when(environmentRepository.findById(1)).thenReturn(Optional.of(environment));
+        when(environmentMapper.toDto(environment)).thenReturn(dto);
 
-        // execute
-        ResponseEntity<Environment> response = environmentController.getEnvironmentById(1);
+        mockMvc.perform(get("/api/v1/environments/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.environmentId", is(1)))
+                .andExpect(jsonPath("$.name", is("Env1")))
+                .andExpect(jsonPath("$.creationDate", is("2023-01-01")));
 
-        // verify
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("Env1", response.getBody().getName());
         verify(environmentRepository).findById(1);
+        verify(environmentMapper).toDto(environment);
     }
 
     @Test
-    void getEnvironmentById_NotFound() {
-        // setup
+    void getEnvironmentById_NotFound() throws Exception {
         when(environmentRepository.findById(1)).thenReturn(Optional.empty());
 
-        // execute
-        ResponseEntity<Environment> response = environmentController.getEnvironmentById(1);
-
-        // verify
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertNull(response.getBody());
-        verify(environmentRepository).findById(1);
+        mockMvc.perform(get("/api/v1/environments/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.message", is("Environment not found with id: 1")));
     }
 
     @Test
-    void getEnvironmentById_ThrowsException() {
-        // setup
+    void getEnvironmentById_ThrowsException() throws Exception {
         when(environmentRepository.findById(1)).thenThrow(new RuntimeException("Database error"));
 
-        // execute
-        ResponseEntity<Environment> response = environmentController.getEnvironmentById(1);
-
-        // verify
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertNull(response.getBody());
-        verify(environmentRepository).findById(1);
+        mockMvc.perform(get("/api/v1/environments/1"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status", is(500)))
+                .andExpect(jsonPath("$.message", is("An unexpected error occurred")));
     }
 
     @Test
-    void getEnvironmentByName_Success() {
-        // setup
+    void getEnvironmentByName_Success() throws Exception {
         Environment environment = new Environment(1, "Env1", "2023-01-01");
+        EnvironmentDto dto = new EnvironmentDto(1, "Env1", "2023-01-01");
         when(environmentRepository.findByName("Env1")).thenReturn(Optional.of(environment));
+        when(environmentMapper.toDto(environment)).thenReturn(dto);
 
-        // execute
-        ResponseEntity<Environment> response = environmentController.getEnvironmentByName("Env1");
+        mockMvc.perform(get("/api/v1/environments/name/Env1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.environmentId", is(1)))
+                .andExpect(jsonPath("$.name", is("Env1")))
+                .andExpect(jsonPath("$.creationDate", is("2023-01-01")));
 
-        // verify
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("Env1", response.getBody().getName());
         verify(environmentRepository).findByName("Env1");
+        verify(environmentMapper).toDto(environment);
     }
 
     @Test
-    void getEnvironmentByName_NotFound() {
-        // setup
+    void getEnvironmentByName_NotFound() throws Exception {
         when(environmentRepository.findByName("NonExistent")).thenReturn(Optional.empty());
 
-        // execute
-        ResponseEntity<Environment> response = environmentController.getEnvironmentByName("NonExistent");
-
-        // verify
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertNull(response.getBody());
-        verify(environmentRepository).findByName("NonExistent");
+        mockMvc.perform(get("/api/v1/environments/name/NonExistent"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.message", is("Environment not found with name: NonExistent")));
     }
 
     @Test
-    void getEnvironmentOfEntity_Success() {
-        // setup
+    void getEnvironmentOfEntity_Success() throws Exception {
         Environment environment = new Environment(1, "Env1", "2023-01-01");
+        EnvironmentDto dto = new EnvironmentDto(1, "Env1", "2023-01-01");
         when(environmentRepository.findByEntityId(1)).thenReturn(Optional.of(environment));
+        when(environmentMapper.toDto(environment)).thenReturn(dto);
 
-        // execute
-        ResponseEntity<Environment> response = environmentController.getEnvironmentOfEntity(1);
+        mockMvc.perform(get("/api/v1/environments/entity/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.environmentId", is(1)))
+                .andExpect(jsonPath("$.name", is("Env1")))
+                .andExpect(jsonPath("$.creationDate", is("2023-01-01")));
 
-        // verify
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("Env1", response.getBody().getName());
         verify(environmentRepository).findByEntityId(1);
+        verify(environmentMapper).toDto(environment);
     }
 
     @Test
-    void getEnvironmentOfEntity_NotFound() {
-        // setup
+    void getEnvironmentOfEntity_NotFound() throws Exception {
         when(environmentRepository.findByEntityId(1)).thenReturn(Optional.empty());
 
-        // execute
-        ResponseEntity<Environment> response = environmentController.getEnvironmentOfEntity(1);
-
-        // verify
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertNull(response.getBody());
-        verify(environmentRepository).findByEntityId(1);
+        mockMvc.perform(get("/api/v1/environments/entity/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.message", is("Environment not found for entity: 1")));
     }
 
     @Test
-    void createEnvironment_Success() throws EnvironmentCreationException {
-        // setup
+    void createEnvironment_Success() throws Exception {
         Environment environment = new Environment(1, "NewEnv", "2023-01-01");
+        EnvironmentDto dto = new EnvironmentDto(1, "NewEnv", "2023-01-01");
         when(environmentFactory.createEnvironment("NewEnv", 5, 10)).thenReturn(environment);
+        when(environmentMapper.toDto(environment)).thenReturn(dto);
 
-        // execute
-        ResponseEntity<Environment> response = environmentController.createEnvironment("NewEnv", 5, 10);
+        mockMvc.perform(post("/api/v1/environments/NewEnv/5/10"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.environmentId", is(1)))
+                .andExpect(jsonPath("$.name", is("NewEnv")))
+                .andExpect(jsonPath("$.creationDate", is("2023-01-01")));
 
-        // verify
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("NewEnv", response.getBody().getName());
         verify(environmentFactory).createEnvironment("NewEnv", 5, 10);
+        verify(environmentMapper).toDto(environment);
     }
 
     @Test
-    void createEnvironment_CreationException() throws EnvironmentCreationException {
-        // setup
+    void createEnvironment_CreationException() throws Exception {
         when(environmentFactory.createEnvironment("NewEnv", 5, 10))
                 .thenThrow(new EnvironmentCreationException("Creation failed"));
 
-        // execute
-        ResponseEntity<Environment> response = environmentController.createEnvironment("NewEnv", 5, 10);
-
-        // verify
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertNull(response.getBody());
-        verify(environmentFactory).createEnvironment("NewEnv", 5, 10);
+        mockMvc.perform(post("/api/v1/environments/NewEnv/5/10"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.message", is("Creation failed")));
     }
 
     @Test
-    void deleteEnvironment_Success() {
-        // setup
-        when(environmentRepository.findById(1)).thenReturn(Optional.of(new Environment(1, "Env1", "2023-01-01")));
-        when(environmentRepository.findEntityIdsByEnvironmentId(1)).thenReturn(Arrays.asList(1, 2));
-        when(environmentRepository.findLocationIdsByEnvironmentId(1)).thenReturn(Arrays.asList(3, 4));
-        when(environmentRepository.findGridIdsByEnvironmentId(1)).thenReturn(Arrays.asList(5, 6));
+    void createEnvironment_ThrowsException() throws Exception {
+        when(environmentFactory.createEnvironment("NewEnv", 5, 10))
+                .thenThrow(new RuntimeException("Database error"));
+
+        mockMvc.perform(post("/api/v1/environments/NewEnv/5/10"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status", is(500)))
+                .andExpect(jsonPath("$.message", is("An unexpected error occurred")));
+    }
+
+    @Test
+    void deleteEnvironment_Success() throws Exception {
+        Environment env = new Environment(1, "Env1", "2023-01-01");
+        when(environmentRepository.findById(1)).thenReturn(Optional.of(env));
+        when(environmentRepository.findEntityIdsByEnvironmentId(1)).thenReturn(List.of(1, 2));
+        when(environmentRepository.findLocationIdsByEnvironmentId(1)).thenReturn(List.of(3, 4));
+        when(environmentRepository.findGridIdsByEnvironmentId(1)).thenReturn(List.of(5));
         when(environmentRepository.deleteEntityLocation(anyInt())).thenReturn(true);
         when(environmentRepository.deleteLocationGrid(anyInt())).thenReturn(true);
         when(environmentRepository.deleteGridEnvironment(anyInt())).thenReturn(true);
@@ -214,65 +243,55 @@ class EnvironmentControllerTest {
         when(environmentRepository.deleteGrid(anyInt())).thenReturn(true);
         when(environmentRepository.deleteById(1)).thenReturn(true);
 
-        // execute
-        ResponseEntity<Void> response = environmentController.deleteEnvironment(1);
+        mockMvc.perform(delete("/api/v1/environments/1"))
+                .andExpect(status().isNoContent());
 
-        // verify
-        assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(environmentRepository).deleteById(1);
     }
 
     @Test
-    void deleteEnvironment_NotFound() {
-        // setup
+    void deleteEnvironment_NotFound() throws Exception {
         when(environmentRepository.findById(1)).thenReturn(Optional.empty());
 
-        // execute
-        ResponseEntity<Void> response = environmentController.deleteEnvironment(1);
+        mockMvc.perform(delete("/api/v1/environments/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.message", is("Environment not found with id: 1")));
 
-        // verify
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         verify(environmentRepository, never()).deleteById(anyInt());
     }
 
     @Test
-    void updateEnvironmentName_Success() {
-        // setup
+    void updateEnvironmentName_Success() throws Exception {
         when(environmentRepository.findById(1)).thenReturn(Optional.of(new Environment(1, "OldName", "2023-01-01")));
         when(environmentRepository.updateName(1, "NewName")).thenReturn(true);
 
-        // execute
-        ResponseEntity<Void> response = environmentController.updateEnvironmentName(1, "NewName");
+        mockMvc.perform(patch("/api/v1/environments/1/name/NewName"))
+                .andExpect(status().isOk());
 
-        // verify
-        assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(environmentRepository).updateName(1, "NewName");
     }
 
     @Test
-    void updateEnvironmentName_NotFound() {
-        // setup
+    void updateEnvironmentName_NotFound() throws Exception {
         when(environmentRepository.findById(1)).thenReturn(Optional.empty());
 
-        // execute
-        ResponseEntity<Void> response = environmentController.updateEnvironmentName(1, "NewName");
+        mockMvc.perform(patch("/api/v1/environments/1/name/NewName"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.message", is("Environment not found with id: 1")));
 
-        // verify
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         verify(environmentRepository, never()).updateName(anyInt(), anyString());
     }
 
     @Test
-    void updateEnvironmentName_ThrowsException() {
-        // setup
+    void updateEnvironmentName_ThrowsException() throws Exception {
         when(environmentRepository.findById(1)).thenReturn(Optional.of(new Environment(1, "OldName", "2023-01-01")));
         when(environmentRepository.updateName(1, "NewName")).thenThrow(new RuntimeException("Database error"));
 
-        // execute
-        ResponseEntity<Void> response = environmentController.updateEnvironmentName(1, "NewName");
-
-        // verify
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        verify(environmentRepository).updateName(1, "NewName");
+        mockMvc.perform(patch("/api/v1/environments/1/name/NewName"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status", is(500)))
+                .andExpect(jsonPath("$.message", is("An unexpected error occurred")));
     }
 }
