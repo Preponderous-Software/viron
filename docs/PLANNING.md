@@ -62,9 +62,9 @@ Deliver GET endpoints for all resources.
 ### **M4 – Write APIs**
 Implement creation, update, and deletion endpoints.
 
-19. **POST /environments/{name}/{numGrids}/{gridSize}** — Create environment with grids and locations.  
+19. **POST /environments** — Create environment with grids and locations (JSON body: `name`, `numGrids`, `gridSize`).  
 20. **DELETE /environments/{id}** — Delete environment with related data.  
-21. **PATCH /environments/{id}/name/{name}** — Update environment name.  
+21. **PATCH /environments/{id}/name** — Update environment name (JSON body: `name`).  
 31. **PUT /locations/{locationId}/entity/{entityId}** — Add entity to location.  
 32. **DELETE /locations/{locationId}/entity/{entityId}** — Remove entity from a specific location.  
 33. **DELETE /locations/entity/{entityId}** — Remove entity from its current location.  

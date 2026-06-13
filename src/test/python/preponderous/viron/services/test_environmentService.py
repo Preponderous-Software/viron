@@ -102,7 +102,10 @@ def test_create_environment(mock_post):
 
     assert isinstance(environment, Environment)
     assert environment.getName() == 'TestEnv'
-    mock_post.assert_called_once_with("http://localhost:9999/api/v1/environments/TestEnv/10/10")
+    mock_post.assert_called_once_with(
+        "http://localhost:9999/api/v1/environments",
+        json={"name": "TestEnv", "numGrids": 10, "gridSize": 10},
+    )
 
 @patch('requests.delete')
 def test_delete_environment(mock_delete):
@@ -126,7 +129,10 @@ def test_update_environment_name(mock_patch):
     result = service.update_environment_name(1, 'NewName')
 
     assert result is True
-    mock_patch.assert_called_once_with("http://localhost:9999/api/v1/environments/1/name/NewName")
+    mock_patch.assert_called_once_with(
+        "http://localhost:9999/api/v1/environments/1/name",
+        json={"name": "NewName"},
+    )
 
 @patch('requests.get')
 def test_get_all_environments_empty(mock_get):

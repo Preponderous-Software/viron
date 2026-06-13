@@ -8,12 +8,15 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import preponderous.viron.config.ServiceConfig;
+import preponderous.viron.dto.CreateEnvironmentRequest;
+import preponderous.viron.dto.UpdateEnvironmentNameRequest;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.models.Environment;
 
@@ -69,13 +72,10 @@ public class EnvironmentService {
     public Environment createEnvironment(String name, int numGrids, int gridSize) {
         RestTemplate restTemplate = restTemplateBuilder.build();
         ResponseEntity<Environment> response = restTemplate.exchange(
-                baseUrl + "/{name}/{numGrids}/{gridSize}",
+                baseUrl,
                 HttpMethod.POST,
-                null,
-                Environment.class,
-                name,
-                numGrids,
-                gridSize
+                new HttpEntity<>(new CreateEnvironmentRequest(name, numGrids, gridSize)),
+                Environment.class
         );
         if (response.getStatusCode().isError()) {
             throw new ServiceException("Error creating environment");
@@ -95,12 +95,11 @@ public class EnvironmentService {
     public boolean updateEnvironmentName(int id, String name) {
         RestTemplate restTemplate = restTemplateBuilder.build();
         ResponseEntity<Void> response = restTemplate.exchange(
-                baseUrl + "/{id}/name/{name}",
+                baseUrl + "/{id}/name",
                 HttpMethod.PATCH,
-                null,
+                new HttpEntity<>(new UpdateEnvironmentNameRequest(name)),
                 Void.class,
-                id,
-                name
+                id
         );
         if (response.getStatusCode().isError()) {
             throw new ServiceException("Error updating environment name");
