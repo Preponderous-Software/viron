@@ -514,7 +514,7 @@ public class EntityRepositoryImplTest {
         Entity entityToSave = new Entity(0, "Entity1", null);
 
         // Mock the insert operation
-        Mockito.when(dbInteractions.update("INSERT INTO viron.entity (name, creation_date) VALUES ('Entity1', NOW())"))
+        Mockito.when(dbInteractions.update("INSERT INTO viron.entity (name, creation_date) VALUES (?, NOW())", "Entity1"))
                 .thenReturn(true);
 
         // Mock getting the last inserted ID
@@ -549,7 +549,7 @@ public class EntityRepositoryImplTest {
         // Arrange
         Entity entityToSave = new Entity(0, "Entity1", null); // ID is 0 for new entity
 
-        Mockito.when(dbInteractions.update("INSERT INTO viron.entity (name, creation_date) VALUES ('Entity1', NOW())"))
+        Mockito.when(dbInteractions.update("INSERT INTO viron.entity (name, creation_date) VALUES (?, NOW())", "Entity1"))
                 .thenReturn(false);
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -566,7 +566,7 @@ public class EntityRepositoryImplTest {
         // Arrange
         Entity entityToSave = new Entity(0, "Entity1", null); // ID is 0 for new entity
 
-        Mockito.when(dbInteractions.update("INSERT INTO viron.entity (name, creation_date) VALUES ('Entity1', NOW())"))
+        Mockito.when(dbInteractions.update("INSERT INTO viron.entity (name, creation_date) VALUES (?, NOW())", "Entity1"))
                 .thenReturn(false); // Instead of throwing SQLException, just return false
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -631,7 +631,7 @@ public class EntityRepositoryImplTest {
         // Arrange
         int entityId = 1;
         String newName = "UpdatedEntityName";
-        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = 'UpdatedEntityName' WHERE entity_id = 1"))
+        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = ? WHERE entity_id = 1", "UpdatedEntityName"))
                 .thenReturn(true);
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -648,7 +648,7 @@ public class EntityRepositoryImplTest {
         // Arrange
         int entityId = 1;
         String newName = "UpdatedEntityName";
-        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = 'UpdatedEntityName' WHERE entity_id = 1"))
+        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = ? WHERE entity_id = 1", "UpdatedEntityName"))
                 .thenReturn(false);
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -665,7 +665,7 @@ public class EntityRepositoryImplTest {
         // Arrange
         int entityId = 1;
         String newName = "UpdatedEntityName";
-        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = 'UpdatedEntityName' WHERE entity_id = 1"))
+        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = ? WHERE entity_id = 1", "UpdatedEntityName"))
                 .thenReturn(false); // Instead of throwing SQLException, just return false
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);

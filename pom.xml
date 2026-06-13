@@ -29,6 +29,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- In-memory database used only to exercise DbInteractions (parameter binding + resource handling) in tests. -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
