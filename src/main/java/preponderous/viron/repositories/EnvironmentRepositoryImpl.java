@@ -59,7 +59,7 @@ public class EnvironmentRepositoryImpl implements EnvironmentRepository {
 
     @Override
     public Optional<Environment> findByName(String name) {
-        ResultSet rs = dbInteractions.query("SELECT * FROM viron.environment WHERE name = '" + name + "'");
+        ResultSet rs = dbInteractions.query("SELECT * FROM viron.environment WHERE name = ?", name);
         if (rs == null) {
             log.error("Error finding environment by name: ResultSet is null");
             return Optional.empty();
@@ -104,8 +104,8 @@ public class EnvironmentRepositoryImpl implements EnvironmentRepository {
 
     @Override
     public boolean updateName(int id, String name) {
-        String query = "UPDATE viron.environment SET name = '" + name + "' WHERE environment_id = " + id;
-        return dbInteractions.update(query);
+        String query = "UPDATE viron.environment SET name = ? WHERE environment_id = " + id;
+        return dbInteractions.update(query, name);
     }
 
     @Override

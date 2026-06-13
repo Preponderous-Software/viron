@@ -149,7 +149,7 @@ public class EnvironmentRepositoryImplTest {
     public void testFindByName_ReturnsEnvironmentWhenRowExists() throws SQLException {
         String name = "Env1";
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE name = '" + name + "'")).thenReturn(mockResultSet);
+        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE name = ?", name)).thenReturn(mockResultSet);
         Mockito.when(mockResultSet.next()).thenReturn(true);
         Mockito.when(mockResultSet.getInt("environment_id")).thenReturn(1);
         Mockito.when(mockResultSet.getString("name")).thenReturn(name);
@@ -169,7 +169,7 @@ public class EnvironmentRepositoryImplTest {
     public void testFindByName_ReturnsEmptyWhenNoRow() throws SQLException {
         String name = "Env1";
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE name = '" + name + "'")).thenReturn(mockResultSet);
+        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE name = ?", name)).thenReturn(mockResultSet);
         Mockito.when(mockResultSet.next()).thenReturn(false);
 
         EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
@@ -183,7 +183,7 @@ public class EnvironmentRepositoryImplTest {
     public void testFindByName_ReturnsEmptyWhenSQLExceptionThrown() throws SQLException {
         String name = "Env1";
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE name = '" + name + "'")).thenReturn(mockResultSet);
+        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE name = ?", name)).thenReturn(mockResultSet);
         Mockito.when(mockResultSet.next()).thenThrow(new SQLException("Simulated SQL Exception"));
 
         EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
@@ -196,7 +196,7 @@ public class EnvironmentRepositoryImplTest {
     @Test
     public void testFindByName_ReturnsEmptyWhenResultSetIsNull() {
         String name = "Env1";
-        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE name = '" + name + "'")).thenReturn(null);
+        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE name = ?", name)).thenReturn(null);
 
         EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
 
@@ -309,7 +309,7 @@ public class EnvironmentRepositoryImplTest {
     public void testUpdateName_ReturnsTrueWhenUpdateSucceeds() {
         int id = 1;
         String name = "NewName";
-        Mockito.when(dbInteractions.update("UPDATE viron.environment SET name = '" + name + "' WHERE environment_id = " + id)).thenReturn(true);
+        Mockito.when(dbInteractions.update("UPDATE viron.environment SET name = ? WHERE environment_id = " + id, name)).thenReturn(true);
 
         EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
 
@@ -320,7 +320,7 @@ public class EnvironmentRepositoryImplTest {
     public void testUpdateName_ReturnsFalseWhenUpdateFails() {
         int id = 1;
         String name = "NewName";
-        Mockito.when(dbInteractions.update("UPDATE viron.environment SET name = '" + name + "' WHERE environment_id = " + id)).thenReturn(false);
+        Mockito.when(dbInteractions.update("UPDATE viron.environment SET name = ? WHERE environment_id = " + id, name)).thenReturn(false);
 
         EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
 

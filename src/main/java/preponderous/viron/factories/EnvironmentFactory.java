@@ -35,8 +35,8 @@ public class EnvironmentFactory {
             throw new EnvironmentCreationException("Failed to get next environment id");
         }
         String creationDate = new java.util.Date().toString();
-        String query = "INSERT INTO viron.environment (environment_id, name, creation_date) VALUES (" + id + ", '" + name + "', '" + creationDate + "')";
-        boolean success = dbInteractions.update(query);
+        String query = "INSERT INTO viron.environment (environment_id, name, creation_date) VALUES (" + id + ", ?, ?)";
+        boolean success = dbInteractions.update(query, name, creationDate);
         if (!success) {
             log.error("Failed to create environment");
             throw new EnvironmentCreationException("Failed to create environment");

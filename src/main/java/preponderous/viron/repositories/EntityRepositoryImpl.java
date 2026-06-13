@@ -152,9 +152,8 @@ public class EntityRepositoryImpl implements EntityRepository {
     @Override
     public Entity save(Entity entity) {
         if (entity.getEntityId() == 0) {
-            String query = String.format("INSERT INTO viron.entity (name, creation_date) VALUES ('%s', NOW())",
-                    entity.getName());
-            if (dbInteractions.update(query)) {
+            String query = "INSERT INTO viron.entity (name, creation_date) VALUES (?, NOW())";
+            if (dbInteractions.update(query, entity.getName())) {
                 // Get the last inserted id
                 ResultSet rs = dbInteractions.query("SELECT LAST_INSERT_ID()");
                 try {
@@ -177,8 +176,7 @@ public class EntityRepositoryImpl implements EntityRepository {
 
     @Override
     public boolean updateName(int id, String name) {
-        String query = String.format("UPDATE viron.entity SET name = '%s' WHERE entity_id = %d",
-                name, id);
-        return dbInteractions.update(query);
+        String query = "UPDATE viron.entity SET name = ? WHERE entity_id = " + id;
+        return dbInteractions.update(query, name);
     }
 }

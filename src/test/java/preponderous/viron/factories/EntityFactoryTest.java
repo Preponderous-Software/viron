@@ -13,6 +13,7 @@ import java.sql.SQLException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -31,7 +32,7 @@ public class EntityFactoryTest {
         Mockito.when(dbInteractions.query(NEXT_ID_QUERY)).thenReturn(idRs);
         Mockito.when(idRs.next()).thenReturn(true);
         Mockito.when(idRs.getInt(1)).thenReturn(5);
-        Mockito.when(dbInteractions.update(anyString())).thenReturn(true);
+        Mockito.when(dbInteractions.update(anyString(), any(), any())).thenReturn(true);
 
         EntityFactory factory = new EntityFactory(dbInteractions);
 
@@ -76,7 +77,7 @@ public class EntityFactoryTest {
         Mockito.when(dbInteractions.query(NEXT_ID_QUERY)).thenReturn(idRs);
         Mockito.when(idRs.next()).thenReturn(true);
         Mockito.when(idRs.getInt(1)).thenReturn(5);
-        Mockito.when(dbInteractions.update(anyString())).thenReturn(false);
+        Mockito.when(dbInteractions.update(anyString(), any(), any())).thenReturn(false);
 
         EntityFactory factory = new EntityFactory(dbInteractions);
 
