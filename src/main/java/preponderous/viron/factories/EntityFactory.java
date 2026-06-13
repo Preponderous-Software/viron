@@ -26,6 +26,10 @@ public class EntityFactory {
     public Entity createEntity(String name) throws EntityCreationException {
         log.info("Attempting to create entity with name: {}", name);
         int id = getNextEntityId();
+        if (id == -1) {
+            log.error("Failed to get next entity id");
+            throw new EntityCreationException("Failed to get next entity id");
+        }
         String creationDate = new java.util.Date().toString();
         String query = "INSERT INTO viron.entity (entity_id, name, creation_date) VALUES (" + id + ", '" + name + "', '" + creationDate + "')";
         boolean success = dbInteractions.update(query);
@@ -38,6 +42,9 @@ public class EntityFactory {
 
     private int getNextEntityId() {
         ResultSet rs = dbInteractions.query("SELECT nextval('viron.entity_id_seq')");
+        if (rs == null) {
+            return -1;
+        }
         try {
             if (rs.next()) {
                 return rs.getInt(1);
