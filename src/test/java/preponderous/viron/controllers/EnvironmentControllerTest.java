@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import preponderous.viron.config.DbConfig;
@@ -196,7 +197,9 @@ class EnvironmentControllerTest {
         when(environmentFactory.createEnvironment("NewEnv", 5, 10)).thenReturn(environment);
         when(environmentMapper.toDto(environment)).thenReturn(dto);
 
-        mockMvc.perform(post("/api/v1/environments/NewEnv/5/10"))
+        mockMvc.perform(post("/api/v1/environments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewEnv\",\"numGrids\":5,\"gridSize\":10}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.environmentId", is(1)))
                 .andExpect(jsonPath("$.name", is("NewEnv")))
@@ -211,7 +214,9 @@ class EnvironmentControllerTest {
         when(environmentFactory.createEnvironment("NewEnv", 5, 10))
                 .thenThrow(new EnvironmentCreationException("Creation failed"));
 
-        mockMvc.perform(post("/api/v1/environments/NewEnv/5/10"))
+        mockMvc.perform(post("/api/v1/environments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewEnv\",\"numGrids\":5,\"gridSize\":10}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.message", is("Creation failed")));
@@ -222,10 +227,34 @@ class EnvironmentControllerTest {
         when(environmentFactory.createEnvironment("NewEnv", 5, 10))
                 .thenThrow(new RuntimeException("Database error"));
 
-        mockMvc.perform(post("/api/v1/environments/NewEnv/5/10"))
+        mockMvc.perform(post("/api/v1/environments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewEnv\",\"numGrids\":5,\"gridSize\":10}"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status", is(500)))
                 .andExpect(jsonPath("$.message", is("An unexpected error occurred")));
+    }
+
+    @Test
+    void createEnvironment_BlankName_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/environments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\",\"numGrids\":5,\"gridSize\":10}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)));
+
+        verify(environmentFactory, never()).createEnvironment(anyString(), anyInt(), anyInt());
+    }
+
+    @Test
+    void createEnvironment_NonPositiveNumGrids_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/environments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewEnv\",\"numGrids\":0,\"gridSize\":10}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)));
+
+        verify(environmentFactory, never()).createEnvironment(anyString(), anyInt(), anyInt());
     }
 
     @Test
@@ -266,7 +295,9 @@ class EnvironmentControllerTest {
         when(environmentRepository.findById(1)).thenReturn(Optional.of(new Environment(1, "OldName", "2023-01-01")));
         when(environmentRepository.updateName(1, "NewName")).thenReturn(true);
 
-        mockMvc.perform(patch("/api/v1/environments/1/name/NewName"))
+        mockMvc.perform(patch("/api/v1/environments/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewName\"}"))
                 .andExpect(status().isOk());
 
         verify(environmentRepository).updateName(1, "NewName");
@@ -276,7 +307,9 @@ class EnvironmentControllerTest {
     void updateEnvironmentName_NotFound() throws Exception {
         when(environmentRepository.findById(1)).thenReturn(Optional.empty());
 
-        mockMvc.perform(patch("/api/v1/environments/1/name/NewName"))
+        mockMvc.perform(patch("/api/v1/environments/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewName\"}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.message", is("Environment not found with id: 1")));
@@ -289,9 +322,22 @@ class EnvironmentControllerTest {
         when(environmentRepository.findById(1)).thenReturn(Optional.of(new Environment(1, "OldName", "2023-01-01")));
         when(environmentRepository.updateName(1, "NewName")).thenThrow(new RuntimeException("Database error"));
 
-        mockMvc.perform(patch("/api/v1/environments/1/name/NewName"))
+        mockMvc.perform(patch("/api/v1/environments/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewName\"}"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status", is(500)))
                 .andExpect(jsonPath("$.message", is("An unexpected error occurred")));
+    }
+
+    @Test
+    void updateEnvironmentName_BlankName_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(patch("/api/v1/environments/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)));
+
+        verify(environmentRepository, never()).updateName(anyInt(), anyString());
     }
 }

@@ -9,7 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import preponderous.viron.dto.CreateEnvironmentRequest;
 import preponderous.viron.dto.EnvironmentDto;
+import preponderous.viron.dto.UpdateEnvironmentNameRequest;
 import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.factories.EnvironmentFactory;
@@ -17,6 +19,7 @@ import preponderous.viron.mappers.EnvironmentMapper;
 import preponderous.viron.models.Environment;
 import preponderous.viron.repositories.EnvironmentRepository;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
@@ -58,13 +61,11 @@ public class EnvironmentController {
         return environmentMapper.toDto(environment);
     }
 
-    @PostMapping("/{name}/{numGrids}/{gridSize}")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EnvironmentDto createEnvironment(
-            @PathVariable @NotBlank String name,
-            @PathVariable @Min(1) int numGrids,
-            @PathVariable @Min(1) int gridSize) {
-        Environment newEnvironment = environmentFactory.createEnvironment(name, numGrids, gridSize);
+    public EnvironmentDto createEnvironment(@Valid @RequestBody CreateEnvironmentRequest request) {
+        Environment newEnvironment = environmentFactory.createEnvironment(
+                request.getName(), request.getNumGrids(), request.getGridSize());
         return environmentMapper.toDto(newEnvironment);
     }
 
@@ -138,8 +139,9 @@ public class EnvironmentController {
         log.info("Environment with id {} deleted", id);
     }
 
-    @PatchMapping("/{id}/name/{name}")
-    public void updateEnvironmentName(@PathVariable @Min(1) int id, @PathVariable @NotBlank String name) {
+    @PatchMapping("/{id}/name")
+    public void updateEnvironmentName(@PathVariable @Min(1) int id, @Valid @RequestBody UpdateEnvironmentNameRequest request) {
+        String name = request.getName();
         if (environmentRepository.findById(id).isEmpty()) {
             throw new NotFoundException("Environment not found with id: " + id);
         }

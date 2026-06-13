@@ -23,8 +23,8 @@ Deliver a working, tested API that supports:
 - [ ] `GET /api/v1/environments/{id}` – Retrieve a specific environment by ID.
 - [ ] `GET /api/v1/environments/name/{name}` – Retrieve a specific environment by name.
 - [ ] `GET /api/v1/environments/entity/{entityId}` – Get the environment containing a specific entity.
-- [ ] `POST /api/v1/environments/{name}/{numGrids}/{gridSize}` – Create an environment.
-- [ ] `PATCH /api/v1/environments/{id}/name/{name}` – Update environment name.
+- [ ] `POST /api/v1/environments` – Create an environment (JSON body: `name`, `numGrids`, `gridSize`).
+- [ ] `PATCH /api/v1/environments/{id}/name` – Update environment name (JSON body: `name`).
 - [ ] `DELETE /api/v1/environments/{id}` – Delete an environment and all related entities, locations, and grids.
 
 ---

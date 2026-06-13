@@ -34,7 +34,8 @@ class EnvironmentService:
         return Environment(**response.json())
 
     def create_environment(self, name: str, num_grids: int, grid_size: int) -> Environment:
-        response = requests.post(f"{self.get_base_url()}/{name}/{num_grids}/{grid_size}")
+        payload = {"name": name, "numGrids": num_grids, "gridSize": grid_size}
+        response = requests.post(f"{self.get_base_url()}", json=payload)
         response.raise_for_status()
         return Environment(**response.json())
 
@@ -44,6 +45,6 @@ class EnvironmentService:
         return response.status_code == 200
 
     def update_environment_name(self, environment_id: int, name: str) -> bool:
-        response = requests.patch(f"{self.get_base_url()}/{environment_id}/name/{name}")
+        response = requests.patch(f"{self.get_base_url()}/{environment_id}/name", json={"name": name})
         response.raise_for_status()
         return response.status_code == 200
