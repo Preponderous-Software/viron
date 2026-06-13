@@ -14,9 +14,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// Note: unlike its sibling repositories, EnvironmentRepositoryImpl does not guard
-// against a null ResultSet, so null-ResultSet cases are intentionally not exercised
-// here (they currently throw NullPointerException). Tracked separately.
 @SpringBootTest
 public class EnvironmentRepositoryImplTest {
 
@@ -65,6 +62,17 @@ public class EnvironmentRepositoryImplTest {
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
         Mockito.when(dbInteractions.query("SELECT * FROM viron.environment")).thenReturn(mockResultSet);
         Mockito.when(mockResultSet.next()).thenThrow(new SQLException("Simulated SQL Exception"));
+
+        EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
+
+        List<Environment> result = repository.findAll();
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    public void testFindAll_ReturnsEmptyListWhenResultSetIsNull() {
+        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment")).thenReturn(null);
 
         EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
 
@@ -123,6 +131,18 @@ public class EnvironmentRepositoryImplTest {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    public void testFindById_ReturnsEmptyWhenResultSetIsNull() {
+        int id = 1;
+        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE environment_id = " + id)).thenReturn(null);
+
+        EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
+
+        Optional<Environment> result = repository.findById(id);
+
+        assertThat(result).isEmpty();
+    }
+
     // ---- findByName ----
 
     @Test
@@ -173,6 +193,18 @@ public class EnvironmentRepositoryImplTest {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    public void testFindByName_ReturnsEmptyWhenResultSetIsNull() {
+        String name = "Env1";
+        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE name = '" + name + "'")).thenReturn(null);
+
+        EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
+
+        Optional<Environment> result = repository.findByName(name);
+
+        assertThat(result).isEmpty();
+    }
+
     // ---- findByEntityId ----
 
     @Test
@@ -215,6 +247,18 @@ public class EnvironmentRepositoryImplTest {
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
         Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE environment_id = (SELECT environment_id FROM viron.entity WHERE entity_id = " + entityId + ")")).thenReturn(mockResultSet);
         Mockito.when(mockResultSet.next()).thenThrow(new SQLException("Simulated SQL Exception"));
+
+        EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
+
+        Optional<Environment> result = repository.findByEntityId(entityId);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    public void testFindByEntityId_ReturnsEmptyWhenResultSetIsNull() {
+        int entityId = 7;
+        Mockito.when(dbInteractions.query("SELECT * FROM viron.environment WHERE environment_id = (SELECT environment_id FROM viron.entity WHERE entity_id = " + entityId + ")")).thenReturn(null);
 
         EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
 
@@ -331,6 +375,19 @@ public class EnvironmentRepositoryImplTest {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    public void testFindEntityIdsByEnvironmentId_ReturnsEmptyListWhenResultSetIsNull() {
+        int environmentId = 5;
+        String query = "SELECT entity_id FROM viron.entity WHERE entity_id in (SELECT entity_id FROM viron.entity_location WHERE location_id in (SELECT location_id FROM viron.location_grid WHERE grid_id in (SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")))";
+        Mockito.when(dbInteractions.query(query)).thenReturn(null);
+
+        EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
+
+        List<Integer> result = repository.findEntityIdsByEnvironmentId(environmentId);
+
+        assertThat(result).isEmpty();
+    }
+
     // ---- findLocationIdsByEnvironmentId ----
 
     @Test
@@ -379,6 +436,19 @@ public class EnvironmentRepositoryImplTest {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    public void testFindLocationIdsByEnvironmentId_ReturnsEmptyListWhenResultSetIsNull() {
+        int environmentId = 5;
+        String query = "SELECT location_id FROM viron.location_grid WHERE grid_id in (SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")";
+        Mockito.when(dbInteractions.query(query)).thenReturn(null);
+
+        EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
+
+        List<Integer> result = repository.findLocationIdsByEnvironmentId(environmentId);
+
+        assertThat(result).isEmpty();
+    }
+
     // ---- findGridIdsByEnvironmentId ----
 
     @Test
@@ -419,6 +489,19 @@ public class EnvironmentRepositoryImplTest {
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
         Mockito.when(dbInteractions.query(query)).thenReturn(mockResultSet);
         Mockito.when(mockResultSet.next()).thenThrow(new SQLException("Simulated SQL Exception"));
+
+        EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
+
+        List<Integer> result = repository.findGridIdsByEnvironmentId(environmentId);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    public void testFindGridIdsByEnvironmentId_ReturnsEmptyListWhenResultSetIsNull() {
+        int environmentId = 5;
+        String query = "SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId;
+        Mockito.when(dbInteractions.query(query)).thenReturn(null);
 
         EnvironmentRepositoryImpl repository = new EnvironmentRepositoryImpl(dbInteractions);
 
