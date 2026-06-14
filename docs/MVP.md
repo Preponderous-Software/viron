@@ -54,7 +54,7 @@ Deliver a working, tested API that supports:
 ### 4. **Entity Management**
 - [x] `GET /api/v1/entities` – Retrieve all entities.
 - [x] `GET /api/v1/entities/{id}` – Retrieve a specific entity by ID.
-- [ ] `POST /api/v1/entities` – Create a new entity. _(Currently implemented as `POST /api/v1/entities/{name}` using a path variable; alignment to the request-body form documented here is tracked in [#135](https://github.com/Preponderous-Software/viron/issues/135).)_
+- [x] `POST /api/v1/entities` – Create a new entity (request body: `{ "name": "..." }`).
 - [x] `DELETE /api/v1/entities/{id}` – Delete an entity.
 
 ---

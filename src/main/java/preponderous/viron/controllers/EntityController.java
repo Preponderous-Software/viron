@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import preponderous.viron.dto.CreateEntityRequest;
 import preponderous.viron.dto.EntityDto;
+import preponderous.viron.dto.UpdateEntityNameRequest;
 import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.factories.EntityFactory;
@@ -13,8 +15,8 @@ import preponderous.viron.mappers.EntityMapper;
 import preponderous.viron.models.Entity;
 import preponderous.viron.repositories.EntityRepository;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 @RestController
@@ -64,10 +66,10 @@ public class EntityController {
         return entityMapper.toDtoList(entities);
     }
 
-    @PostMapping("/{name}")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EntityDto createEntity(@PathVariable @NotBlank String name) {
-        Entity newEntity = entityFactory.createEntity(name);
+    public EntityDto createEntity(@Valid @RequestBody CreateEntityRequest request) {
+        Entity newEntity = entityFactory.createEntity(request.getName());
         return entityMapper.toDto(newEntity);
     }
 
@@ -82,8 +84,9 @@ public class EntityController {
         }
     }
 
-    @PatchMapping("/{id}/name/{name}")
-    public void updateEntityName(@PathVariable @Min(1) int id, @PathVariable @NotBlank String name) {
+    @PatchMapping("/{id}/name")
+    public void updateEntityName(@PathVariable @Min(1) int id, @Valid @RequestBody UpdateEntityNameRequest request) {
+        String name = request.getName();
         if (entityRepository.findById(id).isEmpty()) {
             throw new NotFoundException("Entity not found with id: " + id);
         }

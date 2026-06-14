@@ -51,7 +51,7 @@ class EntityService:
         return [Entity(**entity) for entity in data] if data else []
 
     def create_entity(self, name: str) -> Entity:
-        response = requests.post(f"{self.get_base_url()}/{name}")
+        response = requests.post(self.get_base_url(), json={"name": name})
         response.raise_for_status()
         data = response.json()
         if not data:
@@ -69,7 +69,7 @@ class EntityService:
 
     def update_entity_name(self, entity_id: int, name: str) -> bool:
         try:
-            response = requests.patch(f"{self.get_base_url()}/{entity_id}/name/{name}")
+            response = requests.patch(f"{self.get_base_url()}/{entity_id}/name", json={"name": name})
             response.raise_for_status()
             return True
         except Exception as e:

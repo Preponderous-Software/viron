@@ -7,6 +7,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import preponderous.viron.config.DbConfig;
 import preponderous.viron.database.DbInteractions;
@@ -219,7 +220,7 @@ class EntityControllerTest {
                 .andExpect(jsonPath("$", hasSize(0)));
     }
 
-    // --- POST /api/v1/entities/{name} ---
+    // --- POST /api/v1/entities ---
 
     @Test
     void createEntity_ReturnsCreated() throws Exception {
@@ -228,7 +229,9 @@ class EntityControllerTest {
         when(entityFactory.createEntity("NewEntity")).thenReturn(entity);
         when(entityMapper.toDto(entity)).thenReturn(dto);
 
-        mockMvc.perform(post("/api/v1/entities/NewEntity"))
+        mockMvc.perform(post("/api/v1/entities")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewEntity\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.entityId").value(1))
                 .andExpect(jsonPath("$.name").value("NewEntity"))
@@ -236,11 +239,24 @@ class EntityControllerTest {
     }
 
     @Test
+    void createEntity_BlankName_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/entities")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+
+        verify(entityFactory, never()).createEntity(anyString());
+    }
+
+    @Test
     void createEntity_FactoryThrowsEntityCreationException() throws Exception {
         when(entityFactory.createEntity("BadEntity"))
                 .thenThrow(new EntityCreationException("Creation failed"));
 
-        mockMvc.perform(post("/api/v1/entities/BadEntity"))
+        mockMvc.perform(post("/api/v1/entities")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"BadEntity\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Creation failed"));
@@ -251,7 +267,9 @@ class EntityControllerTest {
         when(entityFactory.createEntity("ErrorEntity"))
                 .thenThrow(new RuntimeException("Unexpected error"));
 
-        mockMvc.perform(post("/api/v1/entities/ErrorEntity"))
+        mockMvc.perform(post("/api/v1/entities")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"ErrorEntity\"}"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.message").isString());
@@ -289,22 +307,39 @@ class EntityControllerTest {
                 .andExpect(jsonPath("$.message").isString());
     }
 
-    // --- PATCH /api/v1/entities/{id}/name/{name} ---
+    // --- PATCH /api/v1/entities/{id}/name ---
 
     @Test
     void updateEntityName_Success() throws Exception {
         when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "OldName", "2024-01-01")));
         when(entityRepository.updateName(1, "UpdatedName")).thenReturn(true);
 
-        mockMvc.perform(patch("/api/v1/entities/1/name/UpdatedName"))
+        mockMvc.perform(patch("/api/v1/entities/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"UpdatedName\"}"))
                 .andExpect(status().isOk());
+
+        verify(entityRepository).updateName(1, "UpdatedName");
+    }
+
+    @Test
+    void updateEntityName_BlankName_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(patch("/api/v1/entities/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+
+        verify(entityRepository, never()).updateName(anyInt(), anyString());
     }
 
     @Test
     void updateEntityName_NotFound() throws Exception {
         when(entityRepository.findById(999)).thenReturn(Optional.empty());
 
-        mockMvc.perform(patch("/api/v1/entities/999/name/UpdatedName"))
+        mockMvc.perform(patch("/api/v1/entities/999/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"UpdatedName\"}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("Entity not found with id: 999"));
@@ -315,7 +350,9 @@ class EntityControllerTest {
         when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "OldName", "2024-01-01")));
         when(entityRepository.updateName(1, "Name")).thenThrow(new RuntimeException("Database error"));
 
-        mockMvc.perform(patch("/api/v1/entities/1/name/Name"))
+        mockMvc.perform(patch("/api/v1/entities/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Name\"}"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.message").isString());

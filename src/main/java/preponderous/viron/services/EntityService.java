@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import preponderous.viron.config.ServiceConfig;
+import preponderous.viron.dto.CreateEntityRequest;
+import preponderous.viron.dto.UpdateEntityNameRequest;
 import preponderous.viron.exceptions.EntityServiceException;
 import preponderous.viron.models.Entity;
 
@@ -134,10 +136,9 @@ public class EntityService {
     public Entity createEntity(String name) {
         try {
             ResponseEntity<Entity> response = restTemplate.postForEntity(
-                    getBaseUrl() + "/{name}",
-                    null,
-                    Entity.class,
-                    name
+                    getBaseUrl(),
+                    new CreateEntityRequest(name),
+                    Entity.class
             );
 
             if (response.getBody() == null) {
@@ -165,11 +166,10 @@ public class EntityService {
     public boolean updateEntityName(int id, String name) {
         try {
             restTemplate.patchForObject(
-                    getBaseUrl() + "/{id}/name/{name}",
-                    null,
+                    getBaseUrl() + "/{id}/name",
+                    new UpdateEntityNameRequest(name),
                     Void.class,
-                    id,
-                    name
+                    id
             );
             return true;
         } catch (Exception e) {
