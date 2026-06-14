@@ -13,4 +13,13 @@ public interface LocationRepository {
     boolean addEntityToLocation(int entityId, int locationId);
     boolean removeEntityFromLocation(int entityId, int locationId);
     boolean removeEntityFromCurrentLocation(int entityId);
+
+    /** Entity ids currently placed at the given location (occupancy / collision query). */
+    List<Integer> getEntityIdsAtLocation(int locationId);
+
+    /** The grid a location belongs to, if any. */
+    Optional<Integer> getGridIdOfLocation(int locationId);
+
+    /** Atomically moves an entity's current placement to the target location. */
+    boolean moveEntityToLocation(int entityId, int targetLocationId);
 }
