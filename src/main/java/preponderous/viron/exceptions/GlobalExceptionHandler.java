@@ -20,6 +20,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflictException(ConflictException ex) {
+        log.warn("Conflict: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     @ExceptionHandler(EntityCreationException.class)
     public ResponseEntity<ErrorResponse> handleEntityCreationException(EntityCreationException ex) {
         log.warn("Entity creation failed: {}", ex.getMessage());

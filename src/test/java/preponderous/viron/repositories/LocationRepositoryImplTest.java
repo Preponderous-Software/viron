@@ -259,4 +259,67 @@ public class LocationRepositoryImplTest {
         assertThat(repository.removeEntityFromCurrentLocation(42)).isTrue();
         Mockito.verify(dbInteractions).update(query);
     }
+
+    // ---- getEntityIdsAtLocation ----
+
+    @Test
+    public void testGetEntityIdsAtLocation_ReturnsIdsWhenResultSetNotEmpty() throws SQLException {
+        ResultSet rs = Mockito.mock(ResultSet.class);
+        Mockito.when(dbInteractions.query("SELECT entity_id FROM viron.entity_location WHERE location_id = 7"))
+                .thenReturn(rs);
+        Mockito.when(rs.next()).thenReturn(true, true, false);
+        Mockito.when(rs.getInt("entity_id")).thenReturn(11, 22);
+
+        LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
+
+        assertThat(repository.getEntityIdsAtLocation(7)).containsExactly(11, 22);
+    }
+
+    @Test
+    public void testGetEntityIdsAtLocation_ReturnsEmptyWhenResultSetNull() {
+        Mockito.when(dbInteractions.query(Mockito.anyString())).thenReturn(null);
+
+        LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
+
+        assertThat(repository.getEntityIdsAtLocation(7)).isEmpty();
+    }
+
+    // ---- getGridIdOfLocation ----
+
+    @Test
+    public void testGetGridIdOfLocation_ReturnsGridWhenPresent() throws SQLException {
+        ResultSet rs = Mockito.mock(ResultSet.class);
+        Mockito.when(dbInteractions.query("SELECT grid_id FROM viron.location_grid WHERE location_id = 5"))
+                .thenReturn(rs);
+        Mockito.when(rs.next()).thenReturn(true);
+        Mockito.when(rs.getInt("grid_id")).thenReturn(3);
+
+        LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
+
+        assertThat(repository.getGridIdOfLocation(5)).contains(3);
+    }
+
+    @Test
+    public void testGetGridIdOfLocation_EmptyWhenNoRow() throws SQLException {
+        ResultSet rs = Mockito.mock(ResultSet.class);
+        Mockito.when(dbInteractions.query(Mockito.anyString())).thenReturn(rs);
+        Mockito.when(rs.next()).thenReturn(false);
+
+        LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
+
+        assertThat(repository.getGridIdOfLocation(5)).isEmpty();
+    }
+
+    // ---- moveEntityToLocation ----
+
+    @Test
+    public void testMoveEntityToLocation_DelegatesToUpdate() {
+        String query = "UPDATE viron.entity_location SET location_id = 9 WHERE entity_id = 4";
+        Mockito.when(dbInteractions.update(query)).thenReturn(true);
+
+        LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
+
+        assertThat(repository.moveEntityToLocation(4, 9)).isTrue();
+        Mockito.verify(dbInteractions).update(query);
+    }
 }

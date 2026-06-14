@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import preponderous.viron.dto.LocationDto;
+import preponderous.viron.exceptions.ConflictException;
+import preponderous.viron.exceptions.InvalidRequestException;
 import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.mappers.LocationMapper;
@@ -14,6 +16,7 @@ import preponderous.viron.repositories.LocationRepository;
 
 import jakarta.validation.constraints.Min;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/locations")
@@ -85,6 +88,50 @@ public class LocationController {
         }
         if (!locationRepository.removeEntityFromCurrentLocation(entityId)) {
             throw new ServiceException("Failed to remove entity " + entityId + " from current location");
+        }
+    }
+
+    @GetMapping("/{locationId}/entities")
+    public List<Integer> getEntityIdsAtLocation(@PathVariable @Min(1) int locationId) {
+        if (locationRepository.findById(locationId).isEmpty()) {
+            throw new NotFoundException("Location not found with id: " + locationId);
+        }
+        return locationRepository.getEntityIdsAtLocation(locationId);
+    }
+
+    @GetMapping("/{locationId}/occupied")
+    public boolean isLocationOccupied(@PathVariable @Min(1) int locationId) {
+        if (locationRepository.findById(locationId).isEmpty()) {
+            throw new NotFoundException("Location not found with id: " + locationId);
+        }
+        return !locationRepository.getEntityIdsAtLocation(locationId).isEmpty();
+    }
+
+    /**
+     * Moves an entity from its current location to {@code locationId}, validating that
+     * the entity is placed, the target exists and is in the same grid, and the target is
+     * not already occupied (collision). The transition itself is a single atomic update.
+     */
+    @PutMapping("/{locationId}/entity/{entityId}/move")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void moveEntityToLocation(@PathVariable("entityId") @Min(1) int entityId,
+                                     @PathVariable("locationId") @Min(1) int locationId) {
+        Location current = locationRepository.findByEntityId(entityId)
+                .orElseThrow(() -> new NotFoundException("Entity " + entityId + " is not placed at any location"));
+        if (locationRepository.findById(locationId).isEmpty()) {
+            throw new NotFoundException("Location not found with id: " + locationId);
+        }
+        Optional<Integer> currentGrid = locationRepository.getGridIdOfLocation(current.getLocationId());
+        Optional<Integer> targetGrid = locationRepository.getGridIdOfLocation(locationId);
+        if (currentGrid.isEmpty() || targetGrid.isEmpty() || !currentGrid.get().equals(targetGrid.get())) {
+            throw new InvalidRequestException(
+                    "Target location " + locationId + " is not in the same grid as entity " + entityId);
+        }
+        if (!locationRepository.getEntityIdsAtLocation(locationId).isEmpty()) {
+            throw new ConflictException("Target location " + locationId + " is already occupied");
+        }
+        if (!locationRepository.moveEntityToLocation(entityId, locationId)) {
+            throw new ServiceException("Failed to move entity " + entityId + " to location " + locationId);
         }
     }
 }

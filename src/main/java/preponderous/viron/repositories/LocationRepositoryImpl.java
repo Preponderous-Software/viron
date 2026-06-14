@@ -125,4 +125,41 @@ public class LocationRepositoryImpl implements LocationRepository {
         String query = "DELETE FROM viron.entity_location WHERE entity_id = " + entityId;
         return dbInteractions.update(query);
     }
+
+    @Override
+    public List<Integer> getEntityIdsAtLocation(int locationId) {
+        List<Integer> entityIds = new ArrayList<>();
+        String query = "SELECT entity_id FROM viron.entity_location WHERE location_id = " + locationId;
+        ResultSet rs = dbInteractions.query(query);
+        try {
+            while (rs != null && rs.next()) {
+                entityIds.add(rs.getInt("entity_id"));
+            }
+        } catch (SQLException e) {
+            log.error("Error getting entities at location: {}", e.getMessage());
+        }
+        return entityIds;
+    }
+
+    @Override
+    public Optional<Integer> getGridIdOfLocation(int locationId) {
+        String query = "SELECT grid_id FROM viron.location_grid WHERE location_id = " + locationId;
+        ResultSet rs = dbInteractions.query(query);
+        try {
+            if (rs != null && rs.next()) {
+                return Optional.of(rs.getInt("grid_id"));
+            }
+        } catch (SQLException e) {
+            log.error("Error getting grid of location: {}", e.getMessage());
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean moveEntityToLocation(int entityId, int targetLocationId) {
+        // Single atomic statement: re-point the entity's existing placement to the target.
+        String query = "UPDATE viron.entity_location SET location_id = " + targetLocationId +
+                " WHERE entity_id = " + entityId;
+        return dbInteractions.update(query);
+    }
 }

@@ -342,4 +342,111 @@ class LocationControllerTest {
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.message").isString());
     }
+
+    // --- GET /api/v1/locations/{locationId}/entities (occupancy) ---
+
+    @Test
+    void getEntityIdsAtLocation_Success() throws Exception {
+        when(locationRepository.findById(5)).thenReturn(Optional.of(new Location(5, 1, 1)));
+        when(locationRepository.getEntityIdsAtLocation(5)).thenReturn(List.of(11, 22));
+
+        mockMvc.perform(get("/api/v1/locations/5/entities"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0]").value(11))
+                .andExpect(jsonPath("$[1]").value(22));
+    }
+
+    @Test
+    void getEntityIdsAtLocation_LocationNotFound() throws Exception {
+        when(locationRepository.findById(5)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/locations/5/entities"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    // --- GET /api/v1/locations/{locationId}/occupied ---
+
+    @Test
+    void isLocationOccupied_TrueWhenEntitiesPresent() throws Exception {
+        when(locationRepository.findById(5)).thenReturn(Optional.of(new Location(5, 1, 1)));
+        when(locationRepository.getEntityIdsAtLocation(5)).thenReturn(List.of(11));
+
+        mockMvc.perform(get("/api/v1/locations/5/occupied"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
+    }
+
+    @Test
+    void isLocationOccupied_FalseWhenEmpty() throws Exception {
+        when(locationRepository.findById(5)).thenReturn(Optional.of(new Location(5, 1, 1)));
+        when(locationRepository.getEntityIdsAtLocation(5)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/v1/locations/5/occupied"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    // --- PUT /api/v1/locations/{locationId}/entity/{entityId}/move ---
+
+    @Test
+    void moveEntityToLocation_Success() throws Exception {
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.of(new Location(5, 0, 0)));
+        when(locationRepository.findById(9)).thenReturn(Optional.of(new Location(9, 1, 0)));
+        when(locationRepository.getGridIdOfLocation(5)).thenReturn(Optional.of(3));
+        when(locationRepository.getGridIdOfLocation(9)).thenReturn(Optional.of(3));
+        when(locationRepository.getEntityIdsAtLocation(9)).thenReturn(Collections.emptyList());
+        when(locationRepository.moveEntityToLocation(1, 9)).thenReturn(true);
+
+        mockMvc.perform(put("/api/v1/locations/9/entity/1/move"))
+                .andExpect(status().isNoContent());
+
+        verify(locationRepository).moveEntityToLocation(1, 9);
+    }
+
+    @Test
+    void moveEntityToLocation_EntityNotPlaced() throws Exception {
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/v1/locations/9/entity/1/move"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Entity 1 is not placed at any location"));
+    }
+
+    @Test
+    void moveEntityToLocation_TargetNotFound() throws Exception {
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.of(new Location(5, 0, 0)));
+        when(locationRepository.findById(9)).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/v1/locations/9/entity/1/move"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Location not found with id: 9"));
+    }
+
+    @Test
+    void moveEntityToLocation_DifferentGridIsBadRequest() throws Exception {
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.of(new Location(5, 0, 0)));
+        when(locationRepository.findById(9)).thenReturn(Optional.of(new Location(9, 1, 0)));
+        when(locationRepository.getGridIdOfLocation(5)).thenReturn(Optional.of(3));
+        when(locationRepository.getGridIdOfLocation(9)).thenReturn(Optional.of(4));
+
+        mockMvc.perform(put("/api/v1/locations/9/entity/1/move"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void moveEntityToLocation_OccupiedTargetIsConflict() throws Exception {
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.of(new Location(5, 0, 0)));
+        when(locationRepository.findById(9)).thenReturn(Optional.of(new Location(9, 1, 0)));
+        when(locationRepository.getGridIdOfLocation(5)).thenReturn(Optional.of(3));
+        when(locationRepository.getGridIdOfLocation(9)).thenReturn(Optional.of(3));
+        when(locationRepository.getEntityIdsAtLocation(9)).thenReturn(List.of(99));
+
+        mockMvc.perform(put("/api/v1/locations/9/entity/1/move"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
+
+        verify(locationRepository, never()).moveEntityToLocation(anyInt(), anyInt());
+    }
 }
