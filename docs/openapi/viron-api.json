@@ -32,7 +32,7 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Environment created",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentDTO" } }
@@ -162,6 +162,148 @@
         "responses": { "200": { "description": "Entity removed" } }
       }
     },
+    "/api/v1/entities": {
+      "get": {
+        "summary": "Get all entities",
+        "responses": {
+          "200": {
+            "description": "List of entities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/EntityDTO" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new entity",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateEntityRequest" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Entity created",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/EntityDTO" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/{id}": {
+      "get": {
+        "summary": "Get entity by ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": {
+            "description": "Entity details",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/EntityDTO" } }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete entity",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "204": { "description": "Entity deleted" } }
+      }
+    },
+    "/api/v1/entities/{id}/name": {
+      "patch": {
+        "summary": "Update entity name",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/UpdateEntityNameRequest" } }
+          }
+        },
+        "responses": { "200": { "description": "Name updated" } }
+      }
+    },
+    "/api/v1/entities/environment/{environmentId}": {
+      "get": {
+        "summary": "Get entities in an environment",
+        "parameters": [{ "name": "environmentId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": {
+            "description": "List of entities in the environment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/EntityDTO" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/grid/{gridId}": {
+      "get": {
+        "summary": "Get entities in a grid",
+        "parameters": [{ "name": "gridId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": {
+            "description": "List of entities in the grid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/EntityDTO" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/location/{locationId}": {
+      "get": {
+        "summary": "Get entities in a location",
+        "parameters": [{ "$ref": "#/components/parameters/LocationIdParam" }],
+        "responses": {
+          "200": {
+            "description": "List of entities in the location",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/EntityDTO" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/unassigned": {
+      "get": {
+        "summary": "Get entities not in any location",
+        "responses": {
+          "200": {
+            "description": "List of entities not assigned to any location",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/EntityDTO" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/debug/create-sample-data": {
       "post": {
         "summary": "Create sample environment and entities",
@@ -235,8 +377,19 @@
         "type": "object",
         "properties": {
           "entityId": { "type": "integer" },
-          "name": { "type": "string" }
+          "name": { "type": "string" },
+          "creationDate": { "type": "string" }
         }
+      },
+      "CreateEntityRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": { "name": { "type": "string" } }
+      },
+      "UpdateEntityNameRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": { "name": { "type": "string" } }
       }
     },
     "parameters": {

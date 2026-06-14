@@ -115,7 +115,7 @@ def test_create_entity_success(mock_post):
     entity = service.create_entity("Entity1")
     assert isinstance(entity, Entity)
     assert entity.name == "Entity1"
-    mock_post.assert_called_once_with(f"{service.get_base_url()}/Entity1")
+    mock_post.assert_called_once_with(service.get_base_url(), json={"name": "Entity1"})
 
 
 @patch('requests.delete')
@@ -135,7 +135,7 @@ def test_update_entity_name_success(mock_patch):
 
     result = service.update_entity_name(1, "NewName")
     assert result is True
-    mock_patch.assert_called_once_with(f"{service.get_base_url()}/1/name/NewName")
+    mock_patch.assert_called_once_with(f"{service.get_base_url()}/1/name", json={"name": "NewName"})
 
 
 # Error cases
