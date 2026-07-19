@@ -83,6 +83,43 @@ def test_get_locations_in_grid(mock_get):
     mock_get.assert_called_with("http://localhost:9999/api/v1/locations/grid/1", headers={})
 
 @patch('requests.get')
+def test_get_unoccupied_locations_in_grid(mock_get):
+    mock_response = Mock()
+    mock_response.json.return_value = [
+        {'locationId': 1, 'x': 10, 'y': 20},
+    ]
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    locations = service.get_unoccupied_locations_in_grid(1)
+
+    assert len(locations) == 1
+    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/grid/1/unoccupied", headers={})
+
+@patch('requests.get')
+def test_get_neighbors(mock_get):
+    mock_response = Mock()
+    mock_response.json.return_value = [
+        {'locationId': 2, 'x': 11, 'y': 20},
+    ]
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    neighbors = service.get_neighbors(1)
+
+    assert len(neighbors) == 1
+    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/1/neighbors", headers={})
+
+@patch('requests.get')
+def test_get_neighbors_not_found(mock_get):
+    mock_response = Mock()
+    mock_response.status_code = 404
+    mock_get.return_value = mock_response
+
+    with pytest.raises(Exception):
+        service.get_neighbors(1)
+
+@patch('requests.get')
 def test_get_location_of_entity(mock_get):
     mock_response = Mock()
     mock_response.json.return_value = {'locationId': 1, 'x': 10, 'y': 20}

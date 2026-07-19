@@ -38,6 +38,18 @@ class LocationService:
         response.raise_for_status()
         return [Location(**loc) for loc in response.json()]
 
+    def get_unoccupied_locations_in_grid(self, grid_id: int) -> List[Location]:
+        response = requests.get(f"{self.get_base_url()}/grid/{grid_id}/unoccupied", headers=self.get_auth_headers())
+        response.raise_for_status()
+        return [Location(**loc) for loc in response.json()]
+
+    def get_neighbors(self, location_id: int) -> List[Location]:
+        response = requests.get(f"{self.get_base_url()}/{location_id}/neighbors", headers=self.get_auth_headers())
+        if response.status_code == 404:
+            raise Exception(f"Location not found with id: {location_id}")
+        response.raise_for_status()
+        return [Location(**loc) for loc in response.json()]
+
     def get_location_of_entity(self, entity_id: int) -> Location:
         response = requests.get(f"{self.get_base_url()}/entity/{entity_id}", headers=self.get_auth_headers())
         if response.status_code == 404:

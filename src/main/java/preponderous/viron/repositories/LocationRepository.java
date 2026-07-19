@@ -17,6 +17,9 @@ public interface LocationRepository {
     /** Entity ids currently placed at the given location (occupancy / collision query). */
     List<Integer> getEntityIdsAtLocation(int locationId);
 
+    /** Locations in the given grid that currently have no entity placed at them. */
+    List<Location> findUnoccupiedByGridId(int gridId);
+
     /** The grid a location belongs to, if any. */
     Optional<Integer> getGridIdOfLocation(int locationId);
 

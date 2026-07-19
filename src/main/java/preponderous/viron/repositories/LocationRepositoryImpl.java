@@ -142,6 +142,23 @@ public class LocationRepositoryImpl implements LocationRepository {
     }
 
     @Override
+    public List<Location> findUnoccupiedByGridId(int gridId) {
+        List<Location> locations = new ArrayList<>();
+        String query = "SELECT * FROM viron.location WHERE location_id in " +
+                "(SELECT location_id FROM viron.location_grid WHERE grid_id = " + gridId + ") " +
+                "AND location_id not in (SELECT location_id FROM viron.entity_location)";
+        ResultSet rs = dbInteractions.query(query);
+        try {
+            while (rs != null && rs.next()) {
+                locations.add(mapResultSetToLocation(rs));
+            }
+        } catch (SQLException e) {
+            log.error("Error getting unoccupied locations in grid: {}", e.getMessage());
+        }
+        return locations;
+    }
+
+    @Override
     public Optional<Integer> getGridIdOfLocation(int locationId) {
         String query = "SELECT grid_id FROM viron.location_grid WHERE location_id = " + locationId;
         ResultSet rs = dbInteractions.query(query);
