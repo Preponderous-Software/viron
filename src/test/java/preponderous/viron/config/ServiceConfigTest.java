@@ -27,4 +27,11 @@ public class ServiceConfigTest {
         serviceConfig.setVironPort(9999);
         assert(serviceConfig.getVironPort() == 9999);
     }
+
+    @Test
+    void testGetAuthToken() {
+        ServiceConfig serviceConfig = new ServiceConfig();
+        serviceConfig.setAuthToken("test-token");
+        assert(serviceConfig.getAuthToken().equals("test-token"));
+    }
 }

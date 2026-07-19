@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import preponderous.viron.config.AuthTokenInterceptor;
 import preponderous.viron.config.ServiceConfig;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.models.Grid;
@@ -24,7 +25,7 @@ public class GridService {
 
     @Autowired
     public GridService(RestTemplateBuilder restTemplateBuilder, ServiceConfig serviceConfig) {
-        this.restTemplateBuilder = restTemplateBuilder;
+        this.restTemplateBuilder = restTemplateBuilder.additionalInterceptors(new AuthTokenInterceptor(serviceConfig));
         this.baseUrl = serviceConfig.getVironHost() + ":" + serviceConfig.getVironPort() + "/api/v1/grids";
     }
 

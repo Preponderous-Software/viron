@@ -45,7 +45,7 @@ class TestGetAllGrids:
         assert grids[1].get_grid_id() == 2
         assert grids[1].get_rows() == 15
         assert grids[1].get_columns() == 25
-        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}")
+        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}", headers={})
 
     @patch('requests.get')
     def test_error(self, mock_get):
@@ -67,7 +67,7 @@ class TestGetGridById:
         assert grid.get_grid_id() == 1
         assert grid.get_rows() == 10
         assert grid.get_columns() == 20
-        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/1")
+        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/1", headers={})
 
     @patch('requests.get')
     def test_not_found(self, mock_get):
@@ -79,7 +79,7 @@ class TestGetGridById:
             grid = service.get_grid_by_id(1)
             assert grid is None
 
-        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/1")
+        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/1", headers={})
 
     @patch('requests.get')
     def test_error(self, mock_get):
@@ -104,7 +104,7 @@ class TestGetGridsInEnvironment:
         assert isinstance(grids[0], Grid)
         assert grids[0].get_grid_id() == 1
         assert grids[1].get_grid_id() == 2
-        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/environment/1")
+        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/environment/1", headers={})
 
     @patch('requests.get')
     def test_empty_list(self, mock_get, mock_response):
@@ -114,7 +114,7 @@ class TestGetGridsInEnvironment:
         grids = service.get_grids_in_environment(1)
 
         assert len(grids) == 0
-        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/environment/1")
+        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/environment/1", headers={})
 
     @patch('requests.get')
     def test_error(self, mock_get):
@@ -123,6 +123,23 @@ class TestGetGridsInEnvironment:
         with pytest.raises(Exception) as exc_info:
             service.get_grids_in_environment(1)
         assert str(exc_info.value) == "Test error"
+
+class TestAuthToken:
+    def test_get_auth_headers_without_token(self):
+        assert service.get_auth_headers() == {}
+
+    @patch('requests.get')
+    def test_get_all_grids_sends_bearer_token(self, mock_get, mock_response):
+        authed_service = GridService("http://localhost", 9999, auth_token="test-token")
+        mock_response.json.return_value = []
+        mock_get.return_value = mock_response
+
+        authed_service.get_all_grids()
+
+        mock_get.assert_called_once_with(
+            f"{BASE_URL}{API_PATH}",
+            headers={"Authorization": "Bearer test-token"},
+        )
 
 class TestGetGridOfEntity:
     @patch('requests.get')
@@ -136,7 +153,7 @@ class TestGetGridOfEntity:
         assert grid.get_grid_id() == 1
         assert grid.get_rows() == 10
         assert grid.get_columns() == 20
-        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/entity/1")
+        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/entity/1", headers={})
 
     @patch('requests.get')
     def test_not_found(self, mock_get):
@@ -148,7 +165,7 @@ class TestGetGridOfEntity:
             grid = service.get_grid_of_entity(1)
             assert grid is None
 
-        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/entity/1")
+        mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/entity/1", headers={})
 
     @patch('requests.get')
     def test_error(self, mock_get):

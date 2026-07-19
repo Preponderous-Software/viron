@@ -12,4 +12,5 @@ import org.springframework.context.annotation.PropertySource;
 public class ServiceConfig {
     private String vironHost;
     private int vironPort;
+    private String authToken;
 }

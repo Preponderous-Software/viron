@@ -30,7 +30,7 @@ def test_get_all_locations(mock_get):
     locations = service.get_all_locations()
 
     assert len(locations) == 2
-    mock_get.assert_called_with("http://localhost:9999/api/v1/locations")
+    mock_get.assert_called_with("http://localhost:9999/api/v1/locations", headers={})
 
 @patch('requests.get')
 def test_get_location_by_id(mock_get):
@@ -41,7 +41,7 @@ def test_get_location_by_id(mock_get):
 
     location = service.get_location_by_id(1)
 
-    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/1")
+    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/1", headers={})
 
 @patch('requests.get')
 def test_get_location_by_id_not_found(mock_get):
@@ -65,7 +65,7 @@ def test_get_locations_in_environment(mock_get):
     locations = service.get_locations_in_environment(1)
 
     assert len(locations) == 2
-    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/environment/1")
+    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/environment/1", headers={})
 
 @patch('requests.get')
 def test_get_locations_in_grid(mock_get):
@@ -80,7 +80,7 @@ def test_get_locations_in_grid(mock_get):
     locations = service.get_locations_in_grid(1)
 
     assert len(locations) == 2
-    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/grid/1")
+    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/grid/1", headers={})
 
 @patch('requests.get')
 def test_get_location_of_entity(mock_get):
@@ -91,7 +91,7 @@ def test_get_location_of_entity(mock_get):
 
     location = service.get_location_of_entity(1)
 
-    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/entity/1")
+    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/entity/1", headers={})
 
 @patch('requests.put')
 def test_add_entity_to_location(mock_put):
@@ -101,7 +101,7 @@ def test_add_entity_to_location(mock_put):
 
     service.add_entity_to_location(1, 1)
 
-    mock_put.assert_called_with("http://localhost:9999/api/v1/locations/1/entity/1")
+    mock_put.assert_called_with("http://localhost:9999/api/v1/locations/1/entity/1", headers={})
 
 @patch('requests.delete')
 def test_remove_entity_from_location(mock_delete):
@@ -111,7 +111,7 @@ def test_remove_entity_from_location(mock_delete):
 
     service.remove_entity_from_location(1, 1)
 
-    mock_delete.assert_called_with("http://localhost:9999/api/v1/locations/1/entity/1")
+    mock_delete.assert_called_with("http://localhost:9999/api/v1/locations/1/entity/1", headers={})
 
 @patch('requests.delete')
 def test_remove_entity_from_current_location(mock_delete):
@@ -121,7 +121,7 @@ def test_remove_entity_from_current_location(mock_delete):
 
     service.remove_entity_from_current_location(1)
 
-    mock_delete.assert_called_with("http://localhost:9999/api/v1/locations/entity/1")
+    mock_delete.assert_called_with("http://localhost:9999/api/v1/locations/entity/1", headers={})
 
 @patch('requests.delete')
 def test_remove_entity_not_found(mock_delete):
@@ -131,3 +131,23 @@ def test_remove_entity_not_found(mock_delete):
 
     with pytest.raises(Exception):
         service.remove_entity_from_current_location(1)
+
+
+def test_get_auth_headers_without_token():
+    assert service.get_auth_headers() == {}
+
+
+@patch('requests.get')
+def test_get_all_locations_sends_bearer_token(mock_get):
+    authed_service = LocationService("http://localhost", 9999, auth_token="test-token")
+    mock_response = Mock()
+    mock_response.json.return_value = []
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    authed_service.get_all_locations()
+
+    mock_get.assert_called_with(
+        "http://localhost:9999/api/v1/locations",
+        headers={"Authorization": "Bearer test-token"},
+    )

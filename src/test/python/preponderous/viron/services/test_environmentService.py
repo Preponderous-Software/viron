@@ -33,7 +33,7 @@ def test_get_all_environments(mock_get):
     assert environments[0].getEnvironmentId() == 1
     assert environments[0].getName() == 'Environment1'
     assert environments[0].getCreationDate() == '2024-01-01'
-    mock_get.assert_called_once_with("http://localhost:9999/api/v1/environments")
+    mock_get.assert_called_once_with("http://localhost:9999/api/v1/environments", headers={})
 
 @patch('requests.get')
 def test_get_environment_by_id(mock_get):
@@ -51,7 +51,7 @@ def test_get_environment_by_id(mock_get):
     assert isinstance(environment, Environment)
     assert environment.getEnvironmentId() == 1
     assert environment.getName() == 'Environment1'
-    mock_get.assert_called_once_with("http://localhost:9999/api/v1/environments/1")
+    mock_get.assert_called_once_with("http://localhost:9999/api/v1/environments/1", headers={})
 
 @patch('requests.get')
 def test_get_environment_by_name(mock_get):
@@ -68,7 +68,7 @@ def test_get_environment_by_name(mock_get):
 
     assert isinstance(environment, Environment)
     assert environment.getName() == 'Environment1'
-    mock_get.assert_called_once_with("http://localhost:9999/api/v1/environments/name/Environment1")
+    mock_get.assert_called_once_with("http://localhost:9999/api/v1/environments/name/Environment1", headers={})
 
 @patch('requests.get')
 def test_get_environment_of_entity(mock_get):
@@ -85,7 +85,7 @@ def test_get_environment_of_entity(mock_get):
 
     assert isinstance(environment, Environment)
     assert environment.getEnvironmentId() == 1
-    mock_get.assert_called_once_with("http://localhost:9999/api/v1/environments/entity/1")
+    mock_get.assert_called_once_with("http://localhost:9999/api/v1/environments/entity/1", headers={})
 
 @patch('requests.post')
 def test_create_environment(mock_post):
@@ -105,6 +105,7 @@ def test_create_environment(mock_post):
     mock_post.assert_called_once_with(
         "http://localhost:9999/api/v1/environments",
         json={"name": "TestEnv", "numGrids": 10, "gridSize": 10},
+        headers={},
     )
 
 @patch('requests.delete')
@@ -117,7 +118,7 @@ def test_delete_environment(mock_delete):
     result = service.delete_environment(1)
 
     assert result is True
-    mock_delete.assert_called_once_with("http://localhost:9999/api/v1/environments/1")
+    mock_delete.assert_called_once_with("http://localhost:9999/api/v1/environments/1", headers={})
 
 @patch('requests.patch')
 def test_update_environment_name(mock_patch):
@@ -132,6 +133,7 @@ def test_update_environment_name(mock_patch):
     mock_patch.assert_called_once_with(
         "http://localhost:9999/api/v1/environments/1/name",
         json={"name": "NewName"},
+        headers={},
     )
 
 @patch('requests.get')
@@ -144,7 +146,7 @@ def test_get_all_environments_empty(mock_get):
     environments = service.get_all_environments()
 
     assert len(environments) == 0
-    mock_get.assert_called_once_with("http://localhost:9999/api/v1/environments")
+    mock_get.assert_called_once_with("http://localhost:9999/api/v1/environments", headers={})
 
 @patch('requests.get')
 def test_http_error_handling(mock_get):
@@ -164,3 +166,21 @@ def test_environment_validation():
 
     with pytest.raises(TypeError):
         Environment(1, 123, "2024-01-01")
+
+def test_get_auth_headers_without_token():
+    assert service.get_auth_headers() == {}
+
+@patch('requests.get')
+def test_get_all_environments_sends_bearer_token(mock_get):
+    authed_service = EnvironmentService("http://localhost", 9999, auth_token="test-token")
+    mock_response = Mock()
+    mock_response.json.return_value = []
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    authed_service.get_all_environments()
+
+    mock_get.assert_called_once_with(
+        "http://localhost:9999/api/v1/environments",
+        headers={"Authorization": "Bearer test-token"},
+    )

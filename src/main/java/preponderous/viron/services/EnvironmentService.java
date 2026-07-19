@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import preponderous.viron.config.AuthTokenInterceptor;
 import preponderous.viron.config.ServiceConfig;
 import preponderous.viron.dto.CreateEnvironmentRequest;
 import preponderous.viron.dto.UpdateEnvironmentNameRequest;
@@ -28,7 +29,7 @@ public class EnvironmentService {
 
     @Autowired
     public EnvironmentService(RestTemplateBuilder restTemplateBuilder, ServiceConfig serviceConfig) {
-        this.restTemplateBuilder = restTemplateBuilder;
+        this.restTemplateBuilder = restTemplateBuilder.additionalInterceptors(new AuthTokenInterceptor(serviceConfig));
         this.serviceConfig = serviceConfig;
         this.baseUrl = this.serviceConfig.getVironHost() + ":" + serviceConfig.getVironPort() + "/api/v1/environments";
     }
