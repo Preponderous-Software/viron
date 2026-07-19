@@ -2,7 +2,7 @@
 
 The **Minimum Viable Product (MVP)** for Viron establishes the core spatial simulation capabilities necessary to manage **environments**, **grids**, **locations**, and **entities** via a REST API.
 
-This document aligns with the [`../openapi/viron-api.json`](../openapi/viron-api.json) specification and serves as the implementation guide.
+This document aligns with the [`openapi/viron-api.json`](openapi/viron-api.json) specification and serves as the implementation guide.
 
 > **Status:** The endpoints and DTOs below are implemented and tested; the checked boxes reflect the current implementation. The remaining gap is aligning entity creation to a request-body contract, tracked in [#135](https://github.com/Preponderous-Software/viron/issues/135).
 
@@ -78,7 +78,7 @@ Deliver a working, tested API that supports:
 
 ## ✅ Completion Criteria
 
-- All endpoints in [`../openapi/viron-api.json`](../openapi/viron-api.json) implemented and tested.
+- All endpoints in [`openapi/viron-api.json`](openapi/viron-api.json) implemented and tested.
 - DTOs returned in responses, avoiding direct exposure of internal entity models.
 - Unit and integration tests covering all controllers and repositories.
 - Endpoints verified via Postman or Swagger UI.

@@ -1,6 +1,6 @@
 # PLANNING.md — Viron MVP Issue Plan (Milestone-Oriented)
 
-This plan enumerates GitHub issues to implement the Viron MVP as defined in `../openapi/viron-api.json`, grouped into milestones with concise descriptions.
+This plan enumerates GitHub issues to implement the Viron MVP as defined in `openapi/viron-api.json`, grouped into milestones with concise descriptions.
 
 ---
 
