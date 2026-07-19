@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import preponderous.viron.config.AuthTokenInterceptor;
 import preponderous.viron.config.ServiceConfig;
 import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
@@ -26,7 +27,7 @@ public class LocationService {
 
     @Autowired
     public LocationService(RestTemplateBuilder restTemplateBuilder, ServiceConfig serviceConfig) {
-        this.restTemplate = restTemplateBuilder.build();
+        this.restTemplate = restTemplateBuilder.additionalInterceptors(new AuthTokenInterceptor(serviceConfig)).build();
         this.baseUrl = serviceConfig.getVironHost() + ":" + serviceConfig.getVironPort() + "/api/v1/locations";
     }
 

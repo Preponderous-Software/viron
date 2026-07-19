@@ -8,7 +8,9 @@ import org.springframework.web.client.RestTemplate;
 public class RestConfig {
 
     @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
+    public RestTemplate restTemplate(ServiceConfig serviceConfig) {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getInterceptors().add(new AuthTokenInterceptor(serviceConfig));
+        return restTemplate;
     }
 }

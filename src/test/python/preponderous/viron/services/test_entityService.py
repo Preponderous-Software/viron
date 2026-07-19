@@ -37,7 +37,7 @@ def test_get_all_entities_success(mock_get):
     entities = service.get_all_entities()
     assert len(entities) == 2
     assert isinstance(entities[0], Entity)
-    mock_get.assert_called_once_with(service.get_base_url())
+    mock_get.assert_called_once_with(service.get_base_url(), headers={})
 
 
 @patch('requests.get')
@@ -59,7 +59,7 @@ def test_get_entity_by_id_success(mock_get):
     entity = service.get_entity_by_id(1)
     assert isinstance(entity, Entity)
     assert entity.getEntityId() == 1
-    mock_get.assert_called_once_with(f"{service.get_base_url()}/1")
+    mock_get.assert_called_once_with(f"{service.get_base_url()}/1", headers={})
 
 
 @patch('requests.get')
@@ -70,7 +70,7 @@ def test_get_entities_in_environment_success(mock_get):
 
     entities = service.get_entities_in_environment(1)
     assert len(entities) == 2
-    mock_get.assert_called_once_with(f"{service.get_base_url()}/environment/1")
+    mock_get.assert_called_once_with(f"{service.get_base_url()}/environment/1", headers={})
 
 
 @patch('requests.get')
@@ -81,7 +81,7 @@ def test_get_entities_in_grid_success(mock_get):
 
     entities = service.get_entities_in_grid(1)
     assert len(entities) == 2
-    mock_get.assert_called_once_with(f"{service.get_base_url()}/grid/1")
+    mock_get.assert_called_once_with(f"{service.get_base_url()}/grid/1", headers={})
 
 
 @patch('requests.get')
@@ -92,7 +92,7 @@ def test_get_entities_in_location_success(mock_get):
 
     entities = service.get_entities_in_location(1)
     assert len(entities) == 2
-    mock_get.assert_called_once_with(f"{service.get_base_url()}/location/1")
+    mock_get.assert_called_once_with(f"{service.get_base_url()}/location/1", headers={})
 
 
 @patch('requests.get')
@@ -103,7 +103,7 @@ def test_get_entities_not_in_any_location_success(mock_get):
 
     entities = service.get_entities_not_in_any_location()
     assert len(entities) == 2
-    mock_get.assert_called_once_with(f"{service.get_base_url()}/unassigned")
+    mock_get.assert_called_once_with(f"{service.get_base_url()}/unassigned", headers={})
 
 
 @patch('requests.post')
@@ -115,7 +115,7 @@ def test_create_entity_success(mock_post):
     entity = service.create_entity("Entity1")
     assert isinstance(entity, Entity)
     assert entity.name == "Entity1"
-    mock_post.assert_called_once_with(service.get_base_url(), json={"name": "Entity1"})
+    mock_post.assert_called_once_with(service.get_base_url(), json={"name": "Entity1"}, headers={})
 
 
 @patch('requests.delete')
@@ -125,7 +125,7 @@ def test_delete_entity_success(mock_delete):
 
     result = service.delete_entity(1)
     assert result is True
-    mock_delete.assert_called_once_with(f"{service.get_base_url()}/1")
+    mock_delete.assert_called_once_with(f"{service.get_base_url()}/1", headers={})
 
 
 @patch('requests.patch')
@@ -135,7 +135,7 @@ def test_update_entity_name_success(mock_patch):
 
     result = service.update_entity_name(1, "NewName")
     assert result is True
-    mock_patch.assert_called_once_with(f"{service.get_base_url()}/1/name", json={"name": "NewName"})
+    mock_patch.assert_called_once_with(f"{service.get_base_url()}/1/name", json={"name": "NewName"}, headers={})
 
 
 # Error cases
@@ -157,4 +157,23 @@ def test_create_entity_null_response(mock_post):
     with pytest.raises(Exception) as exc_info:
         service.create_entity("Entity1")
     assert "Created entity response was null" in str(exc_info.value)
+
+
+def test_get_auth_headers_without_token():
+    assert service.get_auth_headers() == {}
+
+
+@patch('requests.get')
+def test_get_all_entities_sends_bearer_token(mock_get):
+    authed_service = EntityService("http://localhost", 9999, auth_token="test-token")
+    mock_response = Mock()
+    mock_response.json.return_value = []
+    mock_get.return_value = mock_response
+
+    authed_service.get_all_entities()
+
+    mock_get.assert_called_once_with(
+        authed_service.get_base_url(),
+        headers={"Authorization": "Bearer test-token"},
+    )
 
