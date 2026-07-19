@@ -195,7 +195,7 @@
     },
     "/api/v1/locations/{locationId}/entity/{entityId}/move": {
       "put": {
-        "summary": "Move an entity to an adjacent-in-grid, unoccupied location",
+        "summary": "Move an entity to an unoccupied location in the same grid",
         "parameters": [
           { "$ref": "#/components/parameters/LocationIdParam" },
           { "$ref": "#/components/parameters/EntityIdParam" }
