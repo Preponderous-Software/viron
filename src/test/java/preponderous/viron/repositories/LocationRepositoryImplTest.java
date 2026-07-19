@@ -183,6 +183,41 @@ public class LocationRepositoryImplTest {
         assertThat(repository.findByGridId(3)).isEmpty();
     }
 
+    // ---- findUnoccupiedByGridId ----
+
+    @Test
+    public void testFindUnoccupiedByGridId_ReturnsLocationsWhenRowsExist() throws SQLException {
+        String query = "SELECT * FROM viron.location WHERE location_id in " +
+                "(SELECT location_id FROM viron.location_grid WHERE grid_id = 3) " +
+                "AND location_id not in (SELECT location_id FROM viron.entity_location)";
+        ResultSet mockResultSet = Mockito.mock(ResultSet.class);
+        Mockito.when(dbInteractions.query(query)).thenReturn(mockResultSet);
+        Mockito.when(mockResultSet.next()).thenReturn(true, true, false);
+        Mockito.when(mockResultSet.getInt("location_id")).thenReturn(5, 6);
+        Mockito.when(mockResultSet.getInt("x")).thenReturn(1, 2);
+        Mockito.when(mockResultSet.getInt("y")).thenReturn(1, 2);
+
+        LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
+
+        List<Location> result = repository.findUnoccupiedByGridId(3);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getLocationId()).isEqualTo(5);
+        assertThat(result.get(1).getLocationId()).isEqualTo(6);
+    }
+
+    @Test
+    public void testFindUnoccupiedByGridId_ReturnsEmptyListWhenResultSetIsNull() {
+        String query = "SELECT * FROM viron.location WHERE location_id in " +
+                "(SELECT location_id FROM viron.location_grid WHERE grid_id = 3) " +
+                "AND location_id not in (SELECT location_id FROM viron.entity_location)";
+        Mockito.when(dbInteractions.query(query)).thenReturn(null);
+
+        LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
+
+        assertThat(repository.findUnoccupiedByGridId(3)).isEmpty();
+    }
+
     // ---- findByEntityId ----
 
     @Test

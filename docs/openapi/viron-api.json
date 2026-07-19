@@ -175,6 +175,45 @@
         }
       }
     },
+    "/api/v1/locations/grid/{gridId}/unoccupied": {
+      "get": {
+        "summary": "Get unoccupied locations in a grid",
+        "parameters": [{ "$ref": "#/components/parameters/GridIdParam" }],
+        "responses": {
+          "200": {
+            "description": "List of unoccupied locations in the grid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/LocationDTO" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/locations/{locationId}/neighbors": {
+      "get": {
+        "summary": "Get the locations adjacent to a location within the same grid",
+        "parameters": [{ "$ref": "#/components/parameters/LocationIdParam" }],
+        "responses": {
+          "200": {
+            "description": "List of adjacent locations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/LocationDTO" }
+                }
+              }
+            }
+          },
+          "404": { "description": "Location not found, or not in any grid" }
+        }
+      }
+    },
     "/api/v1/locations/{locationId}/entity/{entityId}": {
       "put": {
         "summary": "Add entity to location",
@@ -195,14 +234,14 @@
     },
     "/api/v1/locations/{locationId}/entity/{entityId}/move": {
       "put": {
-        "summary": "Move an entity to an unoccupied location in the same grid",
+        "summary": "Move an entity to an adjacent, unoccupied location in the same grid",
         "parameters": [
           { "$ref": "#/components/parameters/LocationIdParam" },
           { "$ref": "#/components/parameters/EntityIdParam" }
         ],
         "responses": {
           "204": { "description": "Entity moved" },
-          "400": { "description": "Target location is not in the same grid as the entity" },
+          "400": { "description": "Target location is not in the same grid as the entity, or is not adjacent to the entity's current location" },
           "404": { "description": "Entity is not placed at any location, or target location not found" },
           "409": { "description": "Target location is already occupied" }
         }
