@@ -137,6 +137,44 @@
         }
       }
     },
+    "/api/v1/locations/environment/{environmentId}": {
+      "get": {
+        "summary": "Get locations in an environment",
+        "parameters": [{ "$ref": "#/components/parameters/EnvironmentIdParam" }],
+        "responses": {
+          "200": {
+            "description": "List of locations in the environment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/LocationDTO" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/locations/grid/{gridId}": {
+      "get": {
+        "summary": "Get locations in a grid",
+        "parameters": [{ "$ref": "#/components/parameters/GridIdParam" }],
+        "responses": {
+          "200": {
+            "description": "List of locations in the grid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/LocationDTO" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/locations/{locationId}/entity/{entityId}": {
       "put": {
         "summary": "Add entity to location",
@@ -155,7 +193,70 @@
         "responses": { "200": { "description": "Entity removed" } }
       }
     },
+    "/api/v1/locations/{locationId}/entity/{entityId}/move": {
+      "put": {
+        "summary": "Move an entity to an adjacent-in-grid, unoccupied location",
+        "parameters": [
+          { "$ref": "#/components/parameters/LocationIdParam" },
+          { "$ref": "#/components/parameters/EntityIdParam" }
+        ],
+        "responses": {
+          "204": { "description": "Entity moved" },
+          "400": { "description": "Target location is not in the same grid as the entity" },
+          "404": { "description": "Entity is not placed at any location, or target location not found" },
+          "409": { "description": "Target location is already occupied" }
+        }
+      }
+    },
+    "/api/v1/locations/{locationId}/entities": {
+      "get": {
+        "summary": "Get entity IDs at a location",
+        "parameters": [{ "$ref": "#/components/parameters/LocationIdParam" }],
+        "responses": {
+          "200": {
+            "description": "List of entity IDs at the location",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "integer" }
+                }
+              }
+            }
+          },
+          "404": { "description": "Location not found" }
+        }
+      }
+    },
+    "/api/v1/locations/{locationId}/occupied": {
+      "get": {
+        "summary": "Check whether a location is occupied",
+        "parameters": [{ "$ref": "#/components/parameters/LocationIdParam" }],
+        "responses": {
+          "200": {
+            "description": "Whether the location is occupied",
+            "content": {
+              "application/json": { "schema": { "type": "boolean" } }
+            }
+          },
+          "404": { "description": "Location not found" }
+        }
+      }
+    },
     "/api/v1/locations/entity/{entityId}": {
+      "get": {
+        "summary": "Get the location of an entity",
+        "parameters": [{ "$ref": "#/components/parameters/EntityIdParam" }],
+        "responses": {
+          "200": {
+            "description": "Location of the entity",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/LocationDTO" } }
+            }
+          },
+          "404": { "description": "Location not found for entity" }
+        }
+      },
       "delete": {
         "summary": "Remove entity from current location",
         "parameters": [{ "$ref": "#/components/parameters/EntityIdParam" }],
@@ -339,8 +440,7 @@
         "properties": {
           "environmentId": { "type": "integer" },
           "name": { "type": "string" },
-          "width": { "type": "integer" },
-          "height": { "type": "integer" }
+          "creationDate": { "type": "string" }
         }
       },
       "CreateEnvironmentRequest": {

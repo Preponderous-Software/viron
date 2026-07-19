@@ -62,3 +62,25 @@ class LocationService:
         if response.status_code == 404:
             raise Exception("Entity not found")
         response.raise_for_status()
+
+    def get_entity_ids_at_location(self, location_id: int) -> List[int]:
+        response = requests.get(f"{self.get_base_url()}/{location_id}/entities", headers=self.get_auth_headers())
+        if response.status_code == 404:
+            raise Exception(f"Location not found with id: {location_id}")
+        response.raise_for_status()
+        return response.json()
+
+    def is_location_occupied(self, location_id: int) -> bool:
+        response = requests.get(f"{self.get_base_url()}/{location_id}/occupied", headers=self.get_auth_headers())
+        if response.status_code == 404:
+            raise Exception(f"Location not found with id: {location_id}")
+        response.raise_for_status()
+        return response.json()
+
+    def move_entity_to_location(self, entity_id: int, location_id: int) -> None:
+        response = requests.put(f"{self.get_base_url()}/{location_id}/entity/{entity_id}/move", headers=self.get_auth_headers())
+        if response.status_code == 404:
+            raise Exception("Entity or location not found")
+        if response.status_code == 409:
+            raise Exception(f"Target location {location_id} is already occupied")
+        response.raise_for_status()
