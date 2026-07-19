@@ -11,6 +11,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import preponderous.viron.config.AuthTokenInterceptor;
 import preponderous.viron.config.ServiceConfig;
+import preponderous.viron.exceptions.ConflictException;
 import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.models.Location;
@@ -177,6 +178,72 @@ public class LocationService {
         } catch (Exception e) {
             log.error("Error removing entity {} from current location: {}", entityId, e.getMessage());
             throw new ServiceException("Error removing entity from current location", e);
+        }
+    }
+
+    public List<Integer> getEntityIdsAtLocation(int locationId) {
+        try {
+            ResponseEntity<Integer[]> response = restTemplate.getForEntity(
+                    baseUrl + "/{locationId}/entities",
+                    Integer[].class,
+                    locationId
+            );
+            return response.getStatusCode() == HttpStatus.OK && response.getBody() != null
+                    ? Arrays.asList(response.getBody())
+                    : Collections.emptyList();
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("Location not found with id: " + locationId);
+        } catch (Exception e) {
+            log.error("Error getting entity ids at location {}: {}", locationId, e.getMessage());
+            throw new ServiceException("Error getting entity ids at location: " + locationId, e);
+        }
+    }
+
+    public boolean isLocationOccupied(int locationId) {
+        try {
+            ResponseEntity<Boolean> response = restTemplate.getForEntity(
+                    baseUrl + "/{locationId}/occupied",
+                    Boolean.class,
+                    locationId
+            );
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                return response.getBody();
+            }
+            throw new ServiceException("Failed to check occupancy for location: " + locationId);
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("Location not found with id: " + locationId);
+        } catch (Exception e) {
+            log.error("Error checking occupancy for location {}: {}", locationId, e.getMessage());
+            throw new ServiceException("Error checking occupancy for location: " + locationId, e);
+        }
+    }
+
+    public void moveEntityToLocation(int entityId, int locationId) {
+        try {
+            ResponseEntity<Void> response = restTemplate.exchange(
+                    baseUrl + "/{locationId}/entity/{entityId}/move",
+                    HttpMethod.PUT,
+                    null,
+                    Void.class,
+                    locationId,
+                    entityId
+            );
+            if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new NotFoundException("Entity or location not found");
+            }
+            if (response.getStatusCode() == HttpStatus.CONFLICT) {
+                throw new ConflictException("Target location " + locationId + " is already occupied");
+            }
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new ServiceException("Failed to move entity to location");
+            }
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("Entity or location not found");
+        } catch (HttpClientErrorException.Conflict e) {
+            throw new ConflictException("Target location " + locationId + " is already occupied");
+        } catch (Exception e) {
+            log.error("Error moving entity {} to location {}: {}", entityId, locationId, e.getMessage());
+            throw new ServiceException("Error moving entity to location", e);
         }
     }
 }

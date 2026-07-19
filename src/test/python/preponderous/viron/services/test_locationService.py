@@ -133,6 +133,80 @@ def test_remove_entity_not_found(mock_delete):
         service.remove_entity_from_current_location(1)
 
 
+@patch('requests.get')
+def test_get_entity_ids_at_location(mock_get):
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = [1, 2, 3]
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    entity_ids = service.get_entity_ids_at_location(1)
+
+    assert entity_ids == [1, 2, 3]
+    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/1/entities", headers={})
+
+@patch('requests.get')
+def test_get_entity_ids_at_location_not_found(mock_get):
+    mock_response = Mock()
+    mock_response.status_code = 404
+    mock_get.return_value = mock_response
+
+    with pytest.raises(Exception):
+        service.get_entity_ids_at_location(1)
+
+@patch('requests.get')
+def test_is_location_occupied(mock_get):
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = True
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    occupied = service.is_location_occupied(1)
+
+    assert occupied is True
+    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/1/occupied", headers={})
+
+@patch('requests.get')
+def test_is_location_occupied_not_found(mock_get):
+    mock_response = Mock()
+    mock_response.status_code = 404
+    mock_get.return_value = mock_response
+
+    with pytest.raises(Exception):
+        service.is_location_occupied(1)
+
+@patch('requests.put')
+def test_move_entity_to_location(mock_put):
+    mock_response = Mock()
+    mock_response.status_code = 204
+    mock_response.raise_for_status = Mock()
+    mock_put.return_value = mock_response
+
+    service.move_entity_to_location(1, 2)
+
+    mock_put.assert_called_with("http://localhost:9999/api/v1/locations/2/entity/1/move", headers={})
+
+@patch('requests.put')
+def test_move_entity_to_location_not_found(mock_put):
+    mock_response = Mock()
+    mock_response.status_code = 404
+    mock_put.return_value = mock_response
+
+    with pytest.raises(Exception):
+        service.move_entity_to_location(1, 2)
+
+@patch('requests.put')
+def test_move_entity_to_location_conflict(mock_put):
+    mock_response = Mock()
+    mock_response.status_code = 409
+    mock_put.return_value = mock_response
+
+    with pytest.raises(Exception):
+        service.move_entity_to_location(1, 2)
+
+
 def test_get_auth_headers_without_token():
     assert service.get_auth_headers() == {}
 

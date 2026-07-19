@@ -47,7 +47,7 @@ Core responsibilities:
 
 ## 📦 Features (MVP Scope)
 
-The MVP implements the endpoints defined in `openapi/viron-api.json` and documented in `docs/MVP.md`.
+The MVP implements the endpoints defined in `docs/openapi/viron-api.json` and documented in `docs/MVP.md`.
 
 **Environment Management**
 - Create, retrieve, update (including renaming), and delete environments.
@@ -68,7 +68,7 @@ The MVP implements the endpoints defined in `openapi/viron-api.json` and documen
 - Generate sample environments, grids, locations, and entities.
 - Quickly create a world and place an entity for testing.
 
-> For detailed endpoint definitions and request/response formats, see `docs/MVP.md` and `openapi/viron-api.json`.
+> For detailed endpoint definitions and request/response formats, see `docs/MVP.md` and `docs/openapi/viron-api.json`.
 
 ---
 
@@ -127,7 +127,7 @@ API will be available at: http://localhost:8080
 
 Once running, you can view the interactive API docs:  
 http://localhost:8080/swagger-ui.html  
-or refer to the `openapi/viron-api.json` file.
+or refer to the `docs/openapi/viron-api.json` file.
 
 ---
 
