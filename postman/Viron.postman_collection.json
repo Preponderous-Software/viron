@@ -1,333 +1,940 @@
 {
-	"info": {
-		"_postman_id": "b0516e70-f219-42dd-86f6-67e3e16821f7",
-		"name": "Viron",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "38826376"
-	},
-	"item": [
-		{
-			"name": "entity",
-			"item": [
-				{
-					"name": "/get-all-entities",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/get-entity-by-id/{id}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/get-entities-in-environment/{environmentId}",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "localhost:9999/entity/get-entities-in-environment/1",
-							"host": [
-								"localhost"
-							],
-							"port": "9999",
-							"path": [
-								"entity",
-								"get-entities-in-environment",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "/get-entities-in-grid/{gridId}",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "localhost:9999/entity/get-entities-in-grid/1",
-							"host": [
-								"localhost"
-							],
-							"port": "9999",
-							"path": [
-								"entity",
-								"get-entities-in-grid",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "/get-entities-in-location/{locationId}",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "localhost:9999/entity/get-entities-in-location/1",
-							"host": [
-								"localhost"
-							],
-							"port": "9999",
-							"path": [
-								"entity",
-								"get-entities-in-location",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "/get-entities-not-in-any-location",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/create-entity/{name}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/delete-entity/{id}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/set-entity-name/{id}/{name}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "environment",
-			"item": [
-				{
-					"name": "/get-all-environments",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/get-environment-by-id/{id}",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "localhost:9999/environment/get-environment-by-id/1",
-							"host": [
-								"localhost"
-							],
-							"port": "9999",
-							"path": [
-								"environment",
-								"get-environment-by-id",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "/get-environment-of-entity/{entityId}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/create-environment/{name}/{numGrids}/{gridSize}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/delete-environment/{id}",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "localhost:9999/environment/delete-environment/1",
-							"host": [
-								"localhost"
-							],
-							"port": "9999",
-							"path": [
-								"environment",
-								"delete-environment",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "/set-environment-name/{id}/{name}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "grid",
-			"item": [
-				{
-					"name": "/get-all-grids",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/get-grid-by-id/{id}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/get-grids-in-environment/{environmentId}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/get-grid-of-entity/{entityId}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "location",
-			"item": [
-				{
-					"name": "/get-all-locations",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/get-location-by-id/{id}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/get-locations-in-environment/{environmentId}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/get-locations-in-grid/{gridId}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/get-location-of-entity/{entityId}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/add-entity-to-location/{entityId}/{locationId}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/remove-entity-from-location/{entityId}/{locationId}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/remove-entity-from-current-location/{entityId}",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "debug",
-			"item": [
-				{
-					"name": "/health-check",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "/create-sample-data",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				}
-			]
-		}
-	],
-	"variable": [
-		{
-			"key": "entityId",
-			"value": "1"
-		}
-	]
+  "info": {
+    "_postman_id": "b0516e70-f219-42dd-86f6-67e3e16821f7",
+    "name": "Viron",
+    "description": "Requests for the Viron REST API, generated from docs/openapi/viron-api.json.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "38826376"
+  },
+  "item": [
+    {
+      "name": "environments",
+      "item": [
+        {
+          "name": "GET /api/v1/environments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/environments",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "environments"
+              ]
+            },
+            "description": "Get all environments"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/environments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "localhost:9999/api/v1/environments",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "environments"
+              ]
+            },
+            "description": "Create a new environment",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"example\",\n  \"numGrids\": 1,\n  \"gridSize\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/environments/{id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/environments/:id",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "environments",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get environment by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/v1/environments/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/environments/:id",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "environments",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Delete environment"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/v1/environments/{id}/name",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "localhost:9999/api/v1/environments/:id/name",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "environments",
+                ":id",
+                "name"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Update environment name",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"example\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "grids",
+      "item": [
+        {
+          "name": "GET /api/v1/grids",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/grids",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "grids"
+              ]
+            },
+            "description": "Get all grids"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/grids/{id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/grids/:id",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "grids",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get grid by ID"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "locations",
+      "item": [
+        {
+          "name": "GET /api/v1/locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations"
+              ]
+            },
+            "description": "Get all locations"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/locations/{id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/:id",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get location by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/locations/environment/{environmentId}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/environment/:environmentId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                "environment",
+                ":environmentId"
+              ],
+              "variable": [
+                {
+                  "key": "environmentId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get locations in an environment"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/locations/grid/{gridId}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/grid/:gridId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                "grid",
+                ":gridId"
+              ],
+              "variable": [
+                {
+                  "key": "gridId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get locations in a grid"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/locations/grid/{gridId}/unoccupied",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/grid/:gridId/unoccupied",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                "grid",
+                ":gridId",
+                "unoccupied"
+              ],
+              "variable": [
+                {
+                  "key": "gridId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get unoccupied locations in a grid"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/locations/{locationId}/neighbors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/:locationId/neighbors",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                ":locationId",
+                "neighbors"
+              ],
+              "variable": [
+                {
+                  "key": "locationId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get the locations adjacent to a location within the same grid"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/v1/locations/{locationId}/entity/{entityId}",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/:locationId/entity/:entityId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                ":locationId",
+                "entity",
+                ":entityId"
+              ],
+              "variable": [
+                {
+                  "key": "locationId",
+                  "value": "1"
+                },
+                {
+                  "key": "entityId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Add entity to location"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/v1/locations/{locationId}/entity/{entityId}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/:locationId/entity/:entityId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                ":locationId",
+                "entity",
+                ":entityId"
+              ],
+              "variable": [
+                {
+                  "key": "locationId",
+                  "value": "1"
+                },
+                {
+                  "key": "entityId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Remove entity from location"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/v1/locations/{locationId}/entity/{entityId}/move",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/:locationId/entity/:entityId/move",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                ":locationId",
+                "entity",
+                ":entityId",
+                "move"
+              ],
+              "variable": [
+                {
+                  "key": "locationId",
+                  "value": "1"
+                },
+                {
+                  "key": "entityId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Move an entity to an adjacent, unoccupied location in the same grid"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/locations/{locationId}/entities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/:locationId/entities",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                ":locationId",
+                "entities"
+              ],
+              "variable": [
+                {
+                  "key": "locationId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get entity IDs at a location"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/locations/{locationId}/occupied",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/:locationId/occupied",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                ":locationId",
+                "occupied"
+              ],
+              "variable": [
+                {
+                  "key": "locationId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Check whether a location is occupied"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/locations/entity/{entityId}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/entity/:entityId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                "entity",
+                ":entityId"
+              ],
+              "variable": [
+                {
+                  "key": "entityId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get the location of an entity"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/v1/locations/entity/{entityId}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/locations/entity/:entityId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "locations",
+                "entity",
+                ":entityId"
+              ],
+              "variable": [
+                {
+                  "key": "entityId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Remove entity from current location"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "entities",
+      "item": [
+        {
+          "name": "GET /api/v1/entities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/entities",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "entities"
+              ]
+            },
+            "description": "Get all entities"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/entities",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "localhost:9999/api/v1/entities",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "entities"
+              ]
+            },
+            "description": "Create a new entity",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"example\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/entities/{id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/entities/:id",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "entities",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get entity by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/v1/entities/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/entities/:id",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "entities",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Delete entity"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/v1/entities/{id}/name",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "localhost:9999/api/v1/entities/:id/name",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "entities",
+                ":id",
+                "name"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Update entity name",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"example\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/entities/environment/{environmentId}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/entities/environment/:environmentId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "entities",
+                "environment",
+                ":environmentId"
+              ],
+              "variable": [
+                {
+                  "key": "environmentId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get entities in an environment"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/entities/grid/{gridId}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/entities/grid/:gridId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "entities",
+                "grid",
+                ":gridId"
+              ],
+              "variable": [
+                {
+                  "key": "gridId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get entities in a grid"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/entities/location/{locationId}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/entities/location/:locationId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "entities",
+                "location",
+                ":locationId"
+              ],
+              "variable": [
+                {
+                  "key": "locationId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get entities in a location"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/entities/unassigned",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/entities/unassigned",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "entities",
+                "unassigned"
+              ]
+            },
+            "description": "Get entities not in any location"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "debug",
+      "item": [
+        {
+          "name": "POST /api/v1/debug/create-sample-data",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/debug/create-sample-data",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "debug",
+                "create-sample-data"
+              ]
+            },
+            "description": "Create sample environment and entities"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/debug/create-world-and-place-entity/{environmentName}",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/debug/create-world-and-place-entity/:environmentName",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "debug",
+                "create-world-and-place-entity",
+                ":environmentName"
+              ],
+              "variable": [
+                {
+                  "key": "environmentName",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Create environment and place random entity"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
 }
