@@ -123,6 +123,64 @@
           "response": []
         },
         {
+          "name": "GET /api/v1/environments/name/{name}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/environments/name/:name",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "environments",
+                "name",
+                ":name"
+              ],
+              "variable": [
+                {
+                  "key": "name",
+                  "value": "example"
+                }
+              ]
+            },
+            "description": "Get environment by name"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/environments/entity/{entityId}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/environments/entity/:entityId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "environments",
+                "entity",
+                ":entityId"
+              ],
+              "variable": [
+                {
+                  "key": "entityId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get the environment containing an entity"
+          },
+          "response": []
+        },
+        {
           "name": "PATCH /api/v1/environments/{id}/name",
           "request": {
             "method": "PATCH",
@@ -216,6 +274,64 @@
               ]
             },
             "description": "Get grid by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/grids/environment/{environmentId}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/grids/environment/:environmentId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "grids",
+                "environment",
+                ":environmentId"
+              ],
+              "variable": [
+                {
+                  "key": "environmentId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get all grids in an environment"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/grids/entity/{entityId}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:9999/api/v1/grids/entity/:entityId",
+              "host": [
+                "localhost"
+              ],
+              "port": "9999",
+              "path": [
+                "api",
+                "v1",
+                "grids",
+                "entity",
+                ":entityId"
+              ],
+              "variable": [
+                {
+                  "key": "entityId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Get the grid containing an entity"
           },
           "response": []
         }

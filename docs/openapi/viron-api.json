@@ -60,6 +60,43 @@
         "responses": { "200": { "description": "Environment deleted" } }
       }
     },
+    "/api/v1/environments/name/{name}": {
+      "get": {
+        "summary": "Get environment by name",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Environment details",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentDTO" } }
+            }
+          },
+          "404": { "description": "Environment not found with that name" }
+        }
+      }
+    },
+    "/api/v1/environments/entity/{entityId}": {
+      "get": {
+        "summary": "Get the environment containing an entity",
+        "parameters": [{ "$ref": "#/components/parameters/EntityIdParam" }],
+        "responses": {
+          "200": {
+            "description": "Environment containing the entity",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentDTO" } }
+            }
+          },
+          "404": { "description": "Environment not found for entity" }
+        }
+      }
+    },
     "/api/v1/environments/{id}/name": {
       "patch": {
         "summary": "Update environment name",
@@ -102,6 +139,47 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/GridDTO" } }
             }
           }
+        }
+      }
+    },
+    "/api/v1/grids/environment/{environmentId}": {
+      "get": {
+        "summary": "Get all grids in an environment",
+        "parameters": [
+          {
+            "name": "environmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of grids in the environment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/GridDTO" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/grids/entity/{entityId}": {
+      "get": {
+        "summary": "Get the grid containing an entity",
+        "parameters": [{ "$ref": "#/components/parameters/EntityIdParam" }],
+        "responses": {
+          "200": {
+            "description": "Grid containing the entity",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/GridDTO" } }
+            }
+          },
+          "404": { "description": "Grid not found for entity" }
         }
       }
     },
