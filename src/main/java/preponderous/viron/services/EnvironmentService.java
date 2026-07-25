@@ -70,12 +70,31 @@ public class EnvironmentService {
         return response.getBody();
     }
 
+    /**
+     * Creates an environment whose grids are square.
+     *
+     * @param gridSize rows and columns of each grid
+     */
     public Environment createEnvironment(String name, int numGrids, int gridSize) {
+        return createEnvironment(new CreateEnvironmentRequest(name, numGrids, gridSize));
+    }
+
+    /**
+     * Creates an environment whose grids have independently sized dimensions.
+     *
+     * @param numRows    rows in each grid
+     * @param numColumns columns in each grid
+     */
+    public Environment createEnvironment(String name, int numGrids, int numRows, int numColumns) {
+        return createEnvironment(new CreateEnvironmentRequest(name, numGrids, null, numRows, numColumns));
+    }
+
+    private Environment createEnvironment(CreateEnvironmentRequest request) {
         RestTemplate restTemplate = restTemplateBuilder.build();
         ResponseEntity<Environment> response = restTemplate.exchange(
                 baseUrl,
                 HttpMethod.POST,
-                new HttpEntity<>(new CreateEnvironmentRequest(name, numGrids, gridSize)),
+                new HttpEntity<>(request),
                 Environment.class
         );
         if (response.getStatusCode().isError()) {

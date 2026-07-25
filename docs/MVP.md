@@ -25,7 +25,7 @@ Deliver a working, tested API that supports:
 - [x] `GET /api/v1/environments/{id}` – Retrieve a specific environment by ID.
 - [x] `GET /api/v1/environments/name/{name}` – Retrieve a specific environment by name.
 - [x] `GET /api/v1/environments/entity/{entityId}` – Get the environment containing a specific entity.
-- [x] `POST /api/v1/environments` – Create an environment (JSON body: `name`, `numGrids`, `gridSize`).
+- [x] `POST /api/v1/environments` – Create an environment (JSON body: `name`, `numGrids`, and grid dimensions as either `gridSize` or both `numRows` and `numColumns`).
 - [x] `PATCH /api/v1/environments/{id}/name` – Update environment name (JSON body: `name`).
 - [x] `DELETE /api/v1/environments/{id}` – Delete an environment and all related entities, locations, and grids.
 
@@ -60,6 +60,10 @@ Deliver a working, tested API that supports:
 ---
 
 ### 5. **Debug Utilities**
+
+> Disabled by default. These endpoints are only registered when `viron.debug.enabled=true`
+> (environment variable `VIRON_DEBUG_ENABLED`); otherwise `/api/v1/debug/**` is not mapped.
+
 - [x] `POST /api/v1/debug/create-sample-data` – Create an environment with grids, locations, and sample entities for testing.
 - [x] `POST /api/v1/debug/create-world-and-place-entity/{environmentName}` – Create a world and place a random entity.
 

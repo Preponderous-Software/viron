@@ -51,6 +51,7 @@ The MVP implements the endpoints defined in `docs/openapi/viron-api.json` and do
 
 **Environment Management**
 - Create, retrieve, update (including renaming), and delete environments.
+- Create grids as squares (`gridSize`) or with independent dimensions (`numRows`/`numColumns`).
 - Query environments by ID, name, or contained entity.
 
 **Grid Management**
@@ -67,6 +68,9 @@ The MVP implements the endpoints defined in `docs/openapi/viron-api.json` and do
 **Debug Utilities**
 - Generate sample environments, grids, locations, and entities.
 - Quickly create a world and place an entity for testing.
+- Disabled by default — set `VIRON_DEBUG_ENABLED=true` (property `viron.debug.enabled`) to
+  register `/api/v1/debug/**`. Left off, those endpoints are not mapped at all, so debug
+  tooling does not ship to production.
 
 > For detailed endpoint definitions and request/response formats, see `docs/MVP.md` and `docs/openapi/viron-api.json`.
 

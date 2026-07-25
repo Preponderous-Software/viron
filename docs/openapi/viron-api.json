@@ -447,6 +447,7 @@
     "/api/v1/debug/create-sample-data": {
       "post": {
         "summary": "Create sample environment and entities",
+        "description": "Only available when viron.debug.enabled=true (environment variable VIRON_DEBUG_ENABLED); otherwise the controller is not registered and this path is not mapped.",
         "responses": {
           "200": {
             "description": "Sample environment created",
@@ -460,6 +461,7 @@
     "/api/v1/debug/create-world-and-place-entity/{environmentName}": {
       "post": {
         "summary": "Create environment and place random entity",
+        "description": "Only available when viron.debug.enabled=true (environment variable VIRON_DEBUG_ENABLED); otherwise the controller is not registered and this path is not mapped.",
         "parameters": [{ "$ref": "#/components/parameters/EnvironmentNameParam" }],
         "responses": {
           "200": {
@@ -484,11 +486,14 @@
       },
       "CreateEnvironmentRequest": {
         "type": "object",
-        "required": ["name", "numGrids", "gridSize"],
+        "description": "Grid dimensions must be fully specified: supply either gridSize (square shorthand) or both numRows and numColumns. numRows/numColumns take precedence over gridSize; supplying only one of them is rejected.",
+        "required": ["name", "numGrids"],
         "properties": {
           "name": { "type": "string" },
-          "numGrids": { "type": "integer" },
-          "gridSize": { "type": "integer" }
+          "numGrids": { "type": "integer", "minimum": 1 },
+          "gridSize": { "type": "integer", "minimum": 1 },
+          "numRows": { "type": "integer", "minimum": 1 },
+          "numColumns": { "type": "integer", "minimum": 1 }
         }
       },
       "UpdateEnvironmentNameRequest": {
