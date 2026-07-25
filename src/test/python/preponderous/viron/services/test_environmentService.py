@@ -108,6 +108,47 @@ def test_create_environment(mock_post):
         headers={},
     )
 
+
+@patch('requests.post')
+def test_create_environment_with_independent_dimensions(mock_post):
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        'environmentId': 2,
+        'name': 'WideEnv',
+        'creationDate': '2024-01-01'
+    }
+    mock_response.raise_for_status = Mock()
+    mock_post.return_value = mock_response
+
+    environment = service.create_environment('WideEnv', 1, num_rows=3, num_columns=12)
+
+    assert isinstance(environment, Environment)
+    mock_post.assert_called_once_with(
+        "http://localhost:9999/api/v1/environments",
+        json={"name": "WideEnv", "numGrids": 1, "numRows": 3, "numColumns": 12},
+        headers={},
+    )
+
+
+@patch('requests.post')
+def test_create_environment_without_dimensions_raises(mock_post):
+    with pytest.raises(ValueError):
+        service.create_environment('BadEnv', 1)
+
+    mock_post.assert_not_called()
+
+
+@patch('requests.post')
+def test_create_environment_with_half_specified_dimensions_raises(mock_post):
+    with pytest.raises(ValueError):
+        service.create_environment('BadEnv', 1, num_rows=3)
+
+    with pytest.raises(ValueError):
+        service.create_environment('BadEnv', 1, grid_size=5, num_columns=3)
+
+    mock_post.assert_not_called()
+
+
 @patch('requests.delete')
 def test_delete_environment(mock_delete):
     mock_response = Mock()

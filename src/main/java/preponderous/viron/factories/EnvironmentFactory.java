@@ -25,9 +25,18 @@ public class EnvironmentFactory {
         this.dbInteractions = dbInteractions;
     }
 
-    public Environment createEnvironment(String name, int numGrids, int gridSize) throws EnvironmentCreationException {
-        log.info("Attempting to create environment: '{}' with {} grids of size {}", name, numGrids, gridSize);
-        
+    /**
+     * Creates an environment containing {@code numGrids} grids, each {@code numRows} by
+     * {@code numColumns} locations. Rows and columns are independent — grids need not be square.
+     *
+     * @param name        name of the environment
+     * @param numGrids    number of grids to create in the environment
+     * @param numRows     number of rows in each grid
+     * @param numColumns  number of columns in each grid
+     */
+    public Environment createEnvironment(String name, int numGrids, int numRows, int numColumns) throws EnvironmentCreationException {
+        log.info("Attempting to create environment: '{}' with {} grids of size {}x{}", name, numGrids, numRows, numColumns);
+
         // create environment
         int id = getNextEnvironmentId();
         if (id == -1) {
@@ -52,8 +61,8 @@ public class EnvironmentFactory {
             }
             gridIds.add(nextGridId);
 
-            query = "INSERT INTO viron.grid (grid_id, rows, columns) VALUES (" + nextGridId + ", " + gridSize + ", " + gridSize + ")";
-            success = dbInteractions.update(query);
+            query = "INSERT INTO viron.grid (grid_id, rows, columns) VALUES (?, ?, ?)";
+            success = dbInteractions.update(query, nextGridId, numRows, numColumns);
             if (!success) {
                 log.error("Failed to create grid");
                 throw new EnvironmentCreationException("Failed to create grid");
@@ -69,8 +78,8 @@ public class EnvironmentFactory {
 
             // create locations
             List<Integer> locationIds = new ArrayList<>();
-            for (int x = 0; x < gridSize; x++) {
-                for (int y = 0; y < gridSize; y++) {
+            for (int x = 0; x < numRows; x++) {
+                for (int y = 0; y < numColumns; y++) {
                     int locationId = getNextLocationId();
                     if (locationId == -1) {
                         log.error("Failed to get next location id");

@@ -196,7 +196,7 @@ class EnvironmentControllerTest {
     void createEnvironment_Success() throws Exception {
         Environment environment = new Environment(1, "NewEnv", "2023-01-01");
         EnvironmentDto dto = new EnvironmentDto(1, "NewEnv", "2023-01-01");
-        when(environmentFactory.createEnvironment("NewEnv", 5, 10)).thenReturn(environment);
+        when(environmentFactory.createEnvironment("NewEnv", 5, 10, 10)).thenReturn(environment);
         when(environmentMapper.toDto(environment)).thenReturn(dto);
 
         mockMvc.perform(post("/api/v1/environments")
@@ -207,13 +207,13 @@ class EnvironmentControllerTest {
                 .andExpect(jsonPath("$.name", is("NewEnv")))
                 .andExpect(jsonPath("$.creationDate", is("2023-01-01")));
 
-        verify(environmentFactory).createEnvironment("NewEnv", 5, 10);
+        verify(environmentFactory).createEnvironment("NewEnv", 5, 10, 10);
         verify(environmentMapper).toDto(environment);
     }
 
     @Test
     void createEnvironment_CreationException() throws Exception {
-        when(environmentFactory.createEnvironment("NewEnv", 5, 10))
+        when(environmentFactory.createEnvironment("NewEnv", 5, 10, 10))
                 .thenThrow(new EnvironmentCreationException("Creation failed"));
 
         mockMvc.perform(post("/api/v1/environments")
@@ -226,7 +226,7 @@ class EnvironmentControllerTest {
 
     @Test
     void createEnvironment_ThrowsException() throws Exception {
-        when(environmentFactory.createEnvironment("NewEnv", 5, 10))
+        when(environmentFactory.createEnvironment("NewEnv", 5, 10, 10))
                 .thenThrow(new RuntimeException("Database error"));
 
         mockMvc.perform(post("/api/v1/environments")
@@ -245,7 +245,7 @@ class EnvironmentControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status", is(400)));
 
-        verify(environmentFactory, never()).createEnvironment(anyString(), anyInt(), anyInt());
+        verify(environmentFactory, never()).createEnvironment(anyString(), anyInt(), anyInt(), anyInt());
     }
 
     @Test
@@ -256,7 +256,73 @@ class EnvironmentControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status", is(400)));
 
-        verify(environmentFactory, never()).createEnvironment(anyString(), anyInt(), anyInt());
+        verify(environmentFactory, never()).createEnvironment(anyString(), anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    void createEnvironment_RectangularGrid_Success() throws Exception {
+        Environment environment = new Environment(2, "WideEnv", "2023-01-01");
+        EnvironmentDto dto = new EnvironmentDto(2, "WideEnv", "2023-01-01");
+        when(environmentFactory.createEnvironment("WideEnv", 1, 3, 12)).thenReturn(environment);
+        when(environmentMapper.toDto(environment)).thenReturn(dto);
+
+        mockMvc.perform(post("/api/v1/environments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"WideEnv\",\"numGrids\":1,\"numRows\":3,\"numColumns\":12}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.environmentId", is(2)))
+                .andExpect(jsonPath("$.name", is("WideEnv")));
+
+        verify(environmentFactory).createEnvironment("WideEnv", 1, 3, 12);
+    }
+
+    @Test
+    void createEnvironment_RowsAndColumnsTakePrecedenceOverGridSize() throws Exception {
+        Environment environment = new Environment(3, "TallEnv", "2023-01-01");
+        EnvironmentDto dto = new EnvironmentDto(3, "TallEnv", "2023-01-01");
+        when(environmentFactory.createEnvironment("TallEnv", 1, 9, 2)).thenReturn(environment);
+        when(environmentMapper.toDto(environment)).thenReturn(dto);
+
+        mockMvc.perform(post("/api/v1/environments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"TallEnv\",\"numGrids\":1,\"gridSize\":4,\"numRows\":9,\"numColumns\":2}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.environmentId", is(3)));
+
+        verify(environmentFactory).createEnvironment("TallEnv", 1, 9, 2);
+    }
+
+    @Test
+    void createEnvironment_NoDimensions_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/environments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewEnv\",\"numGrids\":5}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)));
+
+        verify(environmentFactory, never()).createEnvironment(anyString(), anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    void createEnvironment_OnlyNumRows_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/environments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewEnv\",\"numGrids\":5,\"numRows\":3}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)));
+
+        verify(environmentFactory, never()).createEnvironment(anyString(), anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    void createEnvironment_NonPositiveNumColumns_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/environments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewEnv\",\"numGrids\":5,\"numRows\":3,\"numColumns\":0}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)));
+
+        verify(environmentFactory, never()).createEnvironment(anyString(), anyInt(), anyInt(), anyInt());
     }
 
     @Test

@@ -65,7 +65,8 @@ public class EnvironmentController {
     @ResponseStatus(HttpStatus.CREATED)
     public EnvironmentDto createEnvironment(@Valid @RequestBody CreateEnvironmentRequest request) {
         Environment newEnvironment = environmentFactory.createEnvironment(
-                request.getName(), request.getNumGrids(), request.getGridSize());
+                request.getName(), request.getNumGrids(),
+                request.getResolvedNumRows(), request.getResolvedNumColumns());
         return environmentMapper.toDto(newEnvironment);
     }
 

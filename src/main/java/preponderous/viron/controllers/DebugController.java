@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +23,18 @@ import preponderous.viron.services.EnvironmentService;
 import preponderous.viron.services.GridService;
 import preponderous.viron.services.LocationService;
 
+/**
+ * Development-only endpoints that seed arbitrary environments, grids, locations, and entities.
+ *
+ * <p>Disabled by default: the controller is only registered when {@code viron.debug.enabled}
+ * is {@code true} (see {@code application.properties} / the {@code VIRON_DEBUG_ENABLED}
+ * environment variable). When disabled, {@code /api/v1/debug/**} is not mapped at all and
+ * returns 404, so a production deployment does not expose data-seeding to every holder of a
+ * valid bearer token.
+ */
 @RestController
 @RequestMapping("/api/v1/debug")
+@ConditionalOnProperty(prefix = "viron.debug", name = "enabled", havingValue = "true")
 @Slf4j
 @Validated
 public class DebugController {

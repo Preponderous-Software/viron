@@ -38,8 +38,27 @@ class EnvironmentService:
         response.raise_for_status()
         return Environment(**response.json())
 
-    def create_environment(self, name: str, num_grids: int, grid_size: int) -> Environment:
-        payload = {"name": name, "numGrids": num_grids, "gridSize": grid_size}
+    def create_environment(self, name: str, num_grids: int, grid_size: Optional[int] = None,
+                           num_rows: Optional[int] = None, num_columns: Optional[int] = None) -> Environment:
+        """Create an environment containing num_grids grids.
+
+        Supply either grid_size (square shorthand) or both num_rows and num_columns.
+        num_rows/num_columns take precedence over grid_size; supplying only one of them
+        is rejected by the API with a 400.
+        """
+        if (num_rows is None) != (num_columns is None):
+            raise ValueError("num_rows and num_columns must be provided together")
+        if num_rows is None and grid_size is None:
+            raise ValueError("either grid_size or both num_rows and num_columns must be provided")
+
+        payload = {"name": name, "numGrids": num_grids}
+        if grid_size is not None:
+            payload["gridSize"] = grid_size
+        if num_rows is not None:
+            payload["numRows"] = num_rows
+        if num_columns is not None:
+            payload["numColumns"] = num_columns
+
         response = requests.post(f"{self.get_base_url()}", json=payload, headers=self.get_auth_headers())
         response.raise_for_status()
         return Environment(**response.json())
