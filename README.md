@@ -81,13 +81,14 @@ The MVP implements the endpoints defined in `docs/openapi/viron-api.json` and do
 - Java 21
 - Spring Boot 3
 - Lombok
+- MapStruct (model ↔ DTO mapping)
+- Spring Security (OAuth2 resource server / JWT)
 - PostgreSQL (persistence layer)
 - Maven (build tool)
 - Docker + Docker Compose (deployment)
 - Swagger/OpenAPI (API documentation)
 - JaCoCo (test coverage)
-- Spotless/Checkstyle (code quality)
-- Optional: MapStruct, Flyway (future migrations)
+- Planned: Flyway (future migrations); schema currently comes from `db-scripts/setup/`
 
 ---
 
@@ -95,17 +96,24 @@ The MVP implements the endpoints defined in `docs/openapi/viron-api.json` and do
 
 viron/  
  ├── src/main/java/preponderous/viron/  
+ │    ├── config/            # Spring configuration (security, database, OpenAPI)  
  │    ├── controllers/       # REST controllers (Environment, Grid, Location, Entity, Debug)  
+ │    ├── database/          # JDBC access helpers  
  │    ├── dto/               # Data Transfer Objects for API requests/responses to keep internal models private  
+ │    ├── exceptions/        # Exception types and the global exception handler  
+ │    ├── factories/         # Creation logic for environments and entities  
+ │    ├── mappers/           # MapStruct mappers between models and DTOs  
  │    ├── models/            # Internal domain models  
  │    ├── repositories/      # Data access layer  
- │    ├── services/          # Business logic  
- │    └── factories/         # Creation logic for environments and entities  
+ │    └── services/          # Business logic  
+ ├── src/main/python/        # Python client SDK  
  ├── src/test/java/...       # Unit and integration tests  
+ ├── db-scripts/             # SQL schema setup scripts  
  ├── docs/  
- │    └── MVP.md             # Implementation checklist for MVP  
- ├── openapi/  
- │    └── viron-api.json     # API specification  
+ │    ├── MVP.md             # Implementation checklist for MVP  
+ │    └── openapi/  
+ │         └── viron-api.json  # API specification  
+ ├── postman/                # Postman collection generated from the API specification  
  ├── pom.xml                 # Maven configuration  
  └── README.md               # This file  
 
