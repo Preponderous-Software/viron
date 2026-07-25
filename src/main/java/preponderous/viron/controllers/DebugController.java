@@ -28,9 +28,9 @@ import preponderous.viron.services.LocationService;
  *
  * <p>Disabled by default: the controller is only registered when {@code viron.debug.enabled}
  * is {@code true} (see {@code application.properties} / the {@code VIRON_DEBUG_ENABLED}
- * environment variable). When disabled, {@code /api/v1/debug/**} is not mapped at all and
- * returns 404, so a production deployment does not expose data-seeding to every holder of a
- * valid bearer token.
+ * environment variable). When disabled, no {@code /api/v1/debug/**} handler is mapped at all,
+ * so a production deployment does not expose data-seeding to every holder of a valid bearer
+ * token.
  */
 @RestController
 @RequestMapping("/api/v1/debug")

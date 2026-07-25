@@ -447,7 +447,7 @@
     "/api/v1/debug/create-sample-data": {
       "post": {
         "summary": "Create sample environment and entities",
-        "description": "Only available when viron.debug.enabled=true (environment variable VIRON_DEBUG_ENABLED); otherwise this path is not mapped and returns 404.",
+        "description": "Only available when viron.debug.enabled=true (environment variable VIRON_DEBUG_ENABLED); otherwise the controller is not registered and this path is not mapped.",
         "responses": {
           "200": {
             "description": "Sample environment created",
@@ -461,7 +461,7 @@
     "/api/v1/debug/create-world-and-place-entity/{environmentName}": {
       "post": {
         "summary": "Create environment and place random entity",
-        "description": "Only available when viron.debug.enabled=true (environment variable VIRON_DEBUG_ENABLED); otherwise this path is not mapped and returns 404.",
+        "description": "Only available when viron.debug.enabled=true (environment variable VIRON_DEBUG_ENABLED); otherwise the controller is not registered and this path is not mapped.",
         "parameters": [{ "$ref": "#/components/parameters/EnvironmentNameParam" }],
         "responses": {
           "200": {
