@@ -51,13 +51,27 @@
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentDTO" } }
             }
+          },
+          "404": {
+            "description": "Environment not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
           }
         }
       },
       "delete": {
         "summary": "Delete environment",
         "parameters": [{ "$ref": "#/components/parameters/EnvironmentIdParam" }],
-        "responses": { "200": { "description": "Environment deleted" } }
+        "responses": {
+          "204": { "description": "Environment deleted" },
+          "404": {
+            "description": "Environment not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
       }
     },
     "/api/v1/environments/name/{name}": {
@@ -78,7 +92,12 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentDTO" } }
             }
           },
-          "404": { "description": "Environment not found with that name" }
+          "404": {
+            "description": "Environment not found with that name",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
         }
       }
     },
@@ -93,7 +112,12 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentDTO" } }
             }
           },
-          "404": { "description": "Environment not found for entity" }
+          "404": {
+            "description": "Environment not found for entity",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
         }
       }
     },
@@ -107,7 +131,15 @@
             "application/json": { "schema": { "$ref": "#/components/schemas/UpdateEnvironmentNameRequest" } }
           }
         },
-        "responses": { "200": { "description": "Name updated" } }
+        "responses": {
+          "200": { "description": "Name updated" },
+          "404": {
+            "description": "Environment not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
       }
     },
     "/api/v1/grids": {
@@ -137,6 +169,12 @@
             "description": "Grid details",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/GridDTO" } }
+            }
+          },
+          "404": {
+            "description": "Grid not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
           }
         }
@@ -179,7 +217,12 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/GridDTO" } }
             }
           },
-          "404": { "description": "Grid not found for entity" }
+          "404": {
+            "description": "Grid not found for entity",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
         }
       }
     },
@@ -210,6 +253,12 @@
             "description": "Location details",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/LocationDTO" } }
+            }
+          },
+          "404": {
+            "description": "Location not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
           }
         }
@@ -288,7 +337,12 @@
               }
             }
           },
-          "404": { "description": "Location not found, or not in any grid" }
+          "404": {
+            "description": "Location not found, or not in any grid",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
         }
       }
     },
@@ -299,7 +353,15 @@
           { "$ref": "#/components/parameters/LocationIdParam" },
           { "$ref": "#/components/parameters/EntityIdParam" }
         ],
-        "responses": { "200": { "description": "Entity added" } }
+        "responses": {
+          "200": { "description": "Entity added" },
+          "404": {
+            "description": "Location not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
       },
       "delete": {
         "summary": "Remove entity from location",
@@ -307,7 +369,15 @@
           { "$ref": "#/components/parameters/LocationIdParam" },
           { "$ref": "#/components/parameters/EntityIdParam" }
         ],
-        "responses": { "200": { "description": "Entity removed" } }
+        "responses": {
+          "204": { "description": "Entity removed" },
+          "404": {
+            "description": "Location not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
       }
     },
     "/api/v1/locations/{locationId}/entity/{entityId}/move": {
@@ -319,9 +389,24 @@
         ],
         "responses": {
           "204": { "description": "Entity moved" },
-          "400": { "description": "Target location is not in the same grid as the entity, or is not adjacent to the entity's current location" },
-          "404": { "description": "Entity is not placed at any location, or target location not found" },
-          "409": { "description": "Target location is already occupied" }
+          "400": {
+            "description": "Target location is not in the same grid as the entity, or is not adjacent to the entity's current location",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "404": {
+            "description": "Entity is not placed at any location, or target location not found",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "409": {
+            "description": "Target location is already occupied",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
         }
       }
     },
@@ -341,7 +426,12 @@
               }
             }
           },
-          "404": { "description": "Location not found" }
+          "404": {
+            "description": "Location not found",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
         }
       }
     },
@@ -356,7 +446,12 @@
               "application/json": { "schema": { "type": "boolean" } }
             }
           },
-          "404": { "description": "Location not found" }
+          "404": {
+            "description": "Location not found",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
         }
       }
     },
@@ -371,13 +466,26 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/LocationDTO" } }
             }
           },
-          "404": { "description": "Location not found for entity" }
+          "404": {
+            "description": "Location not found for entity",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
         }
       },
       "delete": {
         "summary": "Remove entity from current location",
         "parameters": [{ "$ref": "#/components/parameters/EntityIdParam" }],
-        "responses": { "200": { "description": "Entity removed" } }
+        "responses": {
+          "204": { "description": "Entity removed" },
+          "404": {
+            "description": "Location not found for entity",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
       }
     },
     "/api/v1/entities": {
@@ -425,13 +533,27 @@
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/EntityDTO" } }
             }
+          },
+          "404": {
+            "description": "Entity not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
           }
         }
       },
       "delete": {
         "summary": "Delete entity",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "204": { "description": "Entity deleted" } }
+        "responses": {
+          "204": { "description": "Entity deleted" },
+          "404": {
+            "description": "Entity not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
       }
     },
     "/api/v1/entities/{id}/name": {
@@ -444,7 +566,15 @@
             "application/json": { "schema": { "$ref": "#/components/schemas/UpdateEntityNameRequest" } }
           }
         },
-        "responses": { "200": { "description": "Name updated" } }
+        "responses": {
+          "200": { "description": "Name updated" },
+          "404": {
+            "description": "Entity not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
       }
     },
     "/api/v1/entities/environment/{environmentId}": {
@@ -527,10 +657,16 @@
         "summary": "Create sample environment and entities",
         "description": "Only available when viron.debug.enabled=true (environment variable VIRON_DEBUG_ENABLED); otherwise the controller is not registered and this path is not mapped.",
         "responses": {
-          "200": {
+          "201": {
             "description": "Sample environment created",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentDTO" } }
+            }
+          },
+          "400": {
+            "description": "The generated environment has no grids, or has no location at the sampled coordinates",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
           }
         }
@@ -542,10 +678,16 @@
         "description": "Only available when viron.debug.enabled=true (environment variable VIRON_DEBUG_ENABLED); otherwise the controller is not registered and this path is not mapped.",
         "parameters": [{ "$ref": "#/components/parameters/EnvironmentNameParam" }],
         "responses": {
-          "200": {
+          "201": {
             "description": "Entity created and placed",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/EntityDTO" } }
+            }
+          },
+          "400": {
+            "description": "The generated environment has no grids, or has no location at the sampled coordinates",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
           }
         }
@@ -612,6 +754,14 @@
         "type": "object",
         "required": ["name"],
         "properties": { "name": { "type": "string" } }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Standard error response body, returned for every 4xx and 5xx response.",
+        "properties": {
+          "status": { "type": "integer", "description": "HTTP status code" },
+          "message": { "type": "string", "description": "Error message describing what went wrong" }
+        }
       }
     },
     "parameters": {

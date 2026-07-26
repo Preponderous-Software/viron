@@ -66,7 +66,7 @@ class EnvironmentService:
     def delete_environment(self, environment_id: int) -> bool:
         response = requests.delete(f"{self.get_base_url()}/{environment_id}", headers=self.get_auth_headers())
         response.raise_for_status()
-        return response.status_code == 200
+        return True
 
     def update_environment_name(self, environment_id: int, name: str) -> bool:
         response = requests.patch(f"{self.get_base_url()}/{environment_id}/name", json={"name": name}, headers=self.get_auth_headers())

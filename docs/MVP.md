@@ -89,6 +89,7 @@ Deliver a working, tested API that supports:
 - [x] **EntityDTO** – Public representation of an entity.
 - [x] **CreateEntityRequest** – Request body for creating entities (name).
 - [x] **UpdateEntityNameRequest** – Request body for updating entity names.
+- [x] **ErrorResponse** – Body returned for every 4xx and 5xx response (`status`, `message`).
 
 ---
 

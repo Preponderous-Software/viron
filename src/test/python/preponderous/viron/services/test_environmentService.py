@@ -152,7 +152,7 @@ def test_create_environment_with_half_specified_dimensions_raises(mock_post):
 @patch('requests.delete')
 def test_delete_environment(mock_delete):
     mock_response = Mock()
-    mock_response.status_code = 200
+    mock_response.status_code = 204
     mock_response.raise_for_status = Mock()
     mock_delete.return_value = mock_response
 
