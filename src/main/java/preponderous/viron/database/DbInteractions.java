@@ -9,7 +9,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,7 +58,8 @@ public class DbInteractions {
             }
         } catch (SQLException e) {
             log.error("Error executing query: {}", e.getMessage());
-            return Collections.emptyList();
+            // Discard any partially mapped rows rather than reporting a truncated result.
+            return new ArrayList<>();
         }
         return results;
     }
