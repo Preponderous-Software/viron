@@ -31,8 +31,8 @@ public class EntityRepositoryImpl implements EntityRepository {
 
     @Override
     public Optional<Entity> findById(int id) {
-        return dbInteractions.queryOne("SELECT * FROM viron.entity WHERE entity_id = " + id,
-                this::mapResultSetToEntity);
+        return dbInteractions.queryOne("SELECT * FROM viron.entity WHERE entity_id = ?",
+                this::mapResultSetToEntity, id);
     }
 
     @Override
@@ -40,26 +40,26 @@ public class EntityRepositoryImpl implements EntityRepository {
         String query = "SELECT * FROM viron.entity WHERE entity_id in " +
                 "(SELECT entity_id FROM viron.entity_location WHERE location_id in " +
                 "(SELECT location_id FROM viron.location_grid WHERE grid_id in " +
-                "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")))";
+                "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = ?)))";
 
-        return dbInteractions.query(query, this::mapResultSetToEntity);
+        return dbInteractions.query(query, this::mapResultSetToEntity, environmentId);
     }
 
     @Override
     public List<Entity> findByGridId(int gridId) {
         String query = "SELECT * FROM viron.entity WHERE entity_id in " +
                 "(SELECT entity_id FROM viron.entity_location WHERE location_id in " +
-                "(SELECT location_id FROM viron.location_grid WHERE grid_id = " + gridId + "))";
+                "(SELECT location_id FROM viron.location_grid WHERE grid_id = ?))";
 
-        return dbInteractions.query(query, this::mapResultSetToEntity);
+        return dbInteractions.query(query, this::mapResultSetToEntity, gridId);
     }
 
     @Override
     public List<Entity> findByLocationId(int locationId) {
         String query = "SELECT * FROM viron.entity WHERE entity_id in " +
-                "(SELECT entity_id FROM viron.entity_location WHERE location_id = " + locationId + ")";
+                "(SELECT entity_id FROM viron.entity_location WHERE location_id = ?)";
 
-        return dbInteractions.query(query, this::mapResultSetToEntity);
+        return dbInteractions.query(query, this::mapResultSetToEntity, locationId);
     }
 
     @Override
@@ -86,13 +86,13 @@ public class EntityRepositoryImpl implements EntityRepository {
 
     @Override
     public boolean deleteById(int id) {
-        String query = "DELETE FROM viron.entity WHERE entity_id = " + id;
-        return dbInteractions.update(query);
+        String query = "DELETE FROM viron.entity WHERE entity_id = ?";
+        return dbInteractions.update(query, id);
     }
 
     @Override
     public boolean updateName(int id, String name) {
-        String query = "UPDATE viron.entity SET name = ? WHERE entity_id = " + id;
-        return dbInteractions.update(query, name);
+        String query = "UPDATE viron.entity SET name = ? WHERE entity_id = ?";
+        return dbInteractions.update(query, name, id);
     }
 }

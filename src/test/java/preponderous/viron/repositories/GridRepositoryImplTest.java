@@ -74,7 +74,7 @@ public class GridRepositoryImplTest {
     @Test
     public void testFindById_ReturnsGridWhenRowExists() throws SQLException {
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.<Grid>queryOne(eq("SELECT * FROM viron.grid WHERE grid_id = 1"), any())).thenAnswer(mapsFirstRow(mockResultSet));
+        Mockito.when(dbInteractions.<Grid>queryOne(eq("SELECT * FROM viron.grid WHERE grid_id = ?"), any(), eq(1))).thenAnswer(mapsFirstRow(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true);
         Mockito.when(mockResultSet.getInt("grid_id")).thenReturn(1);
         Mockito.when(mockResultSet.getInt("rows")).thenReturn(10);
@@ -93,7 +93,7 @@ public class GridRepositoryImplTest {
     @Test
     public void testFindById_ReturnsEmptyWhenNoRow() throws SQLException {
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.<Grid>queryOne(eq("SELECT * FROM viron.grid WHERE grid_id = 99"), any())).thenAnswer(mapsFirstRow(mockResultSet));
+        Mockito.when(dbInteractions.<Grid>queryOne(eq("SELECT * FROM viron.grid WHERE grid_id = ?"), any(), eq(99))).thenAnswer(mapsFirstRow(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(false);
 
         GridRepositoryImpl repository = new GridRepositoryImpl(dbInteractions);
@@ -103,7 +103,7 @@ public class GridRepositoryImplTest {
 
     @Test
     public void testFindById_ReturnsEmptyWhenQueryFails() {
-        Mockito.when(dbInteractions.<Grid>queryOne(eq("SELECT * FROM viron.grid WHERE grid_id = 1"), any())).thenReturn(Optional.empty());
+        Mockito.when(dbInteractions.<Grid>queryOne(eq("SELECT * FROM viron.grid WHERE grid_id = ?"), any(), eq(1))).thenReturn(Optional.empty());
 
         GridRepositoryImpl repository = new GridRepositoryImpl(dbInteractions);
 
@@ -115,9 +115,9 @@ public class GridRepositoryImplTest {
     @Test
     public void testFindByEnvironmentId_ReturnsGridsWhenRowsExist() throws SQLException {
         String query = "SELECT * FROM viron.grid WHERE grid_id in " +
-                "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = 7)";
+                "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = ?)";
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.<Grid>query(eq(query), any())).thenAnswer(mapsAllRows(mockResultSet));
+        Mockito.when(dbInteractions.<Grid>query(eq(query), any(), eq(7))).thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true, false);
         Mockito.when(mockResultSet.getInt("grid_id")).thenReturn(3);
         Mockito.when(mockResultSet.getInt("rows")).thenReturn(8);
@@ -134,8 +134,8 @@ public class GridRepositoryImplTest {
     @Test
     public void testFindByEnvironmentId_ReturnsEmptyListWhenQueryFails() {
         String query = "SELECT * FROM viron.grid WHERE grid_id in " +
-                "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = 7)";
-        Mockito.when(dbInteractions.<Grid>query(eq(query), any())).thenReturn(Collections.emptyList());
+                "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = ?)";
+        Mockito.when(dbInteractions.<Grid>query(eq(query), any(), eq(7))).thenReturn(Collections.emptyList());
 
         GridRepositoryImpl repository = new GridRepositoryImpl(dbInteractions);
 
@@ -148,9 +148,9 @@ public class GridRepositoryImplTest {
     public void testFindByEntityId_ReturnsGridWhenRowExists() throws SQLException {
         String query = "SELECT * FROM viron.grid WHERE grid_id in " +
                 "(SELECT grid_id FROM viron.location_grid WHERE location_id in " +
-                "(SELECT location_id FROM viron.entity_location WHERE entity_id = 42))";
+                "(SELECT location_id FROM viron.entity_location WHERE entity_id = ?))";
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.<Grid>queryOne(eq(query), any())).thenAnswer(mapsFirstRow(mockResultSet));
+        Mockito.when(dbInteractions.<Grid>queryOne(eq(query), any(), eq(42))).thenAnswer(mapsFirstRow(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true);
         Mockito.when(mockResultSet.getInt("grid_id")).thenReturn(9);
         Mockito.when(mockResultSet.getInt("rows")).thenReturn(4);
@@ -168,8 +168,8 @@ public class GridRepositoryImplTest {
     public void testFindByEntityId_ReturnsEmptyWhenQueryFails() {
         String query = "SELECT * FROM viron.grid WHERE grid_id in " +
                 "(SELECT grid_id FROM viron.location_grid WHERE location_id in " +
-                "(SELECT location_id FROM viron.entity_location WHERE entity_id = 42))";
-        Mockito.when(dbInteractions.<Grid>queryOne(eq(query), any())).thenReturn(Optional.empty());
+                "(SELECT location_id FROM viron.entity_location WHERE entity_id = ?))";
+        Mockito.when(dbInteractions.<Grid>queryOne(eq(query), any(), eq(42))).thenReturn(Optional.empty());
 
         GridRepositoryImpl repository = new GridRepositoryImpl(dbInteractions);
 

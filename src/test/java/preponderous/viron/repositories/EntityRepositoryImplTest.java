@@ -88,7 +88,7 @@ public class EntityRepositoryImplTest {
         int entityId = 1;
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
 
-        Mockito.when(dbInteractions.<Entity>queryOne(eq("SELECT * FROM viron.entity WHERE entity_id = " + entityId), any())).thenAnswer(mapsFirstRow(mockResultSet));
+        Mockito.when(dbInteractions.<Entity>queryOne(eq("SELECT * FROM viron.entity WHERE entity_id = ?"), any(), eq(entityId))).thenAnswer(mapsFirstRow(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true); // Entity is found
         Mockito.when(mockResultSet.getInt("entity_id")).thenReturn(entityId);
         Mockito.when(mockResultSet.getString("name")).thenReturn("Entity1");
@@ -112,7 +112,7 @@ public class EntityRepositoryImplTest {
         int entityId = 1;
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
 
-        Mockito.when(dbInteractions.<Entity>queryOne(eq("SELECT * FROM viron.entity WHERE entity_id = " + entityId), any())).thenAnswer(mapsFirstRow(mockResultSet));
+        Mockito.when(dbInteractions.<Entity>queryOne(eq("SELECT * FROM viron.entity WHERE entity_id = ?"), any(), eq(entityId))).thenAnswer(mapsFirstRow(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(false); // Entity is not found
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -128,7 +128,7 @@ public class EntityRepositoryImplTest {
     public void testFindById_ReturnsEmptyWhenQueryFails() {
         // Arrange
         int entityId = 1;
-        Mockito.when(dbInteractions.<Entity>queryOne(eq("SELECT * FROM viron.entity WHERE entity_id = " + entityId), any())).thenReturn(Optional.empty()); // ResultSet is null
+        Mockito.when(dbInteractions.<Entity>queryOne(eq("SELECT * FROM viron.entity WHERE entity_id = ?"), any(), eq(entityId))).thenReturn(Optional.empty()); // ResultSet is null
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
 
@@ -147,7 +147,7 @@ public class EntityRepositoryImplTest {
         Mockito.when(dbInteractions.<Entity>query(eq("SELECT * FROM viron.entity WHERE entity_id in " +
                         "(SELECT entity_id FROM viron.entity_location WHERE location_id in " +
                         "(SELECT location_id FROM viron.location_grid WHERE grid_id in " +
-                        "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")))"), any()))
+                        "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = ?)))"), any(), eq(environmentId)))
                 .thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true, true, false); // 2 entities in the result set
         Mockito.when(mockResultSet.getInt("entity_id")).thenReturn(1, 2);
@@ -177,7 +177,7 @@ public class EntityRepositoryImplTest {
         Mockito.when(dbInteractions.<Entity>query(eq("SELECT * FROM viron.entity WHERE entity_id in " +
                         "(SELECT entity_id FROM viron.entity_location WHERE location_id in " +
                         "(SELECT location_id FROM viron.location_grid WHERE grid_id in " +
-                        "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")))"), any()))
+                        "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = ?)))"), any(), eq(environmentId)))
                 .thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(false); // No entities in the result set
 
@@ -197,7 +197,7 @@ public class EntityRepositoryImplTest {
         Mockito.when(dbInteractions.<Entity>query(eq("SELECT * FROM viron.entity WHERE entity_id in " +
                         "(SELECT entity_id FROM viron.entity_location WHERE location_id in " +
                         "(SELECT location_id FROM viron.location_grid WHERE grid_id in " +
-                        "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")))"), any()))
+                        "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = ?)))"), any(), eq(environmentId)))
                 .thenReturn(Collections.emptyList()); // ResultSet is null
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -216,7 +216,7 @@ public class EntityRepositoryImplTest {
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
         Mockito.when(dbInteractions.<Entity>query(eq("SELECT * FROM viron.entity WHERE entity_id in " +
                         "(SELECT entity_id FROM viron.entity_location WHERE location_id in " +
-                        "(SELECT location_id FROM viron.location_grid WHERE grid_id = " + gridId + "))"), any()))
+                        "(SELECT location_id FROM viron.location_grid WHERE grid_id = ?))"), any(), eq(gridId)))
                 .thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true, true, false); // 2 entities in the result set
         Mockito.when(mockResultSet.getInt("entity_id")).thenReturn(1, 2);
@@ -245,7 +245,7 @@ public class EntityRepositoryImplTest {
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
         Mockito.when(dbInteractions.<Entity>query(eq("SELECT * FROM viron.entity WHERE entity_id in " +
                         "(SELECT entity_id FROM viron.entity_location WHERE location_id in " +
-                        "(SELECT location_id FROM viron.location_grid WHERE grid_id = " + gridId + "))"), any()))
+                        "(SELECT location_id FROM viron.location_grid WHERE grid_id = ?))"), any(), eq(gridId)))
                 .thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(false); // No entities in the result set
 
@@ -264,7 +264,7 @@ public class EntityRepositoryImplTest {
         int gridId = 10;
         Mockito.when(dbInteractions.<Entity>query(eq("SELECT * FROM viron.entity WHERE entity_id in " +
                         "(SELECT entity_id FROM viron.entity_location WHERE location_id in " +
-                        "(SELECT location_id FROM viron.location_grid WHERE grid_id = " + gridId + "))"), any()))
+                        "(SELECT location_id FROM viron.location_grid WHERE grid_id = ?))"), any(), eq(gridId)))
                 .thenReturn(Collections.emptyList()); // ResultSet is null
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -282,7 +282,7 @@ public class EntityRepositoryImplTest {
         int locationId = 15;
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
         Mockito.when(dbInteractions.<Entity>query(eq("SELECT * FROM viron.entity WHERE entity_id in " +
-                        "(SELECT entity_id FROM viron.entity_location WHERE location_id = " + locationId + ")"), any()))
+                        "(SELECT entity_id FROM viron.entity_location WHERE location_id = ?)"), any(), eq(locationId)))
                 .thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true, true, false); // 2 entities in the result set
         Mockito.when(mockResultSet.getInt("entity_id")).thenReturn(1, 2);
@@ -310,7 +310,7 @@ public class EntityRepositoryImplTest {
         int locationId = 15;
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
         Mockito.when(dbInteractions.<Entity>query(eq("SELECT * FROM viron.entity WHERE entity_id in " +
-                        "(SELECT entity_id FROM viron.entity_location WHERE location_id = " + locationId + ")"), any()))
+                        "(SELECT entity_id FROM viron.entity_location WHERE location_id = ?)"), any(), eq(locationId)))
                 .thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(false); // No entities in the result set
 
@@ -328,7 +328,7 @@ public class EntityRepositoryImplTest {
         // Arrange
         int locationId = 15;
         Mockito.when(dbInteractions.<Entity>query(eq("SELECT * FROM viron.entity WHERE entity_id in " +
-                        "(SELECT entity_id FROM viron.entity_location WHERE location_id = " + locationId + ")"), any()))
+                        "(SELECT entity_id FROM viron.entity_location WHERE location_id = ?)"), any(), eq(locationId)))
                 .thenReturn(Collections.emptyList()); // ResultSet is null
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -418,7 +418,7 @@ public class EntityRepositoryImplTest {
 
         // Mock finding the entity by ID
         ResultSet entityResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.<Entity>queryOne(eq("SELECT * FROM viron.entity WHERE entity_id = 100"), any()))
+        Mockito.when(dbInteractions.<Entity>queryOne(eq("SELECT * FROM viron.entity WHERE entity_id = ?"), any(), eq(100)))
                 .thenAnswer(mapsFirstRow(entityResultSet));
         Mockito.when(entityResultSet.next()).thenReturn(true);
         Mockito.when(entityResultSet.getInt("entity_id")).thenReturn(100);
@@ -475,7 +475,7 @@ public class EntityRepositoryImplTest {
     public void testDeleteById_DeletesEntitySuccessfully_ReturnsTrue() {
         // Arrange
         int entityId = 1;
-        Mockito.when(dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = " + entityId))
+        Mockito.when(dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = ?", entityId))
                 .thenReturn(true);
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -491,7 +491,7 @@ public class EntityRepositoryImplTest {
     public void testDeleteById_EntityNotFound_ReturnsFalse() {
         // Arrange
         int entityId = 1;
-        Mockito.when(dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = " + entityId))
+        Mockito.when(dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = ?", entityId))
                 .thenReturn(false);
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -507,7 +507,7 @@ public class EntityRepositoryImplTest {
     public void testDeleteById_HandlesSQLExceptionGracefully_ReturnsFalse() {
         // Arrange
         int entityId = 1;
-        Mockito.when(dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = " + entityId))
+        Mockito.when(dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = ?", entityId))
                 .thenReturn(false); // Instead of throwing SQLException, just return false
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -524,7 +524,7 @@ public class EntityRepositoryImplTest {
         // Arrange
         int entityId = 1;
         String newName = "UpdatedEntityName";
-        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = ? WHERE entity_id = 1", "UpdatedEntityName"))
+        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = ? WHERE entity_id = ?", "UpdatedEntityName", 1))
                 .thenReturn(true);
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -541,7 +541,7 @@ public class EntityRepositoryImplTest {
         // Arrange
         int entityId = 1;
         String newName = "UpdatedEntityName";
-        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = ? WHERE entity_id = 1", "UpdatedEntityName"))
+        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = ? WHERE entity_id = ?", "UpdatedEntityName", 1))
                 .thenReturn(false);
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
@@ -558,7 +558,7 @@ public class EntityRepositoryImplTest {
         // Arrange
         int entityId = 1;
         String newName = "UpdatedEntityName";
-        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = ? WHERE entity_id = 1", "UpdatedEntityName"))
+        Mockito.when(dbInteractions.update("UPDATE viron.entity SET name = ? WHERE entity_id = ?", "UpdatedEntityName", 1))
                 .thenReturn(false); // Instead of throwing SQLException, just return false
 
         EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
