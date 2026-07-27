@@ -41,8 +41,8 @@ public class EnvironmentFactory {
             throw new EnvironmentCreationException("Failed to get next environment id");
         }
         String creationDate = new java.util.Date().toString();
-        String query = "INSERT INTO viron.environment (environment_id, name, creation_date) VALUES (" + id + ", ?, ?)";
-        boolean success = dbInteractions.update(query, name, creationDate);
+        String query = "INSERT INTO viron.environment (environment_id, name, creation_date) VALUES (?, ?, ?)";
+        boolean success = dbInteractions.update(query, id, name, creationDate);
         if (!success) {
             log.error("Failed to create environment");
             throw new EnvironmentCreationException("Failed to create environment");
@@ -66,8 +66,8 @@ public class EnvironmentFactory {
             }
 
             // associate grid with environment
-            query = "INSERT INTO viron.grid_environment (grid_id, environment_id) VALUES (" + nextGridId + ", " + id + ")";
-            success = dbInteractions.update(query);
+            query = "INSERT INTO viron.grid_environment (grid_id, environment_id) VALUES (?, ?)";
+            success = dbInteractions.update(query, nextGridId, id);
             if (!success) {
                 log.error("Failed to associate grid with environment");
                 throw new EnvironmentCreationException("Failed to associate grid with environment");
@@ -82,16 +82,16 @@ public class EnvironmentFactory {
                         log.error("Failed to get next location id");
                         throw new EnvironmentCreationException("Failed to get next location id");
                     }
-                    query = "INSERT INTO viron.location (location_id, x, y) VALUES (" + locationId + ", " + x + ", " + y + ")";
-                    success = dbInteractions.update(query);
+                    query = "INSERT INTO viron.location (location_id, x, y) VALUES (?, ?, ?)";
+                    success = dbInteractions.update(query, locationId, x, y);
                     if (!success) {
                         log.error("Failed to create location");
                         throw new EnvironmentCreationException("Failed to create location");
                     }
 
                     // associate location with grid
-                    query = "INSERT INTO viron.location_grid (location_id, grid_id) VALUES (" + locationId + ", " + nextGridId + ")";
-                    success = dbInteractions.update(query);
+                    query = "INSERT INTO viron.location_grid (location_id, grid_id) VALUES (?, ?)";
+                    success = dbInteractions.update(query, locationId, nextGridId);
                     if (!success) {
                         log.error("Failed to associate location with grid");
                         throw new EnvironmentCreationException("Failed to associate location with grid");

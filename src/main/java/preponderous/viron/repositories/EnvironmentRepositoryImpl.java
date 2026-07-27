@@ -26,8 +26,8 @@ public class EnvironmentRepositoryImpl implements EnvironmentRepository {
 
     @Override
     public Optional<Environment> findById(int id) {
-        return dbInteractions.queryOne("SELECT * FROM viron.environment WHERE environment_id = " + id,
-                this::mapResultSetToEnvironment);
+        return dbInteractions.queryOne("SELECT * FROM viron.environment WHERE environment_id = ?",
+                this::mapResultSetToEnvironment, id);
     }
 
     @Override
@@ -39,8 +39,8 @@ public class EnvironmentRepositoryImpl implements EnvironmentRepository {
     @Override
     public Optional<Environment> findByEntityId(int entityId) {
         return dbInteractions.queryOne(
-                "SELECT * FROM viron.environment WHERE environment_id = (SELECT environment_id FROM viron.entity WHERE entity_id = " + entityId + ")",
-                this::mapResultSetToEnvironment);
+                "SELECT * FROM viron.environment WHERE environment_id = (SELECT environment_id FROM viron.entity WHERE entity_id = ?)",
+                this::mapResultSetToEnvironment, entityId);
     }
 
     @Override
@@ -50,65 +50,65 @@ public class EnvironmentRepositoryImpl implements EnvironmentRepository {
 
     @Override
     public boolean deleteById(int id) {
-        String query = "DELETE FROM viron.environment WHERE environment_id = " + id;
-        return dbInteractions.update(query);
+        String query = "DELETE FROM viron.environment WHERE environment_id = ?";
+        return dbInteractions.update(query, id);
     }
 
     @Override
     public boolean updateName(int id, String name) {
-        String query = "UPDATE viron.environment SET name = ? WHERE environment_id = " + id;
-        return dbInteractions.update(query, name);
+        String query = "UPDATE viron.environment SET name = ? WHERE environment_id = ?";
+        return dbInteractions.update(query, name, id);
     }
 
     @Override
     public List<Integer> findEntityIdsByEnvironmentId(int environmentId) {
         return dbInteractions.query(
-                "SELECT entity_id FROM viron.entity WHERE entity_id in (SELECT entity_id FROM viron.entity_location WHERE location_id in (SELECT location_id FROM viron.location_grid WHERE grid_id in (SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")))",
-                rs -> rs.getInt("entity_id"));
+                "SELECT entity_id FROM viron.entity WHERE entity_id in (SELECT entity_id FROM viron.entity_location WHERE location_id in (SELECT location_id FROM viron.location_grid WHERE grid_id in (SELECT grid_id FROM viron.grid_environment WHERE environment_id = ?)))",
+                rs -> rs.getInt("entity_id"), environmentId);
     }
 
     @Override
     public List<Integer> findLocationIdsByEnvironmentId(int environmentId) {
         return dbInteractions.query(
-                "SELECT location_id FROM viron.location_grid WHERE grid_id in (SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")",
-                rs -> rs.getInt("location_id"));
+                "SELECT location_id FROM viron.location_grid WHERE grid_id in (SELECT grid_id FROM viron.grid_environment WHERE environment_id = ?)",
+                rs -> rs.getInt("location_id"), environmentId);
     }
 
     @Override
     public List<Integer> findGridIdsByEnvironmentId(int environmentId) {
         return dbInteractions.query(
-                "SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId,
-                rs -> rs.getInt("grid_id"));
+                "SELECT grid_id FROM viron.grid_environment WHERE environment_id = ?",
+                rs -> rs.getInt("grid_id"), environmentId);
     }
 
     @Override
     public boolean deleteEntityLocation(int entityId) {
-        return dbInteractions.update("DELETE FROM viron.entity_location WHERE entity_id = " + entityId);
+        return dbInteractions.update("DELETE FROM viron.entity_location WHERE entity_id = ?", entityId);
     }
 
     @Override
     public boolean deleteLocationGrid(int locationId) {
-        return dbInteractions.update("DELETE FROM viron.location_grid WHERE location_id = " + locationId);
+        return dbInteractions.update("DELETE FROM viron.location_grid WHERE location_id = ?", locationId);
     }
 
     @Override
     public boolean deleteGridEnvironment(int gridId) {
-        return dbInteractions.update("DELETE FROM viron.grid_environment WHERE grid_id = " + gridId);
+        return dbInteractions.update("DELETE FROM viron.grid_environment WHERE grid_id = ?", gridId);
     }
 
     @Override
     public boolean deleteEntity(int entityId) {
-        return dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = " + entityId);
+        return dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = ?", entityId);
     }
 
     @Override
     public boolean deleteLocation(int locationId) {
-        return dbInteractions.update("DELETE FROM viron.location WHERE location_id = " + locationId);
+        return dbInteractions.update("DELETE FROM viron.location WHERE location_id = ?", locationId);
     }
 
     @Override
     public boolean deleteGrid(int gridId) {
-        return dbInteractions.update("DELETE FROM viron.grid WHERE grid_id = " + gridId);
+        return dbInteractions.update("DELETE FROM viron.grid WHERE grid_id = ?", gridId);
     }
 
     private Environment mapResultSetToEnvironment(ResultSet rs) throws SQLException {

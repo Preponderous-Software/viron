@@ -29,7 +29,7 @@ public class EntityFactoryTest {
     @Test
     public void testCreateEntity_Success_ReturnsEntity() {
         Mockito.when(dbInteractions.<Integer>queryOne(eq(NEXT_ID_QUERY), any())).thenReturn(Optional.of(5));
-        Mockito.when(dbInteractions.update(anyString(), any(), any())).thenReturn(true);
+        Mockito.when(dbInteractions.update(anyString(), any(), any(), any())).thenReturn(true);
 
         EntityFactory factory = new EntityFactory(dbInteractions);
 
@@ -51,13 +51,13 @@ public class EntityFactoryTest {
         assertThatThrownBy(() -> factory.createEntity("Bob"))
                 .isInstanceOf(EntityCreationException.class)
                 .hasMessage("Failed to get next entity id");
-        verify(dbInteractions, never()).update(anyString(), any(), any());
+        verify(dbInteractions, never()).update(anyString(), any(), any(), any());
     }
 
     @Test
     public void testCreateEntity_InsertFails_Throws() {
         Mockito.when(dbInteractions.<Integer>queryOne(eq(NEXT_ID_QUERY), any())).thenReturn(Optional.of(5));
-        Mockito.when(dbInteractions.update(anyString(), any(), any())).thenReturn(false);
+        Mockito.when(dbInteractions.update(anyString(), any(), any(), any())).thenReturn(false);
 
         EntityFactory factory = new EntityFactory(dbInteractions);
 

@@ -31,21 +31,21 @@ public class GridRepositoryImpl implements GridRepository {
 
     @Override
     public Optional<Grid> findById(int id) {
-        return dbInteractions.queryOne("SELECT * FROM viron.grid WHERE grid_id = " + id, this::mapResultSetToGrid);
+        return dbInteractions.queryOne("SELECT * FROM viron.grid WHERE grid_id = ?", this::mapResultSetToGrid, id);
     }
 
     @Override
     public List<Grid> findByEnvironmentId(int environmentId) {
         String query = "SELECT * FROM viron.grid WHERE grid_id in " +
-                "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")";
-        return dbInteractions.query(query, this::mapResultSetToGrid);
+                "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = ?)";
+        return dbInteractions.query(query, this::mapResultSetToGrid, environmentId);
     }
 
     @Override
     public Optional<Grid> findByEntityId(int entityId) {
         String query = "SELECT * FROM viron.grid WHERE grid_id in " +
                 "(SELECT grid_id FROM viron.location_grid WHERE location_id in " +
-                "(SELECT location_id FROM viron.entity_location WHERE entity_id = " + entityId + "))";
-        return dbInteractions.queryOne(query, this::mapResultSetToGrid);
+                "(SELECT location_id FROM viron.entity_location WHERE entity_id = ?))";
+        return dbInteractions.queryOne(query, this::mapResultSetToGrid, entityId);
     }
 }

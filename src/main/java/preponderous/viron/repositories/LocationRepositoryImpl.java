@@ -31,77 +31,74 @@ public class LocationRepositoryImpl implements LocationRepository {
 
     @Override
     public Optional<Location> findById(int id) {
-        return dbInteractions.queryOne("SELECT * FROM viron.location WHERE location_id = " + id,
-                this::mapResultSetToLocation);
+        return dbInteractions.queryOne("SELECT * FROM viron.location WHERE location_id = ?",
+                this::mapResultSetToLocation, id);
     }
 
     @Override
     public List<Location> findByEnvironmentId(int environmentId) {
         String query = "SELECT * FROM viron.location WHERE location_id in " +
                 "(SELECT location_id FROM viron.location_grid WHERE grid_id in " +
-                "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + "))";
-        return dbInteractions.query(query, this::mapResultSetToLocation);
+                "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = ?))";
+        return dbInteractions.query(query, this::mapResultSetToLocation, environmentId);
     }
 
     @Override
     public List<Location> findByGridId(int gridId) {
         String query = "SELECT * FROM viron.location WHERE location_id in " +
-                "(SELECT location_id FROM viron.location_grid WHERE grid_id = " + gridId + ")";
-        return dbInteractions.query(query, this::mapResultSetToLocation);
+                "(SELECT location_id FROM viron.location_grid WHERE grid_id = ?)";
+        return dbInteractions.query(query, this::mapResultSetToLocation, gridId);
     }
 
     @Override
     public Optional<Location> findByEntityId(int entityId) {
         String query = "SELECT * FROM viron.location WHERE location_id in " +
-                "(SELECT location_id FROM viron.entity_location WHERE entity_id = " + entityId + ")";
-        return dbInteractions.queryOne(query, this::mapResultSetToLocation);
+                "(SELECT location_id FROM viron.entity_location WHERE entity_id = ?)";
+        return dbInteractions.queryOne(query, this::mapResultSetToLocation, entityId);
     }
 
     @Override
     public boolean addEntityToLocation(int entityId, int locationId) {
-        String query = "INSERT INTO viron.entity_location (entity_id, location_id) VALUES (" +
-                entityId + ", " + locationId + ")";
-        return dbInteractions.update(query);
+        String query = "INSERT INTO viron.entity_location (entity_id, location_id) VALUES (?, ?)";
+        return dbInteractions.update(query, entityId, locationId);
     }
 
     @Override
     public boolean removeEntityFromLocation(int entityId, int locationId) {
-        String query = "DELETE FROM viron.entity_location WHERE entity_id = " +
-                entityId + " AND location_id = " + locationId;
-        return dbInteractions.update(query);
+        String query = "DELETE FROM viron.entity_location WHERE entity_id = ? AND location_id = ?";
+        return dbInteractions.update(query, entityId, locationId);
     }
 
     @Override
     public boolean removeEntityFromCurrentLocation(int entityId) {
-        String query = "DELETE FROM viron.entity_location WHERE entity_id = " + entityId;
-        return dbInteractions.update(query);
+        String query = "DELETE FROM viron.entity_location WHERE entity_id = ?";
+        return dbInteractions.update(query, entityId);
     }
 
     @Override
     public List<Integer> getEntityIdsAtLocation(int locationId) {
-        String query = "SELECT entity_id FROM viron.entity_location WHERE location_id = " + locationId;
-        return dbInteractions.query(query, rs -> rs.getInt("entity_id"));
+        String query = "SELECT entity_id FROM viron.entity_location WHERE location_id = ?";
+        return dbInteractions.query(query, rs -> rs.getInt("entity_id"), locationId);
     }
 
     @Override
     public List<Location> findUnoccupiedByGridId(int gridId) {
         String query = "SELECT * FROM viron.location WHERE location_id in " +
-                "(SELECT location_id FROM viron.location_grid WHERE grid_id = " + gridId + ") " +
+                "(SELECT location_id FROM viron.location_grid WHERE grid_id = ?) " +
                 "AND location_id not in (SELECT location_id FROM viron.entity_location)";
-        return dbInteractions.query(query, this::mapResultSetToLocation);
+        return dbInteractions.query(query, this::mapResultSetToLocation, gridId);
     }
 
     @Override
     public Optional<Integer> getGridIdOfLocation(int locationId) {
-        String query = "SELECT grid_id FROM viron.location_grid WHERE location_id = " + locationId;
-        return dbInteractions.queryOne(query, rs -> rs.getInt("grid_id"));
+        String query = "SELECT grid_id FROM viron.location_grid WHERE location_id = ?";
+        return dbInteractions.queryOne(query, rs -> rs.getInt("grid_id"), locationId);
     }
 
     @Override
     public boolean moveEntityToLocation(int entityId, int targetLocationId) {
         // Single atomic statement: re-point the entity's existing placement to the target.
-        String query = "UPDATE viron.entity_location SET location_id = " + targetLocationId +
-                " WHERE entity_id = " + entityId;
-        return dbInteractions.update(query);
+        String query = "UPDATE viron.entity_location SET location_id = ? WHERE entity_id = ?";
+        return dbInteractions.update(query, targetLocationId, entityId);
     }
 }
