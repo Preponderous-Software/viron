@@ -1,11 +1,8 @@
 package preponderous.viron.factories;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -41,17 +38,8 @@ public class EntityFactory {
     }
 
     private int getNextEntityId() {
-        ResultSet rs = dbInteractions.query("SELECT nextval('viron.entity_id_seq')");
-        if (rs == null) {
-            return -1;
-        }
-        try {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            log.error("Error getting next entity id: {}", e.getMessage());
-        }
-        return -1;
+        Optional<Integer> nextId = dbInteractions.queryOne("SELECT nextval('viron.entity_id_seq')",
+                rs -> rs.getInt(1));
+        return nextId.orElse(-1);
     }
 }
