@@ -8,9 +8,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import javax.sql.rowset.CachedRowSet;
-import javax.sql.rowset.RowSetProvider;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,30 +34,60 @@ public class DbInteractions {
     }
 
     /**
-     * Execute a parameterized SELECT and return a disconnected result.
+     * Execute a parameterized SELECT and map every returned row.
      *
      * <p>The query is run through a {@link PreparedStatement} so caller-supplied
      * values are bound as parameters rather than concatenated into SQL. The
-     * statement and live result set are closed before returning; the rows are
-     * copied into a {@link CachedRowSet} so callers can read them without leaking
-     * JDBC resources.
+     * statement and result set are owned here and closed before returning, so no
+     * JDBC resource ever reaches the caller.
      *
      * @param query  SQL with {@code ?} placeholders for each parameter
+     * @param mapper maps each row to a result object
      * @param params values to bind to the placeholders, in order
-     * @return a disconnected {@link ResultSet} of the rows, or {@code null} on error
+     * @param <T>    mapped result type
+     * @return the mapped rows in result-set order, or an empty list if the query failed
      */
-    public ResultSet query(String query, Object... params) {
+    public <T> List<T> query(String query, RowMapper<T> mapper, Object... params) {
+        List<T> results = new ArrayList<>();
         try (PreparedStatement statement = connection.prepareStatement(query)) {
             bindParameters(statement, params);
             try (ResultSet rs = statement.executeQuery()) {
-                CachedRowSet cachedRowSet = RowSetProvider.newFactory().createCachedRowSet();
-                cachedRowSet.populate(rs);
-                return cachedRowSet;
+                while (rs.next()) {
+                    results.add(mapper.map(rs));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Error executing query: {}", e.getMessage());
+            // Discard any partially mapped rows rather than reporting a truncated result.
+            return new ArrayList<>();
+        }
+        return results;
+    }
+
+    /**
+     * Execute a parameterized SELECT and map its first row, if any.
+     *
+     * <p>Behaves like {@link #query(String, RowMapper, Object...)} but stops after the
+     * first row; any further rows the query happens to return are ignored.
+     *
+     * @param query  SQL with {@code ?} placeholders for each parameter
+     * @param mapper maps the first row to a result object
+     * @param params values to bind to the placeholders, in order
+     * @param <T>    mapped result type
+     * @return the mapped first row, or an empty {@link Optional} if there were no rows or the query failed
+     */
+    public <T> Optional<T> queryOne(String query, RowMapper<T> mapper, Object... params) {
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            bindParameters(statement, params);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.ofNullable(mapper.map(rs));
+                }
             }
         } catch (SQLException e) {
             log.error("Error executing query: {}", e.getMessage());
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -106,5 +136,5 @@ public class DbInteractions {
         }
         return connection;
     }
-    
+
 }

@@ -1,6 +1,5 @@
 package preponderous.viron.repositories;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import preponderous.viron.database.DbInteractions;
@@ -8,12 +7,10 @@ import preponderous.viron.models.Environment;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-@Slf4j
 public class EnvironmentRepositoryImpl implements EnvironmentRepository {
     private final DbInteractions dbInteractions;
 
@@ -24,71 +21,26 @@ public class EnvironmentRepositoryImpl implements EnvironmentRepository {
 
     @Override
     public List<Environment> findAll() {
-        List<Environment> environments = new ArrayList<>();
-        ResultSet rs = dbInteractions.query("SELECT * FROM viron.environment");
-        if (rs == null) {
-            log.error("Error finding all environments: ResultSet is null");
-            return environments;
-        }
-        try {
-            while (rs.next()) {
-                environments.add(mapResultSetToEnvironment(rs));
-            }
-        } catch (SQLException e) {
-            log.error("Error finding all environments: {}", e.getMessage());
-        }
-        return environments;
+        return dbInteractions.query("SELECT * FROM viron.environment", this::mapResultSetToEnvironment);
     }
 
     @Override
     public Optional<Environment> findById(int id) {
-        ResultSet rs = dbInteractions.query("SELECT * FROM viron.environment WHERE environment_id = " + id);
-        if (rs == null) {
-            log.error("Error finding environment by id: ResultSet is null");
-            return Optional.empty();
-        }
-        try {
-            if (rs.next()) {
-                return Optional.of(mapResultSetToEnvironment(rs));
-            }
-        } catch (SQLException e) {
-            log.error("Error finding environment by id: {}", e.getMessage());
-        }
-        return Optional.empty();
+        return dbInteractions.queryOne("SELECT * FROM viron.environment WHERE environment_id = " + id,
+                this::mapResultSetToEnvironment);
     }
 
     @Override
     public Optional<Environment> findByName(String name) {
-        ResultSet rs = dbInteractions.query("SELECT * FROM viron.environment WHERE name = ?", name);
-        if (rs == null) {
-            log.error("Error finding environment by name: ResultSet is null");
-            return Optional.empty();
-        }
-        try {
-            if (rs.next()) {
-                return Optional.of(mapResultSetToEnvironment(rs));
-            }
-        } catch (SQLException e) {
-            log.error("Error finding environment by name: {}", e.getMessage());
-        }
-        return Optional.empty();
+        return dbInteractions.queryOne("SELECT * FROM viron.environment WHERE name = ?",
+                this::mapResultSetToEnvironment, name);
     }
 
     @Override
     public Optional<Environment> findByEntityId(int entityId) {
-        ResultSet rs = dbInteractions.query("SELECT * FROM viron.environment WHERE environment_id = (SELECT environment_id FROM viron.entity WHERE entity_id = " + entityId + ")");
-        if (rs == null) {
-            log.error("Error finding environment by entity id: ResultSet is null");
-            return Optional.empty();
-        }
-        try {
-            if (rs.next()) {
-                return Optional.of(mapResultSetToEnvironment(rs));
-            }
-        } catch (SQLException e) {
-            log.error("Error finding environment by entity id: {}", e.getMessage());
-        }
-        return Optional.empty();
+        return dbInteractions.queryOne(
+                "SELECT * FROM viron.environment WHERE environment_id = (SELECT environment_id FROM viron.entity WHERE entity_id = " + entityId + ")",
+                this::mapResultSetToEnvironment);
     }
 
     @Override
@@ -110,56 +62,23 @@ public class EnvironmentRepositoryImpl implements EnvironmentRepository {
 
     @Override
     public List<Integer> findEntityIdsByEnvironmentId(int environmentId) {
-        List<Integer> entityIds = new ArrayList<>();
-        ResultSet rs = dbInteractions.query("SELECT entity_id FROM viron.entity WHERE entity_id in (SELECT entity_id FROM viron.entity_location WHERE location_id in (SELECT location_id FROM viron.location_grid WHERE grid_id in (SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")))");
-        if (rs == null) {
-            log.error("Error finding entity ids: ResultSet is null");
-            return entityIds;
-        }
-        try {
-            while (rs.next()) {
-                entityIds.add(rs.getInt("entity_id"));
-            }
-        } catch (SQLException e) {
-            log.error("Error finding entity ids: {}", e.getMessage());
-        }
-        return entityIds;
+        return dbInteractions.query(
+                "SELECT entity_id FROM viron.entity WHERE entity_id in (SELECT entity_id FROM viron.entity_location WHERE location_id in (SELECT location_id FROM viron.location_grid WHERE grid_id in (SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")))",
+                rs -> rs.getInt("entity_id"));
     }
 
     @Override
     public List<Integer> findLocationIdsByEnvironmentId(int environmentId) {
-        List<Integer> locationIds = new ArrayList<>();
-        ResultSet rs = dbInteractions.query("SELECT location_id FROM viron.location_grid WHERE grid_id in (SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")");
-        if (rs == null) {
-            log.error("Error finding location ids: ResultSet is null");
-            return locationIds;
-        }
-        try {
-            while (rs.next()) {
-                locationIds.add(rs.getInt("location_id"));
-            }
-        } catch (SQLException e) {
-            log.error("Error finding location ids: {}", e.getMessage());
-        }
-        return locationIds;
+        return dbInteractions.query(
+                "SELECT location_id FROM viron.location_grid WHERE grid_id in (SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId + ")",
+                rs -> rs.getInt("location_id"));
     }
 
     @Override
     public List<Integer> findGridIdsByEnvironmentId(int environmentId) {
-        List<Integer> gridIds = new ArrayList<>();
-        ResultSet rs = dbInteractions.query("SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId);
-        if (rs == null) {
-            log.error("Error finding grid ids: ResultSet is null");
-            return gridIds;
-        }
-        try {
-            while (rs.next()) {
-                gridIds.add(rs.getInt("grid_id"));
-            }
-        } catch (SQLException e) {
-            log.error("Error finding grid ids: {}", e.getMessage());
-        }
-        return gridIds;
+        return dbInteractions.query(
+                "SELECT grid_id FROM viron.grid_environment WHERE environment_id = " + environmentId,
+                rs -> rs.getInt("grid_id"));
     }
 
     @Override

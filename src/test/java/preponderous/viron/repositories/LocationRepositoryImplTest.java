@@ -9,10 +9,15 @@ import preponderous.viron.models.Location;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static preponderous.viron.database.ResultSetAnswers.mapsAllRows;
+import static preponderous.viron.database.ResultSetAnswers.mapsFirstRow;
 
 @SpringBootTest
 public class LocationRepositoryImplTest {
@@ -25,7 +30,7 @@ public class LocationRepositoryImplTest {
     @Test
     public void testFindAll_ReturnsLocationsWhenResultSetIsNotEmpty() throws SQLException {
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query("SELECT * FROM viron.location")).thenReturn(mockResultSet);
+        Mockito.when(dbInteractions.<Location>query(eq("SELECT * FROM viron.location"), any())).thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true, true, false);
         Mockito.when(mockResultSet.getInt("location_id")).thenReturn(1, 2);
         Mockito.when(mockResultSet.getInt("x")).thenReturn(3, 7);
@@ -47,7 +52,7 @@ public class LocationRepositoryImplTest {
     @Test
     public void testFindAll_ReturnsEmptyListWhenResultSetIsEmpty() throws SQLException {
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query("SELECT * FROM viron.location")).thenReturn(mockResultSet);
+        Mockito.when(dbInteractions.<Location>query(eq("SELECT * FROM viron.location"), any())).thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(false);
 
         LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
@@ -56,19 +61,8 @@ public class LocationRepositoryImplTest {
     }
 
     @Test
-    public void testFindAll_ReturnsEmptyListWhenResultSetIsNull() {
-        Mockito.when(dbInteractions.query("SELECT * FROM viron.location")).thenReturn(null);
-
-        LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
-
-        assertThat(repository.findAll()).isEmpty();
-    }
-
-    @Test
-    public void testFindAll_ReturnsEmptyListWhenSQLExceptionThrown() throws SQLException {
-        ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query("SELECT * FROM viron.location")).thenReturn(mockResultSet);
-        Mockito.when(mockResultSet.next()).thenThrow(new SQLException("boom"));
+    public void testFindAll_ReturnsEmptyListWhenQueryFails() {
+        Mockito.when(dbInteractions.<Location>query(eq("SELECT * FROM viron.location"), any())).thenReturn(Collections.emptyList());
 
         LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
 
@@ -80,7 +74,7 @@ public class LocationRepositoryImplTest {
     @Test
     public void testFindById_ReturnsLocationWhenRowExists() throws SQLException {
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query("SELECT * FROM viron.location WHERE location_id = 1")).thenReturn(mockResultSet);
+        Mockito.when(dbInteractions.<Location>queryOne(eq("SELECT * FROM viron.location WHERE location_id = 1"), any())).thenAnswer(mapsFirstRow(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true);
         Mockito.when(mockResultSet.getInt("location_id")).thenReturn(1);
         Mockito.when(mockResultSet.getInt("x")).thenReturn(3);
@@ -99,7 +93,7 @@ public class LocationRepositoryImplTest {
     @Test
     public void testFindById_ReturnsEmptyWhenNoRow() throws SQLException {
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query("SELECT * FROM viron.location WHERE location_id = 99")).thenReturn(mockResultSet);
+        Mockito.when(dbInteractions.<Location>queryOne(eq("SELECT * FROM viron.location WHERE location_id = 99"), any())).thenAnswer(mapsFirstRow(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(false);
 
         LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
@@ -108,8 +102,8 @@ public class LocationRepositoryImplTest {
     }
 
     @Test
-    public void testFindById_ReturnsEmptyWhenResultSetIsNull() {
-        Mockito.when(dbInteractions.query("SELECT * FROM viron.location WHERE location_id = 1")).thenReturn(null);
+    public void testFindById_ReturnsEmptyWhenQueryFails() {
+        Mockito.when(dbInteractions.<Location>queryOne(eq("SELECT * FROM viron.location WHERE location_id = 1"), any())).thenReturn(Optional.empty());
 
         LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
 
@@ -124,7 +118,7 @@ public class LocationRepositoryImplTest {
                 "(SELECT location_id FROM viron.location_grid WHERE grid_id in " +
                 "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = 7))";
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query(query)).thenReturn(mockResultSet);
+        Mockito.when(dbInteractions.<Location>query(eq(query), any())).thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true, false);
         Mockito.when(mockResultSet.getInt("location_id")).thenReturn(5);
         Mockito.when(mockResultSet.getInt("x")).thenReturn(1);
@@ -139,11 +133,11 @@ public class LocationRepositoryImplTest {
     }
 
     @Test
-    public void testFindByEnvironmentId_ReturnsEmptyListWhenResultSetIsNull() {
+    public void testFindByEnvironmentId_ReturnsEmptyListWhenQueryFails() {
         String query = "SELECT * FROM viron.location WHERE location_id in " +
                 "(SELECT location_id FROM viron.location_grid WHERE grid_id in " +
                 "(SELECT grid_id FROM viron.grid_environment WHERE environment_id = 7))";
-        Mockito.when(dbInteractions.query(query)).thenReturn(null);
+        Mockito.when(dbInteractions.<Location>query(eq(query), any())).thenReturn(Collections.emptyList());
 
         LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
 
@@ -157,7 +151,7 @@ public class LocationRepositoryImplTest {
         String query = "SELECT * FROM viron.location WHERE location_id in " +
                 "(SELECT location_id FROM viron.location_grid WHERE grid_id = 3)";
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query(query)).thenReturn(mockResultSet);
+        Mockito.when(dbInteractions.<Location>query(eq(query), any())).thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true, true, false);
         Mockito.when(mockResultSet.getInt("location_id")).thenReturn(5, 6);
         Mockito.when(mockResultSet.getInt("x")).thenReturn(1, 2);
@@ -173,10 +167,10 @@ public class LocationRepositoryImplTest {
     }
 
     @Test
-    public void testFindByGridId_ReturnsEmptyListWhenResultSetIsNull() {
+    public void testFindByGridId_ReturnsEmptyListWhenQueryFails() {
         String query = "SELECT * FROM viron.location WHERE location_id in " +
                 "(SELECT location_id FROM viron.location_grid WHERE grid_id = 3)";
-        Mockito.when(dbInteractions.query(query)).thenReturn(null);
+        Mockito.when(dbInteractions.<Location>query(eq(query), any())).thenReturn(Collections.emptyList());
 
         LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
 
@@ -191,7 +185,7 @@ public class LocationRepositoryImplTest {
                 "(SELECT location_id FROM viron.location_grid WHERE grid_id = 3) " +
                 "AND location_id not in (SELECT location_id FROM viron.entity_location)";
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query(query)).thenReturn(mockResultSet);
+        Mockito.when(dbInteractions.<Location>query(eq(query), any())).thenAnswer(mapsAllRows(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true, true, false);
         Mockito.when(mockResultSet.getInt("location_id")).thenReturn(5, 6);
         Mockito.when(mockResultSet.getInt("x")).thenReturn(1, 2);
@@ -207,11 +201,11 @@ public class LocationRepositoryImplTest {
     }
 
     @Test
-    public void testFindUnoccupiedByGridId_ReturnsEmptyListWhenResultSetIsNull() {
+    public void testFindUnoccupiedByGridId_ReturnsEmptyListWhenQueryFails() {
         String query = "SELECT * FROM viron.location WHERE location_id in " +
                 "(SELECT location_id FROM viron.location_grid WHERE grid_id = 3) " +
                 "AND location_id not in (SELECT location_id FROM viron.entity_location)";
-        Mockito.when(dbInteractions.query(query)).thenReturn(null);
+        Mockito.when(dbInteractions.<Location>query(eq(query), any())).thenReturn(Collections.emptyList());
 
         LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
 
@@ -225,7 +219,7 @@ public class LocationRepositoryImplTest {
         String query = "SELECT * FROM viron.location WHERE location_id in " +
                 "(SELECT location_id FROM viron.entity_location WHERE entity_id = 42)";
         ResultSet mockResultSet = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query(query)).thenReturn(mockResultSet);
+        Mockito.when(dbInteractions.<Location>queryOne(eq(query), any())).thenAnswer(mapsFirstRow(mockResultSet));
         Mockito.when(mockResultSet.next()).thenReturn(true);
         Mockito.when(mockResultSet.getInt("location_id")).thenReturn(8);
         Mockito.when(mockResultSet.getInt("x")).thenReturn(0);
@@ -240,10 +234,10 @@ public class LocationRepositoryImplTest {
     }
 
     @Test
-    public void testFindByEntityId_ReturnsEmptyWhenResultSetIsNull() {
+    public void testFindByEntityId_ReturnsEmptyWhenQueryFails() {
         String query = "SELECT * FROM viron.location WHERE location_id in " +
                 "(SELECT location_id FROM viron.entity_location WHERE entity_id = 42)";
-        Mockito.when(dbInteractions.query(query)).thenReturn(null);
+        Mockito.when(dbInteractions.<Location>queryOne(eq(query), any())).thenReturn(Optional.empty());
 
         LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
 
@@ -300,8 +294,8 @@ public class LocationRepositoryImplTest {
     @Test
     public void testGetEntityIdsAtLocation_ReturnsIdsWhenResultSetNotEmpty() throws SQLException {
         ResultSet rs = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query("SELECT entity_id FROM viron.entity_location WHERE location_id = 7"))
-                .thenReturn(rs);
+        Mockito.when(dbInteractions.<Integer>query(eq("SELECT entity_id FROM viron.entity_location WHERE location_id = 7"), any()))
+                .thenAnswer(mapsAllRows(rs));
         Mockito.when(rs.next()).thenReturn(true, true, false);
         Mockito.when(rs.getInt("entity_id")).thenReturn(11, 22);
 
@@ -311,8 +305,8 @@ public class LocationRepositoryImplTest {
     }
 
     @Test
-    public void testGetEntityIdsAtLocation_ReturnsEmptyWhenResultSetNull() {
-        Mockito.when(dbInteractions.query(Mockito.anyString())).thenReturn(null);
+    public void testGetEntityIdsAtLocation_ReturnsEmptyWhenQueryFails() {
+        Mockito.when(dbInteractions.<Integer>query(Mockito.anyString(), any())).thenReturn(Collections.emptyList());
 
         LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);
 
@@ -324,8 +318,8 @@ public class LocationRepositoryImplTest {
     @Test
     public void testGetGridIdOfLocation_ReturnsGridWhenPresent() throws SQLException {
         ResultSet rs = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query("SELECT grid_id FROM viron.location_grid WHERE location_id = 5"))
-                .thenReturn(rs);
+        Mockito.when(dbInteractions.<Integer>queryOne(eq("SELECT grid_id FROM viron.location_grid WHERE location_id = 5"), any()))
+                .thenAnswer(mapsFirstRow(rs));
         Mockito.when(rs.next()).thenReturn(true);
         Mockito.when(rs.getInt("grid_id")).thenReturn(3);
 
@@ -337,7 +331,7 @@ public class LocationRepositoryImplTest {
     @Test
     public void testGetGridIdOfLocation_EmptyWhenNoRow() throws SQLException {
         ResultSet rs = Mockito.mock(ResultSet.class);
-        Mockito.when(dbInteractions.query(Mockito.anyString())).thenReturn(rs);
+        Mockito.when(dbInteractions.<Integer>queryOne(Mockito.anyString(), any())).thenAnswer(mapsFirstRow(rs));
         Mockito.when(rs.next()).thenReturn(false);
 
         LocationRepositoryImpl repository = new LocationRepositoryImpl(dbInteractions);

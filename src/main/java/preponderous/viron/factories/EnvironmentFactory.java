@@ -1,13 +1,10 @@
 package preponderous.viron.factories;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -113,47 +110,20 @@ public class EnvironmentFactory {
     }
 
     private int getNextEnvironmentId() {
-        ResultSet rs = dbInteractions.query("SELECT nextval('viron.environment_id_seq')");
-        if (rs == null) {
-            return -1;
-        }
-        try {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            log.error("Error getting next environment id", e);
-        }
-        return -1;
+        Optional<Integer> nextId = dbInteractions.queryOne("SELECT nextval('viron.environment_id_seq')",
+                rs -> rs.getInt(1));
+        return nextId.orElse(-1);
     }
 
     private int getNextGridId() {
-        ResultSet rs = dbInteractions.query("SELECT nextval('viron.grid_id_seq')");
-        if (rs == null) {
-            return -1;
-        }
-        try {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            log.error("Error getting next grid id", e);
-        }
-        return -1;
+        Optional<Integer> nextId = dbInteractions.queryOne("SELECT nextval('viron.grid_id_seq')",
+                rs -> rs.getInt(1));
+        return nextId.orElse(-1);
     }
 
     private int getNextLocationId() {
-        ResultSet rs = dbInteractions.query("SELECT nextval('viron.location_id_seq')");
-        if (rs == null) {
-            return -1;
-        }
-        try {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            log.error("Error getting next location id", e);
-        }
-        return -1;
+        Optional<Integer> nextId = dbInteractions.queryOne("SELECT nextval('viron.location_id_seq')",
+                rs -> rs.getInt(1));
+        return nextId.orElse(-1);
     }
 }
