@@ -35,6 +35,7 @@ public class GridRepositoryImplTest {
         Mockito.when(mockResultSet.getInt("grid_id")).thenReturn(1, 2);
         Mockito.when(mockResultSet.getInt("rows")).thenReturn(10, 20);
         Mockito.when(mockResultSet.getInt("columns")).thenReturn(5, 15);
+        Mockito.when(mockResultSet.getString("name")).thenReturn("battlefield", null);
 
         GridRepositoryImpl repository = new GridRepositoryImpl(dbInteractions);
 
@@ -44,9 +45,11 @@ public class GridRepositoryImplTest {
         assertThat(result.get(0).getGridId()).isEqualTo(1);
         assertThat(result.get(0).getRows()).isEqualTo(10);
         assertThat(result.get(0).getColumns()).isEqualTo(5);
+        assertThat(result.get(0).getName()).isEqualTo("battlefield");
         assertThat(result.get(1).getGridId()).isEqualTo(2);
         assertThat(result.get(1).getRows()).isEqualTo(20);
         assertThat(result.get(1).getColumns()).isEqualTo(15);
+        assertThat(result.get(1).getName()).isNull();
     }
 
     @Test
@@ -79,6 +82,7 @@ public class GridRepositoryImplTest {
         Mockito.when(mockResultSet.getInt("grid_id")).thenReturn(1);
         Mockito.when(mockResultSet.getInt("rows")).thenReturn(10);
         Mockito.when(mockResultSet.getInt("columns")).thenReturn(5);
+        Mockito.when(mockResultSet.getString("name")).thenReturn("battlefield");
 
         GridRepositoryImpl repository = new GridRepositoryImpl(dbInteractions);
 
@@ -88,6 +92,7 @@ public class GridRepositoryImplTest {
         assertThat(result.get().getGridId()).isEqualTo(1);
         assertThat(result.get().getRows()).isEqualTo(10);
         assertThat(result.get().getColumns()).isEqualTo(5);
+        assertThat(result.get().getName()).isEqualTo("battlefield");
     }
 
     @Test
@@ -174,5 +179,27 @@ public class GridRepositoryImplTest {
         GridRepositoryImpl repository = new GridRepositoryImpl(dbInteractions);
 
         assertThat(repository.findByEntityId(42)).isEmpty();
+    }
+
+    // ---- updateName ----
+
+    @Test
+    public void testUpdateName_ReturnsTrueWhenUpdateSucceeds() {
+        String query = "UPDATE viron.grid SET name = ? WHERE grid_id = ?";
+        Mockito.when(dbInteractions.update(query, "arena", 1)).thenReturn(true);
+
+        GridRepositoryImpl repository = new GridRepositoryImpl(dbInteractions);
+
+        assertThat(repository.updateName(1, "arena")).isTrue();
+    }
+
+    @Test
+    public void testUpdateName_ReturnsFalseWhenUpdateFails() {
+        String query = "UPDATE viron.grid SET name = ? WHERE grid_id = ?";
+        Mockito.when(dbInteractions.update(query, "arena", 1)).thenReturn(false);
+
+        GridRepositoryImpl repository = new GridRepositoryImpl(dbInteractions);
+
+        assertThat(repository.updateName(1, "arena")).isFalse();
     }
 }

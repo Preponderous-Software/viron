@@ -226,6 +226,27 @@
         }
       }
     },
+    "/api/v1/grids/{id}/name": {
+      "patch": {
+        "summary": "Update grid name",
+        "parameters": [{ "$ref": "#/components/parameters/GridIdParam" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/UpdateGridNameRequest" } }
+          }
+        },
+        "responses": {
+          "200": { "description": "Name updated" },
+          "404": {
+            "description": "Grid not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/locations": {
       "get": {
         "summary": "Get all locations",
@@ -726,8 +747,14 @@
         "properties": {
           "gridId": { "type": "integer" },
           "rows": { "type": "integer" },
-          "columns": { "type": "integer" }
+          "columns": { "type": "integer" },
+          "name": { "type": "string", "nullable": true }
         }
+      },
+      "UpdateGridNameRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": { "name": { "type": "string" } }
       },
       "LocationDTO": {
         "type": "object",

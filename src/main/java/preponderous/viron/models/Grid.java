@@ -10,11 +10,13 @@ public class Grid {
     private int gridId;
     private int rows;
     private int columns;
+    private String name;
 
-    public Grid(int gridId, int rows, int columns) {
+    public Grid(int gridId, int rows, int columns, String name) {
         this.gridId = gridId;
         this.rows = rows;
         this.columns = columns;
+        this.name = name;
     }
 
     @Override
@@ -23,6 +25,7 @@ public class Grid {
                 "gridId=" + gridId +
                 ", rows=" + rows +
                 ", columns=" + columns +
+                ", name='" + name + '\'' +
                 '}';
     }
 }

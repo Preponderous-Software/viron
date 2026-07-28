@@ -9,4 +9,5 @@ public interface GridRepository {
     Optional<Grid> findById(int id);
     List<Grid> findByEnvironmentId(int environmentId);
     Optional<Grid> findByEntityId(int entityId);
+    boolean updateName(int id, String name);
 }

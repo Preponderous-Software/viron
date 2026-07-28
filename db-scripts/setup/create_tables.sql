@@ -18,11 +18,12 @@ CREATE TABLE IF NOT EXISTS viron.location (
     y INT NOT NULL
 );
 
--- grid table (grid_id, columns, rows)
+-- grid table (grid_id, columns, rows, name)
 CREATE TABLE IF NOT EXISTS viron.grid (
     grid_id INT PRIMARY KEY,
     rows INT NOT NULL,
-    columns INT NOT NULL
+    columns INT NOT NULL,
+    name VARCHAR(255)
 );
 
 -- environment table (environment_id, name, creation_date)

@@ -21,7 +21,8 @@ public class GridRepositoryImpl implements GridRepository {
         int id = rs.getInt("grid_id");
         int rows = rs.getInt("rows");
         int columns = rs.getInt("columns");
-        return new Grid(id, rows, columns);
+        String name = rs.getString("name");
+        return new Grid(id, rows, columns, name);
     }
 
     @Override
@@ -47,5 +48,11 @@ public class GridRepositoryImpl implements GridRepository {
                 "(SELECT grid_id FROM viron.location_grid WHERE location_id in " +
                 "(SELECT location_id FROM viron.entity_location WHERE entity_id = ?))";
         return dbInteractions.queryOne(query, this::mapResultSetToGrid, entityId);
+    }
+
+    @Override
+    public boolean updateName(int id, String name) {
+        String query = "UPDATE viron.grid SET name = ? WHERE grid_id = ?";
+        return dbInteractions.update(query, name, id);
     }
 }

@@ -3,6 +3,7 @@ package preponderous.viron.controllers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -50,12 +51,12 @@ class GridControllerTest {
     @Test
     void getAllGrids_Success() throws Exception {
         List<Grid> grids = List.of(
-                new Grid(1, 10, 20),
-                new Grid(2, 30, 40)
+                new Grid(1, 10, 20, null),
+                new Grid(2, 30, 40, null)
         );
         List<GridDto> dtos = List.of(
-                new GridDto(1, 10, 20),
-                new GridDto(2, 30, 40)
+                new GridDto(1, 10, 20, null),
+                new GridDto(2, 30, 40, null)
         );
         when(gridRepository.findAll()).thenReturn(grids);
         when(gridMapper.toDtoList(grids)).thenReturn(dtos);
@@ -88,8 +89,8 @@ class GridControllerTest {
 
     @Test
     void getGridById_Success() throws Exception {
-        Grid grid = new Grid(1, 10, 20);
-        GridDto dto = new GridDto(1, 10, 20);
+        Grid grid = new Grid(1, 10, 20, "battlefield");
+        GridDto dto = new GridDto(1, 10, 20, "battlefield");
         when(gridRepository.findById(1)).thenReturn(Optional.of(grid));
         when(gridMapper.toDto(grid)).thenReturn(dto);
 
@@ -97,7 +98,8 @@ class GridControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gridId").value(1))
                 .andExpect(jsonPath("$.rows").value(10))
-                .andExpect(jsonPath("$.columns").value(20));
+                .andExpect(jsonPath("$.columns").value(20))
+                .andExpect(jsonPath("$.name").value("battlefield"));
 
         verify(gridRepository).findById(1);
         verify(gridMapper).toDto(grid);
@@ -127,8 +129,8 @@ class GridControllerTest {
 
     @Test
     void getGridsInEnvironment_Success() throws Exception {
-        List<Grid> grids = List.of(new Grid(1, 10, 20));
-        List<GridDto> dtos = List.of(new GridDto(1, 10, 20));
+        List<Grid> grids = List.of(new Grid(1, 10, 20, null));
+        List<GridDto> dtos = List.of(new GridDto(1, 10, 20, null));
         when(gridRepository.findByEnvironmentId(1)).thenReturn(grids);
         when(gridMapper.toDtoList(grids)).thenReturn(dtos);
 
@@ -167,8 +169,8 @@ class GridControllerTest {
 
     @Test
     void getGridOfEntity_Success() throws Exception {
-        Grid grid = new Grid(5, 15, 25);
-        GridDto dto = new GridDto(5, 15, 25);
+        Grid grid = new Grid(5, 15, 25, null);
+        GridDto dto = new GridDto(5, 15, 25, null);
         when(gridRepository.findByEntityId(1)).thenReturn(Optional.of(grid));
         when(gridMapper.toDto(grid)).thenReturn(dto);
 
@@ -200,5 +202,58 @@ class GridControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.message").isString());
+    }
+
+    // --- PATCH /api/v1/grids/{id}/name ---
+
+    @Test
+    void updateGridName_Success() throws Exception {
+        when(gridRepository.findById(1)).thenReturn(Optional.of(new Grid(1, 10, 20, null)));
+        when(gridRepository.updateName(1, "NewName")).thenReturn(true);
+
+        mockMvc.perform(patch("/api/v1/grids/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewName\"}"))
+                .andExpect(status().isOk());
+
+        verify(gridRepository).updateName(1, "NewName");
+    }
+
+    @Test
+    void updateGridName_NotFound() throws Exception {
+        when(gridRepository.findById(1)).thenReturn(Optional.empty());
+
+        mockMvc.perform(patch("/api/v1/grids/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewName\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Grid not found with id: 1"));
+
+        verify(gridRepository, never()).updateName(anyInt(), anyString());
+    }
+
+    @Test
+    void updateGridName_ThrowsException() throws Exception {
+        when(gridRepository.findById(1)).thenReturn(Optional.of(new Grid(1, 10, 20, null)));
+        when(gridRepository.updateName(1, "NewName")).thenThrow(new RuntimeException("Database error"));
+
+        mockMvc.perform(patch("/api/v1/grids/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"NewName\"}"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.message").isString());
+    }
+
+    @Test
+    void updateGridName_BlankName_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(patch("/api/v1/grids/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+
+        verify(gridRepository, never()).updateName(anyInt(), anyString());
     }
 }

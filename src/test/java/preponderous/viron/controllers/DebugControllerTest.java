@@ -72,7 +72,7 @@ class DebugControllerTest {
     @Test
     void createSampleData_Success() throws Exception {
         Environment environment = new Environment(1, "Sample Environment", "2024-01-01");
-        Grid grid = new Grid(1, 10, 10);
+        Grid grid = new Grid(1, 10, 10, null);
         List<Location> locations = buildLocationGrid(10, 10);
 
         when(environmentService.createEnvironment("Sample Environment", 1, 10)).thenReturn(environment);
@@ -119,7 +119,7 @@ class DebugControllerTest {
     @Test
     void createWorldAndPlaceEntity_Success() throws Exception {
         Environment environment = new Environment(2, "TestWorld", "2024-02-01");
-        Grid grid = new Grid(5, 5, 5);
+        Grid grid = new Grid(5, 5, 5, null);
         List<Location> locations = buildLocationGrid(5, 5);
 
         when(environmentService.createEnvironment("TestWorld", 1, 5)).thenReturn(environment);
@@ -150,7 +150,7 @@ class DebugControllerTest {
     @Test
     void createWorldAndPlaceEntity_ServiceException_Returns500() throws Exception {
         Environment environment = new Environment(3, "FailWorld", "2024-03-01");
-        Grid grid = new Grid(6, 5, 5);
+        Grid grid = new Grid(6, 5, 5, null);
 
         when(environmentService.createEnvironment("FailWorld", 1, 5)).thenReturn(environment);
         when(gridService.getGridsInEnvironment(3)).thenReturn(List.of(grid));
@@ -178,7 +178,7 @@ class DebugControllerTest {
     @Test
     void createWorldAndPlaceEntity_NoValidLocation_Returns400() throws Exception {
         Environment environment = new Environment(4, "EmptyWorld", "2024-04-01");
-        Grid grid = new Grid(7, 5, 5);
+        Grid grid = new Grid(7, 5, 5, null);
 
         when(environmentService.createEnvironment("EmptyWorld", 1, 5)).thenReturn(environment);
         when(gridService.getGridsInEnvironment(4)).thenReturn(List.of(grid));

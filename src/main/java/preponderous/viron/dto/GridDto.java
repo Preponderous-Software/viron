@@ -18,4 +18,7 @@ public class GridDto {
 
     @Schema(description = "Number of columns in the grid")
     private int columns;
+
+    @Schema(description = "Name of the grid, if set")
+    private String name;
 }
