@@ -5,11 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import preponderous.viron.dto.GridDto;
+import preponderous.viron.dto.UpdateGridNameRequest;
 import preponderous.viron.exceptions.NotFoundException;
+import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.mappers.GridMapper;
 import preponderous.viron.models.Grid;
 import preponderous.viron.repositories.GridRepository;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import java.util.List;
 
@@ -46,5 +49,19 @@ public class GridController {
         Grid grid = gridRepository.findByEntityId(entityId)
                 .orElseThrow(() -> new NotFoundException("Grid not found for entity: " + entityId));
         return gridMapper.toDto(grid);
+    }
+
+    @PatchMapping("/{id}/name")
+    public void updateGridName(@PathVariable @Min(1) int id, @Valid @RequestBody UpdateGridNameRequest request) {
+        String name = request.getName();
+        if (gridRepository.findById(id).isEmpty()) {
+            throw new NotFoundException("Grid not found with id: " + id);
+        }
+
+        if (!gridRepository.updateName(id, name)) {
+            throw new ServiceException("Failed to update name for grid " + id);
+        }
+
+        log.info("Updated name for grid {} to '{}'", id, name);
     }
 }

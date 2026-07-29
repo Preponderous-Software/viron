@@ -58,7 +58,7 @@ class TestGetAllGrids:
 class TestGetGridById:
     @patch('requests.get')
     def test_success(self, mock_get, mock_response):
-        mock_response.json.return_value = {'gridId': 1, 'rows': 10, 'columns': 20}
+        mock_response.json.return_value = {'gridId': 1, 'rows': 10, 'columns': 20, 'name': 'battlefield'}
         mock_get.return_value = mock_response
 
         grid = service.get_grid_by_id(1)
@@ -67,6 +67,7 @@ class TestGetGridById:
         assert grid.get_grid_id() == 1
         assert grid.get_rows() == 10
         assert grid.get_columns() == 20
+        assert grid.get_name() == 'battlefield'
         mock_get.assert_called_once_with(f"{BASE_URL}{API_PATH}/1", headers={})
 
     @patch('requests.get')
@@ -173,4 +174,30 @@ class TestGetGridOfEntity:
 
         with pytest.raises(Exception) as exc_info:
             service.get_grid_of_entity(1)
+        assert str(exc_info.value) == "Test error"
+
+
+class TestUpdateGridName:
+    @patch('requests.patch')
+    def test_success(self, mock_patch):
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
+        mock_patch.return_value = mock_response
+
+        result = service.update_grid_name(1, "NewName")
+
+        assert result is True
+        mock_patch.assert_called_once_with(
+            f"{BASE_URL}{API_PATH}/1/name",
+            json={"name": "NewName"},
+            headers={},
+        )
+
+    @patch('requests.patch')
+    def test_error(self, mock_patch):
+        mock_patch.side_effect = Exception("Test error")
+
+        with pytest.raises(Exception) as exc_info:
+            service.update_grid_name(1, "NewName")
         assert str(exc_info.value) == "Test error"

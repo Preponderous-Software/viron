@@ -40,3 +40,8 @@ class GridService:
         response = requests.get(f"{self.get_base_url()}/entity/{entity_id}", headers=self.get_auth_headers())
         response.raise_for_status()
         return Grid(**response.json())
+
+    def update_grid_name(self, grid_id: int, name: str) -> bool:
+        response = requests.patch(f"{self.get_base_url()}/{grid_id}/name", json={"name": name}, headers=self.get_auth_headers())
+        response.raise_for_status()
+        return response.status_code == 200

@@ -2,10 +2,11 @@
 # MIT License
 
 class Grid:
-    def __init__(self, gridId: int, rows: int, columns: int):
+    def __init__(self, gridId: int, rows: int, columns: int, name: str = None):
         self.grid_id = gridId
         self.rows = rows
         self.columns = columns
+        self.name = name
 
     def get_grid_id(self) -> int:
         return self.grid_id
@@ -25,5 +26,11 @@ class Grid:
     def set_columns(self, columns: int):
         self.columns = columns
 
+    def get_name(self) -> str:
+        return self.name
+
+    def set_name(self, name: str):
+        self.name = name
+
     def __str__(self) -> str:
-        return f"Grid{{grid_id={self.grid_id}, rows={self.rows}, columns={self.columns}}}"
+        return f"Grid{{grid_id={self.grid_id}, rows={self.rows}, columns={self.columns}, name={self.name}}}"

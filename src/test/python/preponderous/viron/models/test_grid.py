@@ -22,5 +22,14 @@ def test_get_set_columns(grid):
     grid.set_columns(25)
     assert grid.get_columns() == 25
 
+def test_name_defaults_to_none(grid):
+    assert grid.get_name() is None
+
+def test_get_set_name():
+    grid = Grid(1, 10, 20, "battlefield")
+    assert grid.get_name() == "battlefield"
+    grid.set_name("arena")
+    assert grid.get_name() == "arena"
+
 def test_str_representation(grid):
-    assert str(grid) == "Grid{grid_id=1, rows=10, columns=20}"
+    assert str(grid) == "Grid{grid_id=1, rows=10, columns=20, name=None}"

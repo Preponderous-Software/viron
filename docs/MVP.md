@@ -36,6 +36,7 @@ Deliver a working, tested API that supports:
 - [x] `GET /api/v1/grids/{id}` – Retrieve a grid by ID.
 - [x] `GET /api/v1/grids/environment/{environmentId}` – Retrieve all grids in an environment.
 - [x] `GET /api/v1/grids/entity/{entityId}` – Retrieve the grid containing a specific entity.
+- [x] `PATCH /api/v1/grids/{id}/name` – Update grid name (JSON body: `name`).
 
 ---
 
@@ -84,7 +85,8 @@ Deliver a working, tested API that supports:
 - [x] **EnvironmentDTO** – Public representation of an environment.
 - [x] **CreateEnvironmentRequest** – Request body for creating environments (name, number of grids, and grid dimensions as either `gridSize` or both `numRows` and `numColumns`).
 - [x] **UpdateEnvironmentNameRequest** – Request body for updating environment names.
-- [x] **GridDTO** – Public representation of a grid.
+- [x] **GridDTO** – Public representation of a grid (includes an optional `name`).
+- [x] **UpdateGridNameRequest** – Request body for updating grid names.
 - [x] **LocationDTO** – Public representation of a location.
 - [x] **EntityDTO** – Public representation of an entity.
 - [x] **CreateEntityRequest** – Request body for creating entities (name).
