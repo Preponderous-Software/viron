@@ -83,8 +83,8 @@ Each ticket is designed to:
   - `GET /api/v1/environments/{id}`
   - `GET /api/v1/environments/name/{name}`
   - `GET /api/v1/environments/entity/{entityId}`
-  - `POST /api/v1/environments/{name}/{numGrids}/{gridSize}`
-  - `PATCH /api/v1/environments/{id}/name/{name}`
+  - `POST /api/v1/environments` — JSON body: `name`, `numGrids`, and grid dimensions as either `gridSize` or both `numRows` and `numColumns`
+  - `PATCH /api/v1/environments/{id}/name` — JSON body: `name`
   - `DELETE /api/v1/environments/{id}`
 - Add exception handling and proper HTTP status codes
 - Write controller tests (@WebMvcTest or @SpringBootTest)
