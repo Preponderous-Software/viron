@@ -207,7 +207,7 @@ public class EntityServiceTest {
 
         assertThatThrownBy(() -> entityService.createEntity("Bob"))
                 .isInstanceOf(EntityServiceException.class)
-                .hasMessage("Error creating entity");
+                .hasMessage("Created entity response was null");
     }
 
     @Test

@@ -9,6 +9,7 @@ import preponderous.viron.config.ServiceConfig;
 import preponderous.viron.dto.CreateEntityRequest;
 import preponderous.viron.dto.UpdateEntityNameRequest;
 import preponderous.viron.exceptions.EntityServiceException;
+import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.models.Entity;
 
 import java.util.Arrays;
@@ -147,6 +148,8 @@ public class EntityService {
 
             return response.getBody();
 
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to create entity with name {}: {}", name, e.getMessage());
             throw new EntityServiceException("Error creating entity", e);
