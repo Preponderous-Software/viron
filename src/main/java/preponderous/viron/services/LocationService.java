@@ -53,6 +53,8 @@ public class LocationService {
             throw new NotFoundException("Location not found with id: " + id);
         } catch (HttpClientErrorException.NotFound e) {
             throw new NotFoundException("Location not found with id: " + id);
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error getting location by id {}: {}", id, e.getMessage());
             throw new ServiceException("Error getting location by id: " + id, e);
@@ -104,6 +106,8 @@ public class LocationService {
             throw new NotFoundException("Location not found for entity: " + entityId);
         } catch (HttpClientErrorException.NotFound e) {
             throw new NotFoundException("Location not found for entity: " + entityId);
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error getting location of entity {}: {}", entityId, e.getMessage());
             throw new ServiceException("Error getting location of entity: " + entityId, e);
@@ -128,6 +132,8 @@ public class LocationService {
             }
         } catch (HttpClientErrorException.NotFound e) {
             throw new NotFoundException("Location or entity not found");
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error adding entity {} to location {}: {}", entityId, locationId, e.getMessage());
             throw new ServiceException("Error adding entity to location", e);
@@ -152,6 +158,8 @@ public class LocationService {
             }
         } catch (HttpClientErrorException.NotFound e) {
             throw new NotFoundException("Location or entity not found");
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error removing entity {} from location {}: {}", entityId, locationId, e.getMessage());
             throw new ServiceException("Error removing entity from location", e);
@@ -175,6 +183,8 @@ public class LocationService {
             }
         } catch (HttpClientErrorException.NotFound e) {
             throw new NotFoundException("Entity not found");
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error removing entity {} from current location: {}", entityId, e.getMessage());
             throw new ServiceException("Error removing entity from current location", e);
@@ -212,6 +222,8 @@ public class LocationService {
             throw new ServiceException("Failed to check occupancy for location: " + locationId);
         } catch (HttpClientErrorException.NotFound e) {
             throw new NotFoundException("Location not found with id: " + locationId);
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error checking occupancy for location {}: {}", locationId, e.getMessage());
             throw new ServiceException("Error checking occupancy for location: " + locationId, e);
@@ -241,6 +253,8 @@ public class LocationService {
             throw new NotFoundException("Entity or location not found");
         } catch (HttpClientErrorException.Conflict e) {
             throw new ConflictException("Target location " + locationId + " is already occupied");
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error moving entity {} to location {}: {}", entityId, locationId, e.getMessage());
             throw new ServiceException("Error moving entity to location", e);
