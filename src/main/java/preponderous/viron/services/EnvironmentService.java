@@ -4,24 +4,30 @@
 package preponderous.viron.services;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import lombok.extern.slf4j.Slf4j;
 import preponderous.viron.config.AuthTokenInterceptor;
 import preponderous.viron.config.ServiceConfig;
 import preponderous.viron.dto.CreateEnvironmentRequest;
 import preponderous.viron.dto.UpdateEnvironmentNameRequest;
+import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.models.Environment;
 
 @Service
+@Slf4j
 public class EnvironmentService {
     private final RestTemplateBuilder restTemplateBuilder;
     private final ServiceConfig serviceConfig;
@@ -35,39 +41,70 @@ public class EnvironmentService {
     }
 
     public List<Environment> getAllEnvironments() {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        ResponseEntity<Environment[]> response = restTemplate.exchange(baseUrl, HttpMethod.GET, null, Environment[].class);
-        if (response.getStatusCode().isError()) {
-            throw new ServiceException("Error getting environments");
+        try {
+            RestTemplate restTemplate = restTemplateBuilder.build();
+            ResponseEntity<Environment[]> response = restTemplate.exchange(baseUrl, HttpMethod.GET, null, Environment[].class);
+            return response.getStatusCode() == HttpStatus.OK && response.getBody() != null
+                    ? Arrays.asList(response.getBody())
+                    : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error getting environments: {}", e.getMessage());
+            throw new ServiceException("Error getting environments", e);
         }
-        return Arrays.asList(response.getBody());
     }
 
     public Environment getEnvironmentById(int id) {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        ResponseEntity<Environment> response = restTemplate.exchange(baseUrl + "/{id}", HttpMethod.GET, null, Environment.class, id);
-        if (response.getStatusCode().isError()) {
-            throw new ServiceException("Error getting environment by id");
+        try {
+            RestTemplate restTemplate = restTemplateBuilder.build();
+            ResponseEntity<Environment> response = restTemplate.exchange(baseUrl + "/{id}", HttpMethod.GET, null, Environment.class, id);
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                return response.getBody();
+            }
+            throw new NotFoundException("Environment not found with id: " + id);
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("Environment not found with id: " + id);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error getting environment by id {}: {}", id, e.getMessage());
+            throw new ServiceException("Error getting environment by id: " + id, e);
         }
-        return response.getBody();
     }
 
     public Environment getEnvironmentByName(String name) {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        ResponseEntity<Environment> response = restTemplate.exchange(baseUrl + "/name/{name}", HttpMethod.GET, null, Environment.class, name);
-        if (response.getStatusCode().isError()) {
-            throw new ServiceException("Error getting environment by name");
+        try {
+            RestTemplate restTemplate = restTemplateBuilder.build();
+            ResponseEntity<Environment> response = restTemplate.exchange(baseUrl + "/name/{name}", HttpMethod.GET, null, Environment.class, name);
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                return response.getBody();
+            }
+            throw new NotFoundException("Environment not found with name: " + name);
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("Environment not found with name: " + name);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error getting environment by name {}: {}", name, e.getMessage());
+            throw new ServiceException("Error getting environment by name: " + name, e);
         }
-        return response.getBody();
     }
 
     public Environment getEnvironmentOfEntity(int entityId) {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        ResponseEntity<Environment> response = restTemplate.exchange(baseUrl + "/entity/{entityId}", HttpMethod.GET, null, Environment.class, entityId);
-        if (response.getStatusCode().isError()) {
-            throw new ServiceException("Error getting environment of entity");
+        try {
+            RestTemplate restTemplate = restTemplateBuilder.build();
+            ResponseEntity<Environment> response = restTemplate.exchange(baseUrl + "/entity/{entityId}", HttpMethod.GET, null, Environment.class, entityId);
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                return response.getBody();
+            }
+            throw new NotFoundException("Environment not found for entity: " + entityId);
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("Environment not found for entity: " + entityId);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error getting environment of entity {}: {}", entityId, e.getMessage());
+            throw new ServiceException("Error getting environment of entity: " + entityId, e);
         }
-        return response.getBody();
     }
 
     /**
@@ -90,40 +127,71 @@ public class EnvironmentService {
     }
 
     private Environment createEnvironment(CreateEnvironmentRequest request) {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        ResponseEntity<Environment> response = restTemplate.exchange(
-                baseUrl,
-                HttpMethod.POST,
-                new HttpEntity<>(request),
-                Environment.class
-        );
-        if (response.getStatusCode().isError()) {
+        try {
+            RestTemplate restTemplate = restTemplateBuilder.build();
+            ResponseEntity<Environment> response = restTemplate.exchange(
+                    baseUrl,
+                    HttpMethod.POST,
+                    new HttpEntity<>(request),
+                    Environment.class
+            );
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return response.getBody();
+            }
             throw new ServiceException("Error creating environment");
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error creating environment {}: {}", request.getName(), e.getMessage());
+            throw new ServiceException("Error creating environment", e);
         }
-        return response.getBody();
     }
 
     public boolean deleteEnvironment(int id) {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        ResponseEntity<Void> response = restTemplate.exchange(baseUrl + "/{id}", HttpMethod.DELETE, null, Void.class, id);
-        if (response.getStatusCode().isError()) {
-            throw new ServiceException("Error deleting environment");
+        try {
+            RestTemplate restTemplate = restTemplateBuilder.build();
+            ResponseEntity<Void> response = restTemplate.exchange(baseUrl + "/{id}", HttpMethod.DELETE, null, Void.class, id);
+            if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new NotFoundException("Environment not found with id: " + id);
+            }
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new ServiceException("Error deleting environment");
+            }
+            return true;
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("Environment not found with id: " + id);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error deleting environment {}: {}", id, e.getMessage());
+            throw new ServiceException("Error deleting environment", e);
         }
-        return response.getStatusCode().is2xxSuccessful();
     }
 
     public boolean updateEnvironmentName(int id, String name) {
-        RestTemplate restTemplate = restTemplateBuilder.build();
-        ResponseEntity<Void> response = restTemplate.exchange(
-                baseUrl + "/{id}/name",
-                HttpMethod.PATCH,
-                new HttpEntity<>(new UpdateEnvironmentNameRequest(name)),
-                Void.class,
-                id
-        );
-        if (response.getStatusCode().isError()) {
-            throw new ServiceException("Error updating environment name");
+        try {
+            RestTemplate restTemplate = restTemplateBuilder.build();
+            ResponseEntity<Void> response = restTemplate.exchange(
+                    baseUrl + "/{id}/name",
+                    HttpMethod.PATCH,
+                    new HttpEntity<>(new UpdateEnvironmentNameRequest(name)),
+                    Void.class,
+                    id
+            );
+            if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new NotFoundException("Environment not found with id: " + id);
+            }
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new ServiceException("Error updating environment name");
+            }
+            return true;
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("Environment not found with id: " + id);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error updating name for environment {}: {}", id, e.getMessage());
+            throw new ServiceException("Error updating environment name", e);
         }
-        return response.getStatusCode().is2xxSuccessful();
     }
 }
