@@ -32,7 +32,7 @@ Establish the core building blocks: project structure, models, DTOs, mapping, re
 Implement core service logic to support the REST API.
 
 11. **EnvironmentService** — Create, retrieve, update name, delete (cascade).  
-12. **GridService** — Lookups by ID, environment, or entity.  
+12. **GridService** — Lookups by ID, environment, or entity; update name.  
 13. **LocationService** — Manage locations, add/remove entities, lookups.  
 14. **EntityService** — Create, retrieve, delete entities and handle detach.
 
