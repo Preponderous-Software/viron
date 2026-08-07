@@ -188,6 +188,35 @@ public class LocationServiceTest {
                 .hasMessage("Error getting locations in grid: 7");
     }
 
+    // getUnoccupiedLocationsInGrid
+
+    @Test
+    void testGetUnoccupiedLocationsInGrid_Success_ReturnsLocations() {
+        Location[] locations = {new Location(1, 0, 0), new Location(2, 0, 1)};
+        Mockito.when(restTemplate.getForEntity(eq(BASE_URL + "/grid/{gridId}/unoccupied"), eq(Location[].class), eq(7)))
+                .thenReturn(ResponseEntity.ok(locations));
+
+        assertThat(locationService.getUnoccupiedLocationsInGrid(7)).hasSize(2);
+    }
+
+    @Test
+    void testGetUnoccupiedLocationsInGrid_NullBody_ReturnsEmptyList() {
+        Mockito.when(restTemplate.getForEntity(eq(BASE_URL + "/grid/{gridId}/unoccupied"), eq(Location[].class), eq(7)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        assertThat(locationService.getUnoccupiedLocationsInGrid(7)).isEmpty();
+    }
+
+    @Test
+    void testGetUnoccupiedLocationsInGrid_RestTemplateThrows_WrapsInServiceException() {
+        Mockito.when(restTemplate.getForEntity(eq(BASE_URL + "/grid/{gridId}/unoccupied"), eq(Location[].class), eq(7)))
+                .thenThrow(new RestClientException("boom"));
+
+        assertThatThrownBy(() -> locationService.getUnoccupiedLocationsInGrid(7))
+                .isExactlyInstanceOf(ServiceException.class)
+                .hasMessage("Error getting unoccupied locations in grid: 7");
+    }
+
     // getLocationOfEntity
 
     @Test
@@ -486,6 +515,45 @@ public class LocationServiceTest {
         assertThatThrownBy(() -> locationService.isLocationOccupied(5))
                 .isExactlyInstanceOf(ServiceException.class)
                 .hasMessage("Error checking occupancy for location: 5");
+    }
+
+    // getNeighbors
+
+    @Test
+    void testGetNeighbors_Success_ReturnsLocations() {
+        Location[] neighbors = {new Location(4, 0, 1), new Location(6, 1, 0)};
+        Mockito.when(restTemplate.getForEntity(eq(BASE_URL + "/{locationId}/neighbors"), eq(Location[].class), eq(5)))
+                .thenReturn(ResponseEntity.ok(neighbors));
+
+        assertThat(locationService.getNeighbors(5)).hasSize(2);
+    }
+
+    @Test
+    void testGetNeighbors_NullBody_ReturnsEmptyList() {
+        Mockito.when(restTemplate.getForEntity(eq(BASE_URL + "/{locationId}/neighbors"), eq(Location[].class), eq(5)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        assertThat(locationService.getNeighbors(5)).isEmpty();
+    }
+
+    @Test
+    void testGetNeighbors_HttpNotFound_ThrowsNotFoundException() {
+        Mockito.when(restTemplate.getForEntity(eq(BASE_URL + "/{locationId}/neighbors"), eq(Location[].class), eq(5)))
+                .thenThrow(HttpClientErrorException.NotFound.class);
+
+        assertThatThrownBy(() -> locationService.getNeighbors(5))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Location not found with id: 5");
+    }
+
+    @Test
+    void testGetNeighbors_RestTemplateThrows_WrapsInServiceException() {
+        Mockito.when(restTemplate.getForEntity(eq(BASE_URL + "/{locationId}/neighbors"), eq(Location[].class), eq(5)))
+                .thenThrow(new RestClientException("boom"));
+
+        assertThatThrownBy(() -> locationService.getNeighbors(5))
+                .isExactlyInstanceOf(ServiceException.class)
+                .hasMessage("Error getting neighbors of location: 5");
     }
 
     // moveEntityToLocation

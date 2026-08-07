@@ -2,14 +2,20 @@ package preponderous.viron.services;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import preponderous.viron.config.ServiceConfig;
+import preponderous.viron.dto.UpdateGridNameRequest;
+import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.models.Grid;
 
@@ -24,6 +30,7 @@ import static org.mockito.ArgumentMatchers.eq;
 public class GridServiceTest {
 
     private static final String BASE_URL = "http://localhost:8080/api/v1/grids";
+    private static final String NAME_URL = BASE_URL + "/{id}/name";
 
     private RestTemplate restTemplate;
     private GridService gridService;
@@ -41,6 +48,10 @@ public class GridServiceTest {
         serviceConfig.setVironPort(8080);
 
         gridService = new GridService(restTemplateBuilder, serviceConfig);
+    }
+
+    private static ArgumentCaptor<HttpEntity> requestEntityCaptor() {
+        return ArgumentCaptor.forClass(HttpEntity.class);
     }
 
     @Test
@@ -146,5 +157,65 @@ public class GridServiceTest {
         assertThatThrownBy(() -> gridService.getGridOfEntity(9))
                 .isInstanceOf(ServiceException.class)
                 .hasMessageContaining("Failed to fetch grid for entity: 9");
+    }
+
+    @Test
+    void testUpdateGridName_Success_PatchesWithNameBody() {
+        Mockito.when(restTemplate.exchange(
+                        eq(NAME_URL), eq(HttpMethod.PATCH), any(HttpEntity.class), eq(Void.class), eq(1)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        assertThat(gridService.updateGridName(1, "Renamed")).isTrue();
+
+        ArgumentCaptor<HttpEntity> captor = requestEntityCaptor();
+        Mockito.verify(restTemplate).exchange(
+                eq(NAME_URL), eq(HttpMethod.PATCH), captor.capture(), eq(Void.class), eq(1));
+        UpdateGridNameRequest request = (UpdateGridNameRequest) captor.getValue().getBody();
+        assertThat(request).isNotNull();
+        assertThat(request.getName()).isEqualTo("Renamed");
+    }
+
+    @Test
+    void testUpdateGridName_NotFoundStatus_ThrowsNotFoundException() {
+        Mockito.when(restTemplate.exchange(
+                        eq(NAME_URL), eq(HttpMethod.PATCH), any(HttpEntity.class), eq(Void.class), eq(1)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+
+        assertThatThrownBy(() -> gridService.updateGridName(1, "Renamed"))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Grid not found with id: 1");
+    }
+
+    @Test
+    void testUpdateGridName_NotFoundResponse_ThrowsNotFoundException() {
+        Mockito.when(restTemplate.exchange(
+                        eq(NAME_URL), eq(HttpMethod.PATCH), any(HttpEntity.class), eq(Void.class), eq(1)))
+                .thenThrow(HttpClientErrorException.NotFound.class);
+
+        assertThatThrownBy(() -> gridService.updateGridName(1, "Renamed"))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Grid not found with id: 1");
+    }
+
+    @Test
+    void testUpdateGridName_NonSuccessStatus_ThrowsServiceException() {
+        Mockito.when(restTemplate.exchange(
+                        eq(NAME_URL), eq(HttpMethod.PATCH), any(HttpEntity.class), eq(Void.class), eq(1)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        assertThatThrownBy(() -> gridService.updateGridName(1, "Renamed"))
+                .isExactlyInstanceOf(ServiceException.class)
+                .hasMessage("Failed to update grid name");
+    }
+
+    @Test
+    void testUpdateGridName_RestTemplateThrows_WrapsInServiceException() {
+        Mockito.when(restTemplate.exchange(
+                        eq(NAME_URL), eq(HttpMethod.PATCH), any(HttpEntity.class), eq(Void.class), eq(1)))
+                .thenThrow(new RestClientException("boom"));
+
+        assertThatThrownBy(() -> gridService.updateGridName(1, "Renamed"))
+                .isExactlyInstanceOf(ServiceException.class)
+                .hasMessage("Failed to update grid name");
     }
 }

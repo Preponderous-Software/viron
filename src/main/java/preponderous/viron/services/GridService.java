@@ -3,13 +3,17 @@ package preponderous.viron.services;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import preponderous.viron.config.AuthTokenInterceptor;
 import preponderous.viron.config.ServiceConfig;
+import preponderous.viron.dto.UpdateGridNameRequest;
+import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.models.Grid;
 
@@ -82,6 +86,33 @@ public class GridService {
         } catch (Exception e) {
             log.error("Error getting grid for entity {}: {}", entityId, e.getMessage());
             throw new ServiceException("Failed to fetch grid for entity: " + entityId, e);
+        }
+    }
+
+    public boolean updateGridName(int id, String name) {
+        try {
+            RestTemplate restTemplate = restTemplateBuilder.build();
+            ResponseEntity<Void> response = restTemplate.exchange(
+                    baseUrl + "/{id}/name",
+                    HttpMethod.PATCH,
+                    new HttpEntity<>(new UpdateGridNameRequest(name)),
+                    Void.class,
+                    id
+            );
+            if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new NotFoundException("Grid not found with id: " + id);
+            }
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new ServiceException("Failed to update grid name");
+            }
+            return true;
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("Grid not found with id: " + id);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error updating name for grid {}: {}", id, e.getMessage());
+            throw new ServiceException("Failed to update grid name", e);
         }
     }
 }
