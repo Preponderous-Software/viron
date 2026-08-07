@@ -93,6 +93,22 @@ public class LocationService {
         }
     }
 
+    public List<Location> getUnoccupiedLocationsInGrid(int gridId) {
+        try {
+            ResponseEntity<Location[]> response = restTemplate.getForEntity(
+                    baseUrl + "/grid/{gridId}/unoccupied",
+                    Location[].class,
+                    gridId
+            );
+            return response.getStatusCode() == HttpStatus.OK && response.getBody() != null
+                    ? Arrays.asList(response.getBody())
+                    : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error getting unoccupied locations in grid {}: {}", gridId, e.getMessage());
+            throw new ServiceException("Error getting unoccupied locations in grid: " + gridId, e);
+        }
+    }
+
     public Location getLocationOfEntity(int entityId) {
         try {
             ResponseEntity<Location> response = restTemplate.getForEntity(
@@ -227,6 +243,24 @@ public class LocationService {
         } catch (Exception e) {
             log.error("Error checking occupancy for location {}: {}", locationId, e.getMessage());
             throw new ServiceException("Error checking occupancy for location: " + locationId, e);
+        }
+    }
+
+    public List<Location> getNeighbors(int locationId) {
+        try {
+            ResponseEntity<Location[]> response = restTemplate.getForEntity(
+                    baseUrl + "/{locationId}/neighbors",
+                    Location[].class,
+                    locationId
+            );
+            return response.getStatusCode() == HttpStatus.OK && response.getBody() != null
+                    ? Arrays.asList(response.getBody())
+                    : Collections.emptyList();
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new NotFoundException("Location not found with id: " + locationId);
+        } catch (Exception e) {
+            log.error("Error getting neighbors of location {}: {}", locationId, e.getMessage());
+            throw new ServiceException("Error getting neighbors of location: " + locationId, e);
         }
     }
 
