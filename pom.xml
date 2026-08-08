@@ -10,7 +10,7 @@
     </parent>
     <groupId>preponderous</groupId>
     <artifactId>viron</artifactId>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.7.0-SNAPSHOT-8-8-2026</version>
     <name>viron</name>
     <description>Environment manager</description>
     <properties>
