@@ -12,6 +12,7 @@ import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.mappers.LocationMapper;
 import preponderous.viron.models.Location;
+import preponderous.viron.repositories.EntityRepository;
 import preponderous.viron.repositories.LocationRepository;
 
 import jakarta.validation.constraints.Min;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 @Validated
 public class LocationController {
     private final LocationRepository locationRepository;
+    private final EntityRepository entityRepository;
     private final LocationMapper locationMapper;
 
     @GetMapping
@@ -66,10 +68,26 @@ public class LocationController {
         return locationMapper.toDto(location);
     }
 
+    /**
+     * Places an unplaced entity at {@code locationId}. An entity occupies at most one location,
+     * so a request for an entity that is already placed elsewhere is a conflict; a request for an
+     * entity already at the target is a no-op, keeping the {@code PUT} idempotent.
+     */
     @PutMapping("/{locationId}/entity/{entityId}")
     public void addEntityToLocation(@PathVariable("entityId") @Min(1) int entityId, @PathVariable("locationId") @Min(1) int locationId) {
         if (locationRepository.findById(locationId).isEmpty()) {
             throw new NotFoundException("Location not found with id: " + locationId);
+        }
+        if (entityRepository.findById(entityId).isEmpty()) {
+            throw new NotFoundException("Entity not found with id: " + entityId);
+        }
+        Optional<Location> currentLocation = locationRepository.findByEntityId(entityId);
+        if (currentLocation.isPresent()) {
+            if (currentLocation.get().getLocationId() == locationId) {
+                return;
+            }
+            throw new ConflictException("Entity " + entityId + " is already placed at location "
+                    + currentLocation.get().getLocationId());
         }
         if (!locationRepository.addEntityToLocation(entityId, locationId)) {
             throw new ServiceException("Failed to add entity " + entityId + " to location " + locationId);

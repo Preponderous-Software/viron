@@ -50,7 +50,7 @@ Deliver a working, tested API that supports:
 - [x] `GET /api/v1/locations/{locationId}/entities` – Retrieve the IDs of the entities at a location.
 - [x] `GET /api/v1/locations/{locationId}/occupied` – Report whether a location holds any entities.
 - [x] `GET /api/v1/locations/{locationId}/neighbors` – Retrieve the locations adjacent to a location within its grid.
-- [x] `PUT /api/v1/locations/{locationId}/entity/{entityId}` – Add an entity to a location.
+- [x] `PUT /api/v1/locations/{locationId}/entity/{entityId}` – Place an unplaced entity at a location (no-op when the entity is already there, conflict when it is placed elsewhere).
 - [x] `PUT /api/v1/locations/{locationId}/entity/{entityId}/move` – Move a placed entity to an adjacent, unoccupied location in the same grid.
 - [x] `DELETE /api/v1/locations/{locationId}/entity/{entityId}` – Remove an entity from a specific location.
 - [x] `DELETE /api/v1/locations/entity/{entityId}` – Remove an entity from its current location.

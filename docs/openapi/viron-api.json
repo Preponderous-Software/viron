@@ -370,14 +370,21 @@
     "/api/v1/locations/{locationId}/entity/{entityId}": {
       "put": {
         "summary": "Add entity to location",
+        "description": "Places an unplaced entity at the location. An entity occupies at most one location, so the request is a no-op when the entity is already at that location and a conflict when it is placed elsewhere.",
         "parameters": [
           { "$ref": "#/components/parameters/LocationIdParam" },
           { "$ref": "#/components/parameters/EntityIdParam" }
         ],
         "responses": {
-          "200": { "description": "Entity added" },
+          "200": { "description": "Entity added, or already present at that location" },
           "404": {
-            "description": "Location not found with that id",
+            "description": "Location or entity not found with that id",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "409": {
+            "description": "Entity is already placed at a different location",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }

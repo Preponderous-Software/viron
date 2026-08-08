@@ -1,6 +1,7 @@
 package preponderous.viron.repositories;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -517,6 +518,45 @@ public class EntityRepositoryImplTest {
 
         // Assert
         assertThat(result).isFalse();
+    }
+
+    @Test
+    public void testDeleteById_ClearsPlacementBeforeDeletingEntity() {
+        // Arrange
+        int entityId = 1;
+        Mockito.when(dbInteractions.update("DELETE FROM viron.entity_location WHERE entity_id = ?", entityId))
+                .thenReturn(true);
+        Mockito.when(dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = ?", entityId))
+                .thenReturn(true);
+
+        EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
+
+        // Act
+        boolean result = repository.deleteById(entityId);
+
+        // Assert
+        assertThat(result).isTrue();
+        InOrder inOrder = Mockito.inOrder(dbInteractions);
+        inOrder.verify(dbInteractions).update("DELETE FROM viron.entity_location WHERE entity_id = ?", entityId);
+        inOrder.verify(dbInteractions).update("DELETE FROM viron.entity WHERE entity_id = ?", entityId);
+    }
+
+    @Test
+    public void testDeleteById_UnplacedEntity_ReturnsTrueEvenThoughNoPlacementWasCleared() {
+        // Arrange
+        int entityId = 1;
+        Mockito.when(dbInteractions.update("DELETE FROM viron.entity_location WHERE entity_id = ?", entityId))
+                .thenReturn(false); // no placement row existed
+        Mockito.when(dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = ?", entityId))
+                .thenReturn(true);
+
+        EntityRepositoryImpl repository = new EntityRepositoryImpl(dbInteractions);
+
+        // Act
+        boolean result = repository.deleteById(entityId);
+
+        // Assert
+        assertThat(result).isTrue();
     }
 
     @Test

@@ -12,7 +12,9 @@ import preponderous.viron.config.DbConfig;
 import preponderous.viron.database.DbInteractions;
 import preponderous.viron.dto.LocationDto;
 import preponderous.viron.mappers.LocationMapper;
+import preponderous.viron.models.Entity;
 import preponderous.viron.models.Location;
+import preponderous.viron.repositories.EntityRepository;
 import preponderous.viron.repositories.LocationRepository;
 
 import java.util.Collections;
@@ -34,6 +36,9 @@ class LocationControllerTest {
 
     @MockBean
     private LocationRepository locationRepository;
+
+    @MockBean
+    private EntityRepository entityRepository;
 
     @MockBean
     private LocationMapper locationMapper;
@@ -332,6 +337,8 @@ class LocationControllerTest {
     @Test
     void addEntityToLocation_Success() throws Exception {
         when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
+        when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "Entity1", "2024-01-01")));
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.empty());
         when(locationRepository.addEntityToLocation(1, 2)).thenReturn(true);
 
         mockMvc.perform(put("/api/v1/locations/2/entity/1"))
@@ -348,11 +355,67 @@ class LocationControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("Location not found with id: 2"));
+
+        verify(locationRepository, never()).addEntityToLocation(anyInt(), anyInt());
+    }
+
+    @Test
+    void addEntityToLocation_EntityNotFound() throws Exception {
+        when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
+        when(entityRepository.findById(1)).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/v1/locations/2/entity/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Entity not found with id: 1"));
+
+        verify(locationRepository, never()).addEntityToLocation(anyInt(), anyInt());
+    }
+
+    @Test
+    void addEntityToLocation_AlreadyAtTargetLocation_IsNoOp() throws Exception {
+        when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
+        when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "Entity1", "2024-01-01")));
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.of(new Location(2, 10, 20)));
+
+        mockMvc.perform(put("/api/v1/locations/2/entity/1"))
+                .andExpect(status().isOk());
+
+        verify(locationRepository, never()).addEntityToLocation(anyInt(), anyInt());
+    }
+
+    @Test
+    void addEntityToLocation_AlreadyAtAnotherLocation_Conflict() throws Exception {
+        when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
+        when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "Entity1", "2024-01-01")));
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.of(new Location(7, 30, 40)));
+
+        mockMvc.perform(put("/api/v1/locations/2/entity/1"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value("Entity 1 is already placed at location 7"));
+
+        verify(locationRepository, never()).addEntityToLocation(anyInt(), anyInt());
+    }
+
+    @Test
+    void addEntityToLocation_UpdateFails() throws Exception {
+        when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
+        when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "Entity1", "2024-01-01")));
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.empty());
+        when(locationRepository.addEntityToLocation(1, 2)).thenReturn(false);
+
+        mockMvc.perform(put("/api/v1/locations/2/entity/1"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.message").value("Failed to add entity 1 to location 2"));
     }
 
     @Test
     void addEntityToLocation_RepositoryThrowsException() throws Exception {
         when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
+        when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "Entity1", "2024-01-01")));
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.empty());
         when(locationRepository.addEntityToLocation(1, 2)).thenThrow(new RuntimeException("Database error"));
 
         mockMvc.perform(put("/api/v1/locations/2/entity/1"))

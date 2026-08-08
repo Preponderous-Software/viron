@@ -307,6 +307,30 @@ public class LocationServiceTest {
     }
 
     @Test
+    void testAddEntityToLocation_ConflictStatus_ThrowsConflictException() {
+        Mockito.when(restTemplate.exchange(
+                        eq(ENTITY_AT_LOCATION_URL), eq(HttpMethod.PUT), nullRequestEntity(),
+                        eq(Void.class), eq(5), eq(2)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.CONFLICT));
+
+        assertThatThrownBy(() -> locationService.addEntityToLocation(2, 5))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Entity 2 is already placed at another location");
+    }
+
+    @Test
+    void testAddEntityToLocation_HttpConflict_ThrowsConflictException() {
+        Mockito.when(restTemplate.exchange(
+                        eq(ENTITY_AT_LOCATION_URL), eq(HttpMethod.PUT), nullRequestEntity(),
+                        eq(Void.class), eq(5), eq(2)))
+                .thenThrow(HttpClientErrorException.Conflict.class);
+
+        assertThatThrownBy(() -> locationService.addEntityToLocation(2, 5))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Entity 2 is already placed at another location");
+    }
+
+    @Test
     void testAddEntityToLocation_RestTemplateThrows_WrapsInServiceException() {
         Mockito.when(restTemplate.exchange(
                         eq(ENTITY_AT_LOCATION_URL), eq(HttpMethod.PUT), nullRequestEntity(),

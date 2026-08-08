@@ -84,10 +84,18 @@ public class EntityRepositoryImpl implements EntityRepository {
         return null;
     }
 
+    /**
+     * Deletes the entity and its placement, if any.
+     *
+     * <p>{@code viron.entity_location} carries a foreign key onto {@code viron.entity}, so the
+     * placement row has to be cleared first or the entity delete is rejected by the constraint.
+     * An entity that is not placed has no row to clear, which is why the first statement's result
+     * is not part of the outcome — only the entity delete itself is reported.
+     */
     @Override
     public boolean deleteById(int id) {
-        String query = "DELETE FROM viron.entity WHERE entity_id = ?";
-        return dbInteractions.update(query, id);
+        dbInteractions.update("DELETE FROM viron.entity_location WHERE entity_id = ?", id);
+        return dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = ?", id);
     }
 
     @Override
