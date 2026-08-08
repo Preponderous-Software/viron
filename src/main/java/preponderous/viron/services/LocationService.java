@@ -143,11 +143,16 @@ public class LocationService {
             if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
                 throw new NotFoundException("Location or entity not found");
             }
+            if (response.getStatusCode() == HttpStatus.CONFLICT) {
+                throw new ConflictException("Entity " + entityId + " is already placed at another location");
+            }
             if (!response.getStatusCode().is2xxSuccessful()) {
                 throw new ServiceException("Failed to add entity to location");
             }
         } catch (HttpClientErrorException.NotFound e) {
             throw new NotFoundException("Location or entity not found");
+        } catch (HttpClientErrorException.Conflict e) {
+            throw new ConflictException("Entity " + entityId + " is already placed at another location");
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {

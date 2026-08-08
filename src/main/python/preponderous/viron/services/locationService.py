@@ -61,6 +61,8 @@ class LocationService:
         response = requests.put(f"{self.get_base_url()}/{location_id}/entity/{entity_id}", headers=self.get_auth_headers())
         if response.status_code == 404:
             raise Exception("Location or entity not found")
+        if response.status_code == 409:
+            raise Exception(f"Entity {entity_id} is already placed at another location")
         response.raise_for_status()
 
     def remove_entity_from_location(self, entity_id: int, location_id: int) -> None:

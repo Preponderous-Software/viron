@@ -140,6 +140,24 @@ def test_add_entity_to_location(mock_put):
 
     mock_put.assert_called_with("http://localhost:9999/api/v1/locations/1/entity/1", headers={})
 
+@patch('requests.put')
+def test_add_entity_to_location_not_found(mock_put):
+    mock_response = Mock()
+    mock_response.status_code = 404
+    mock_put.return_value = mock_response
+
+    with pytest.raises(Exception):
+        service.add_entity_to_location(1, 1)
+
+@patch('requests.put')
+def test_add_entity_to_location_conflict(mock_put):
+    mock_response = Mock()
+    mock_response.status_code = 409
+    mock_put.return_value = mock_response
+
+    with pytest.raises(Exception):
+        service.add_entity_to_location(1, 1)
+
 @patch('requests.delete')
 def test_remove_entity_from_location(mock_delete):
     mock_response = Mock()
