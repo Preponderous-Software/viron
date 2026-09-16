@@ -33,7 +33,9 @@ import preponderous.viron.VironApplication;
  * (each with an environment override): set {@code usage-reporting.enabled=false} (or the
  * {@code USAGE_REPORTING_ENABLED=false} environment variable) to turn it off. A blank key
  * also disables it, and a malformed endpoint yields a disabled client rather than a failed
- * start-up.
+ * start-up. {@code TRACE_USAGE_REPORTING=off} and {@code DO_NOT_TRACK=1} in the environment
+ * turn it off too: the client checks those two itself, before this program's own setting, so
+ * they always win. Details: {@value #DETAILS_URL}.
  */
 @Component
 @Slf4j
@@ -43,6 +45,9 @@ public class UsageReporter {
     static final String APPLICATION = "viron";
 
     static final String STARTUP_EVENT = "startup";
+
+    /** Where what is and is not sent, and every way to turn it off, is written up. */
+    static final String DETAILS_URL = "https://github.com/Stephenson-Software/trace#usage-reporting";
 
     private final TraceClient client;
     private final String version;
@@ -55,10 +60,11 @@ public class UsageReporter {
         this.client = buildClient(enabled, endpoint, key);
         this.version = resolveVersion(version);
         if (client.isEnabled()) {
-            log.info("Usage reporting is on: a startup event (program name and version only) is sent to {}; "
-                    + "set usage-reporting.enabled=false (USAGE_REPORTING_ENABLED=false) to turn it off.", endpoint);
+            log.info("Usage reporting is on: a startup event (program name, version and service=true only) is sent to {}; "
+                    + "set usage-reporting.enabled=false (USAGE_REPORTING_ENABLED=false) or TRACE_USAGE_REPORTING=off "
+                    + "to turn it off. Details: {}", endpoint, DETAILS_URL);
         } else {
-            log.info("Usage reporting is off.");
+            log.info("Usage reporting is off ({}).", disabledReason(client));
         }
     }
 
@@ -94,14 +100,23 @@ public class UsageReporter {
         return version;
     }
 
+    /**
+     * The client's reason for sending nothing, with its Bukkit-flavoured name for the
+     * program's own switch replaced by the property this service actually reads.
+     */
+    private static String disabledReason(TraceClient client) {
+        String reason = client.disabledReason();
+        return TraceClient.REASON_CONFIG.equals(reason) ? "usage-reporting.enabled" : reason;
+    }
+
     private static TraceClient buildClient(boolean enabled, String endpoint, String key) {
-        if (!enabled) {
-            return TraceClient.disabled();
-        }
         try {
+            // The program's own switch goes to the builder rather than short-circuiting
+            // here, so the client applies its precedence (environment first) and
+            // disabledReason() names the switch that actually turned reporting off.
             return TraceClient.builder(endpoint, APPLICATION)
                     .key(key)
-                    .enabled(true)
+                    .enabled(enabled)
                     .logger(Logger.getLogger(UsageReporter.class.getName()))
                     .build();
         } catch (RuntimeException invalid) {

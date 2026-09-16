@@ -164,7 +164,8 @@ It is on by default and configured by the `usage-reporting.*` properties in
 | `usage-reporting.endpoint` | `USAGE_REPORTING_ENDPOINT` | `https://trace.danielstephenson.dev` |
 | `usage-reporting.key` | `USAGE_REPORTING_KEY` | the bundled program key |
 
-Set `USAGE_REPORTING_ENABLED=false` to turn it off.
+Set `USAGE_REPORTING_ENABLED=false` to turn it off; every opt-out is listed under
+[Usage reporting](#usage-reporting) below.
 
 ### Running Locally
 docker-compose up --build  
@@ -198,6 +199,27 @@ that release or newer.
 
 CI runs both suites: the Java build and tests, and the Python client tests on Python 3.8 and
 3.12.
+
+---
+
+## Usage reporting
+
+Usage reporting is on by default: on start-up the service sends one `startup` event (program
+name `viron`, version, tag `service=true`) to the trace service at
+`https://trace.danielstephenson.dev`. Nothing is sent per request, and nothing about users,
+hosts, addresses or data is ever included.
+
+Turn it off any of these ways:
+
+- `USAGE_REPORTING_ENABLED=false` in the environment (`usage-reporting.enabled=false` in
+  `application.properties`; `compose.yml` passes the variable through)
+- `TRACE_USAGE_REPORTING=off` in the environment (also `false`, `0`, `no`; shared by every
+  program that reports to trace, and it wins over the setting above)
+- `DO_NOT_TRACK=1` in the environment (also `true`, `yes`; see
+  [consoledonottrack.com](https://consoledonottrack.com))
+
+One line is logged at start-up saying whether reporting is on and, if it is off, which switch
+turned it off. Details: https://github.com/Stephenson-Software/trace#usage-reporting
 
 ---
 
