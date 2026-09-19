@@ -8,6 +8,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.test.web.servlet.MockMvc;
 import preponderous.viron.database.DbInteractions;
@@ -728,6 +729,32 @@ class LocationControllerTest {
         mockMvc.perform(put("/api/v1/locations/9/entity/1/move"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Location not found with id: 9"));
+
+        verify(locationRepository, never()).moveEntityToLocation(anyInt(), anyInt());
+    }
+
+    /**
+     * The target exists and is well-formed, but its lock was held by another request for longer
+     * than the bound {@code DataSourceConfig} sets (#212). That is a transient condition, told to
+     * the client as one: 503 with a {@code Retry-After}, not the 500 it used to fall through to,
+     * and not the move's 409, which would claim the target is occupied.
+     */
+    @Test
+    void moveEntityToLocation_LockWaitTimedOutIsServiceUnavailable() throws Exception {
+        when(locationRepository.lockPlacementOfEntity(1)).thenReturn(true);
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.of(new Location(5, 0, 0)));
+        when(locationRepository.findById(9)).thenReturn(Optional.of(new Location(9, 1, 0)));
+        when(locationRepository.getGridIdOfLocation(5)).thenReturn(Optional.of(3));
+        when(locationRepository.getGridIdOfLocation(9)).thenReturn(Optional.of(3));
+        when(locationRepository.lockLocation(9))
+                .thenThrow(new CannotAcquireLockException("Could not take lock: lock timeout"));
+
+        mockMvc.perform(put("/api/v1/locations/9/entity/1/move"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("Retry-After", "1"))
+                .andExpect(jsonPath("$.status").value(503))
+                .andExpect(jsonPath("$.message")
+                        .value("The requested resource is in use by another request; retry shortly"));
 
         verify(locationRepository, never()).moveEntityToLocation(anyInt(), anyInt());
     }

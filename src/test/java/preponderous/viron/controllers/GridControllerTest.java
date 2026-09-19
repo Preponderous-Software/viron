@@ -9,7 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
-import preponderous.viron.config.DbConfig;
 import preponderous.viron.database.DbInteractions;
 import preponderous.viron.dto.GridDto;
 import preponderous.viron.mappers.GridMapper;
@@ -43,8 +42,8 @@ class GridControllerTest {
     @MockBean
     private DbInteractions dbInteractions;
 
-    @MockBean
-    private DbConfig dbConfig;
+    // DbConfig is left real, unlike the collaborators above: the pool DataSourceConfig builds
+    // from it is sized by it (#212), and a mock would size it at zero.
 
     // --- GET /api/v1/grids ---
 

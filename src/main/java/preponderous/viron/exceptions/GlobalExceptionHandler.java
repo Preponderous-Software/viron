@@ -3,6 +3,8 @@ package preponderous.viron.exceptions;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,6 +16,12 @@ import preponderous.viron.dto.ErrorResponse;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    /**
+     * Seconds a client is told to wait before retrying a request that lost a lock wait. The
+     * holder of a row lock is a single request over a single row, so a short interval is enough.
+     */
+    static final String RETRY_AFTER_SECONDS = "1";
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException ex) {
@@ -111,6 +119,27 @@ public class GlobalExceptionHandler {
         log.warn("Validation error during handler method validation: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Validation failed");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Answers a request whose row lock could not be taken within the bound
+     * {@link preponderous.viron.config.DataSourceConfig} sets on every connection (#212). The
+     * data is intact and the request was well-formed; another request simply held what this one
+     * needed for longer than it was allowed to wait. That is a transient condition and is told to
+     * the client as one — 503 with a {@code Retry-After} — rather than the 500 it reached before,
+     * which read as a fault and gave no reason to try again.
+     *
+     * <p>It is not a 409: the move endpoint's 409 says the target is occupied, and a lock that
+     * timed out says nothing about the target's occupancy either way.
+     */
+    @ExceptionHandler(CannotAcquireLockException.class)
+    public ResponseEntity<ErrorResponse> handleCannotAcquireLockException(CannotAcquireLockException ex) {
+        log.warn("Lock not acquired in time: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.SERVICE_UNAVAILABLE.value(),
+                "The requested resource is in use by another request; retry shortly");
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS)
+                .body(error);
     }
 
     @ExceptionHandler(Exception.class)

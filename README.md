@@ -167,6 +167,25 @@ It is on by default and configured by the `usage-reporting.*` properties in
 Set `USAGE_REPORTING_ENABLED=false` to turn it off; every opt-out is listed under
 [Usage reporting](#usage-reporting) below.
 
+#### Database pool and lock wait
+The write paths that lock a row before deciding on it (moving an entity, removing a placement)
+hold a pooled connection for as long as they wait for that lock. Two `database.*` properties
+bound that, and are set as a pair: the longest any statement waits for a row lock, and the size
+of the pool the wait is drawn against.
+
+| Property | Environment variable | Default |
+|---|---|---|
+| `database.lockTimeoutMs` | `DATABASE_LOCK_TIMEOUT_MS` | `5000` |
+| `database.maxPoolSize` | `DATABASE_MAX_POOL_SIZE` | `10` |
+
+A request whose lock wait runs past the bound is answered `503 Service Unavailable` with a
+`Retry-After` header rather than held; the data is untouched and the request can be retried.
+The lock timeout is applied as `lock_timeout` on every connection the pool opens, so it must
+stay below the pool's 30-second connection timeout. `0` leaves the database's own default in
+place, which for PostgreSQL means waiting indefinitely. No `statement_timeout` is set: the
+environment cascade delete issues one statement per entity, location and grid, and a blanket
+limit tuned for single-row requests would break the deletion of a large environment.
+
 ### Running Locally
 docker-compose up --build  
 API will be available at: http://localhost:9999

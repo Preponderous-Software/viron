@@ -198,11 +198,13 @@ class ConcurrentMoveTest {
 
     private static DbConfig h2Config() {
         DbConfig config = new DbConfig();
-        // A lock timeout well above the time either transaction needs, so the request that waits
-        // for the other one waits rather than failing.
-        config.setDbUrl("jdbc:h2:mem:viron_concurrent_move;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000");
+        config.setDbUrl("jdbc:h2:mem:viron_concurrent_move;DB_CLOSE_DELAY=-1");
         config.setDbUsername("sa");
         config.setDbPassword("");
+        // A lock timeout well above the time either transaction needs, so the request that waits
+        // for the other one waits rather than failing. Set the way production sets it (#212), so
+        // the wait here goes through the same bound.
+        config.setLockTimeoutMs(10000);
         return config;
     }
 }
