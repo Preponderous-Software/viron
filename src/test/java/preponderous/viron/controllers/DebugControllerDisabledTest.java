@@ -8,7 +8,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
-import preponderous.viron.config.DbConfig;
 import preponderous.viron.database.DbInteractions;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -32,8 +31,8 @@ class DebugControllerDisabledTest {
     @MockBean
     private DbInteractions dbInteractions;
 
-    @MockBean
-    private DbConfig dbConfig;
+    // DbConfig is left real: the pool DataSourceConfig builds from it is sized by it (#212), and
+    // a mock would size it at zero.
 
     @Test
     void debugControllerBeanIsNotRegisteredByDefault() {

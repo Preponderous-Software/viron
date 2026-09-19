@@ -26,6 +26,20 @@ import org.springframework.transaction.PlatformTransactionManager;
  * first {@code getConnection()} call, so the application context still starts when the
  * database is unreachable. That matches how the service behaved when it opened a single
  * {@code DriverManager} connection, and keeps context-only tests from needing a database.
+ *
+ * <p>Two of the pool's settings are taken from {@link DbConfig} as a pair rather than left at
+ * their defaults (#212). The write paths that lock a row before deciding on it hold a pooled
+ * connection for as long as they wait for that lock, and the database's default is to wait
+ * indefinitely; so a bounded {@code lock_timeout} is set on every connection the pool opens,
+ * and the pool's size is stated next to it, since the size is what that wait is drawn against.
+ * A request whose wait exceeds the bound fails its locking statement, which
+ * {@link preponderous.viron.database.DbInteractions#lock} reports as a
+ * {@link org.springframework.dao.CannotAcquireLockException} and
+ * {@link preponderous.viron.exceptions.GlobalExceptionHandler} answers as retryable.
+ *
+ * <p>No {@code statement_timeout} is set alongside it. That would bound every statement
+ * including the ones the environment cascade delete issues per entity, location and grid, and a
+ * limit tuned for a single-row request would break the deletion of a large environment.
  */
 @Configuration
 public class DataSourceConfig {
@@ -40,7 +54,21 @@ public class DataSourceConfig {
         dataSource.setJdbcUrl(dbConfig.getDbUrl());
         dataSource.setUsername(dbConfig.getDbUsername());
         dataSource.setPassword(dbConfig.getDbPassword());
+        dataSource.setMaximumPoolSize(dbConfig.getMaxPoolSize());
+        if (dbConfig.getLockTimeoutMs() > 0) {
+            dataSource.setConnectionInitSql(lockTimeoutSql(dbConfig.getLockTimeoutMs()));
+        }
         return dataSource;
+    }
+
+    /**
+     * The statement Hikari runs once on each connection it opens, so the bound is a property of
+     * the session rather than of any one request. The {@code SET name = value} form is the one
+     * both Postgres and the H2 database the tests run against accept, and both read a bare
+     * integer as milliseconds.
+     */
+    static String lockTimeoutSql(int lockTimeoutMs) {
+        return "SET lock_timeout = " + lockTimeoutMs;
     }
 
     /**

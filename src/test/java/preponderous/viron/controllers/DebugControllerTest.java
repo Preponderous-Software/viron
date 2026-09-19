@@ -9,7 +9,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import preponderous.viron.config.DbConfig;
 import preponderous.viron.database.DbInteractions;
 import preponderous.viron.dto.EntityDto;
 import preponderous.viron.dto.EnvironmentDto;
@@ -64,8 +63,8 @@ class DebugControllerTest {
     @MockBean
     private DbInteractions dbInteractions;
 
-    @MockBean
-    private DbConfig dbConfig;
+    // DbConfig is left real, unlike the collaborators above: the pool DataSourceConfig builds
+    // from it is sized by it (#212), and a mock would size it at zero.
 
     // --- POST /api/v1/debug/create-sample-data ---
 
