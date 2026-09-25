@@ -38,9 +38,11 @@ public class EnvironmentRepositoryImpl implements EnvironmentRepository {
 
     @Override
     public Optional<Environment> findByEntityId(int entityId) {
-        return dbInteractions.queryOne(
-                "SELECT * FROM viron.environment WHERE environment_id = (SELECT environment_id FROM viron.entity WHERE entity_id = ?)",
-                this::mapResultSetToEnvironment, entityId);
+        String query = "SELECT * FROM viron.environment WHERE environment_id in " +
+                "(SELECT environment_id FROM viron.grid_environment WHERE grid_id in " +
+                "(SELECT grid_id FROM viron.location_grid WHERE location_id in " +
+                "(SELECT location_id FROM viron.entity_location WHERE entity_id = ?)))";
+        return dbInteractions.queryOne(query, this::mapResultSetToEnvironment, entityId);
     }
 
     @Override
