@@ -6,7 +6,7 @@ import preponderous.viron.models.Entity;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(config = StrictMapperConfig.class)
 public interface EntityMapper {
     EntityDto toDto(Entity entity);
     Entity toEntity(EntityDto dto);

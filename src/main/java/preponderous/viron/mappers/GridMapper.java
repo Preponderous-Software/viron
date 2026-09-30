@@ -6,7 +6,7 @@ import preponderous.viron.models.Grid;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(config = StrictMapperConfig.class)
 public interface GridMapper {
     GridDto toDto(Grid grid);
     Grid toGrid(GridDto dto);
