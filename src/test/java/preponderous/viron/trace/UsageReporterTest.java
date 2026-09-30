@@ -3,7 +3,6 @@
 
 package preponderous.viron.trace;
 
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -53,8 +52,8 @@ class UsageReporterTest {
     @Test
     void startupIsTaggedAsAServiceWithItsVersion() {
         UsageReporter reporter = new UsageReporter(false, ENDPOINT, "a-key", " 0.7.0 ");
-        Map<String, String> tags = reporter.startupTags();
-        assertThat(tags).containsEntry("service", "true").containsEntry("version", "0.7.0").hasSize(2);
+        assertThat(reporter.startupTags()).containsEntry("service", "true").hasSize(1);
+        assertThat(reporter.version()).isEqualTo("0.7.0");
         reporter.close();
     }
 
@@ -62,7 +61,7 @@ class UsageReporterTest {
     @Test
     void unfilledVersionPlaceholderIsNotReported() {
         UsageReporter reporter = new UsageReporter(false, ENDPOINT, "a-key", "@project.version@");
-        assertThat(reporter.version()).isNotEqualTo("@project.version@");
+        assertThat(reporter.version()).isNotEqualTo("@project.version@").isNotBlank();
         assertThat(reporter.startupTags()).containsEntry("service", "true").doesNotContainKey("@project.version@");
         reporter.close();
     }

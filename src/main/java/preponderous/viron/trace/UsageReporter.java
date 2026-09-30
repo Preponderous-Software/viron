@@ -46,6 +46,9 @@ public class UsageReporter {
 
     static final String STARTUP_EVENT = "startup";
 
+    /** Reported as the version when neither the property nor the jar manifest gives one. */
+    static final String UNKNOWN_VERSION = "unknown";
+
     /** Where what is and is not sent, and every way to turn it off, is written up. */
     static final String DETAILS_URL = "https://github.com/Stephenson-Software/trace#usage-reporting";
 
@@ -57,8 +60,8 @@ public class UsageReporter {
             @Value("${usage-reporting.endpoint:https://trace.danielstephenson.dev}") String endpoint,
             @Value("${usage-reporting.key:}") String key,
             @Value("${usage-reporting.version:}") String version) {
-        this.client = buildClient(enabled, endpoint, key);
         this.version = resolveVersion(version);
+        this.client = buildClient(enabled, endpoint, key, this.version);
         if (client.isEnabled()) {
             log.info("Usage reporting is on: a startup event (program name, version and service=true only) is sent to {}; "
                     + "set usage-reporting.enabled=false (USAGE_REPORTING_ENABLED=false) or TRACE_USAGE_REPORTING=off "
@@ -85,17 +88,17 @@ public class UsageReporter {
         client.close();
     }
 
-    /** The tags attached to the startup event: {@code service=true}, plus {@code version} when known. */
+    /**
+     * The tags attached to the startup event: {@code service=true}. The client adds the
+     * version itself, as the tag {@code version}, to every event.
+     */
     Map<String, String> startupTags() {
         Map<String, String> tags = new LinkedHashMap<>();
         tags.put("service", "true");
-        if (version != null) {
-            tags.put("version", version);
-        }
         return tags;
     }
 
-    /** The version that will be reported, or {@code null} if none could be determined. */
+    /** The version that will be reported, or {@value #UNKNOWN_VERSION} if none could be determined. */
     String version() {
         return version;
     }
@@ -109,12 +112,12 @@ public class UsageReporter {
         return TraceClient.REASON_CONFIG.equals(reason) ? "usage-reporting.enabled" : reason;
     }
 
-    private static TraceClient buildClient(boolean enabled, String endpoint, String key) {
+    private static TraceClient buildClient(boolean enabled, String endpoint, String key, String version) {
         try {
             // The program's own switch goes to the builder rather than short-circuiting
             // here, so the client applies its precedence (environment first) and
             // disabledReason() names the switch that actually turned reporting off.
-            return TraceClient.builder(endpoint, APPLICATION)
+            return TraceClient.builder(endpoint, APPLICATION, version)
                     .key(key)
                     .enabled(enabled)
                     .logger(Logger.getLogger(UsageReporter.class.getName()))
@@ -132,6 +135,6 @@ public class UsageReporter {
         }
         Package pkg = VironApplication.class.getPackage();
         String fromManifest = pkg == null ? null : pkg.getImplementationVersion();
-        return fromManifest == null || fromManifest.trim().isEmpty() ? null : fromManifest.trim();
+        return fromManifest == null || fromManifest.trim().isEmpty() ? UNKNOWN_VERSION : fromManifest.trim();
     }
 }
