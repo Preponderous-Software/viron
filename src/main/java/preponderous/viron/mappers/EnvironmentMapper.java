@@ -6,7 +6,7 @@ import preponderous.viron.models.Environment;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(config = StrictMapperConfig.class)
 public interface EnvironmentMapper {
     EnvironmentDto toDto(Environment environment);
     Environment toEnvironment(EnvironmentDto dto);

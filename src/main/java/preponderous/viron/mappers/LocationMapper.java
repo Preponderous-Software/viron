@@ -6,7 +6,7 @@ import preponderous.viron.models.Location;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(config = StrictMapperConfig.class)
 public interface LocationMapper {
     LocationDto toDto(Location location);
     Location toLocation(LocationDto dto);
