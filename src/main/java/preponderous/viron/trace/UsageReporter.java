@@ -76,6 +76,11 @@ public class UsageReporter {
         return client.isEnabled();
     }
 
+    /** The random installation ID sent as the tag {@code install}, or null while reporting is off. */
+    public String installId() {
+        return client.installId();
+    }
+
     /** Sends the one startup event, once the context is fully up. Returns immediately. */
     @EventListener(ApplicationReadyEvent.class)
     public void reportStartup() {
@@ -120,6 +125,8 @@ public class UsageReporter {
             return TraceClient.builder(endpoint, APPLICATION, version)
                     .key(key)
                     .enabled(enabled)
+                    .installId(TraceInstallId.fromEnvironment())
+                    .installIdFile(TraceInstallId.file(APPLICATION))
                     .logger(Logger.getLogger(UsageReporter.class.getName()))
                     .build();
         } catch (RuntimeException invalid) {
