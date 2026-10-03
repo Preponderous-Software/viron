@@ -18,6 +18,17 @@ class UsageReporterTest {
     private static final String ENDPOINT = "http://127.0.0.1:9";
 
     @Test
+    void carriesARandomInstallationIdOnlyWhileReportingIsOn() {
+        UsageReporter on = new UsageReporter(true, ENDPOINT, "a-key", "1.2.3");
+        UsageReporter off = new UsageReporter(false, ENDPOINT, "a-key", "1.2.3");
+
+        assertThat(on.installId()).as("an enabled client carries a random installation ID").isNotBlank();
+        assertThat(off.installId()).as("a disabled client never makes up an ID").isNull();
+        on.close();
+        off.close();
+    }
+
+    @Test
     void reportsWhenEnabledWithAKey() {
         UsageReporter reporter = new UsageReporter(true, ENDPOINT, "a-key", "1.2.3");
         try {

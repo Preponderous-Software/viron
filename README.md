@@ -155,6 +155,16 @@ On start-up the service sends **one** `startup` event to the trace usage-trackin
 is ever included. The event goes out on a background thread and is dropped if the trace server
 is down or slow, so it can never delay start-up or a request.
 
+Every event also carries a random installation ID as the tag `install`, so the number of
+running deployments can be counted rather than events. It is the value of `TRACE_INSTALL_ID`
+when that is set (to pin one ID per deployment), and otherwise a random UUID written the first
+time reporting runs to `<user data dir>/viron/trace-install-id` (`$XDG_DATA_HOME` or
+`~/.local/share` on Linux, `~/Library/Application Support` on macOS, `%APPDATA%` on Windows)
+and reused after that. In a container that directory is usually not on a volume, so a recreated
+container counts as a new installation unless `TRACE_INSTALL_ID` is set. The ID identifies no
+person, account, host or address; delete the file to get a new one. Every opt-out also stops
+it: when reporting is off, no ID is made up and the file is neither read nor written.
+
 It is on by default and configured by the `usage-reporting.*` properties in
 `application.properties`, each with an environment override:
 
