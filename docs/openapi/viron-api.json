@@ -421,7 +421,8 @@
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
-          }
+          },
+          "503": { "$ref": "#/components/responses/LockTimeout" }
         }
       }
     },
@@ -452,7 +453,8 @@
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
-          }
+          },
+          "503": { "$ref": "#/components/responses/LockTimeout" }
         }
       }
     },
@@ -534,7 +536,8 @@
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
-          }
+          },
+          "503": { "$ref": "#/components/responses/LockTimeout" }
         }
       }
     },
@@ -862,6 +865,18 @@
     "responses": {
       "ValidationError": {
         "description": "A request parameter or body field failed validation. The message names the rejected field; several rejections are joined with '; '.",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+        }
+      },
+      "LockTimeout": {
+        "description": "A row this request needed to lock could not be locked, typically because another request held it for longer than the configured lock wait (database.lockTimeoutMs). Nothing was changed and the request can be retried.",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before retrying",
+            "schema": { "type": "integer" }
+          }
+        },
         "content": {
           "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
         }
