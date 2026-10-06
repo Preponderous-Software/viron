@@ -208,6 +208,11 @@ Once running, you can view the interactive API docs:
 http://localhost:9999/swagger-ui.html  
 or refer to the `docs/openapi/viron-api.json` file.
 
+Every endpoint except `/actuator/health` and these API docs requires a JWT issued by the
+UserAuth service, sent as `Authorization: Bearer <token>`; a request without a valid one is
+answered `401 Unauthorized`. The Postman collection under `postman/` sends the token from its
+`authToken` variable.
+
 ---
 
 ## 🧪 Testing
