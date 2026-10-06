@@ -248,7 +248,7 @@ Turn it off any of these ways:
   [consoledonottrack.com](https://consoledonottrack.com))
 
 One line is logged at start-up saying whether reporting is on and, if it is off, which switch
-turned it off. Details: https://github.com/Stephenson-Software/trace#usage-reporting
+turned it off. Details: https://danielstephenson.dev/usage-reporting
 
 ---
 
