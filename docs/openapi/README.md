@@ -9,9 +9,9 @@ The specification defines endpoints, request/response formats, and DTO schemas f
 
 - **viron-api.json** – The complete OpenAPI definition for the Viron API, covering:
   - **Environments** – Create, read, update (including renaming), and delete environments.
-  - **Grids** – Retrieve grids and their relationships to environments and entities.
-  - **Locations** – Manage locations, including entity placement and removal.
-  - **Entities** – Access, create, and delete entities in the simulation.
+  - **Grids** – Retrieve and rename grids, and find their relationships to environments and entities.
+  - **Locations** – Manage locations, including entity placement, movement, and removal.
+  - **Entities** – Access, create, rename, and delete entities in the simulation.
   - **Debug Utilities** – Endpoints for generating sample data and test scenarios.
 
 ---
@@ -21,9 +21,9 @@ The specification defines endpoints, request/response formats, and DTO schemas f
 The API is organized around **domain-specific controllers**:
 
 - **EnvironmentController** – Handles environment-level operations, including creation, retrieval, renaming, and deletion.
-- **GridController** – Handles grid-related retrieval and relationships.
-- **LocationController** – Manages spatial locations and entity placement/removal.
-- **EntityController** – Manages entity creation, retrieval, and deletion.
+- **GridController** – Handles grid-related retrieval, relationships, and renaming.
+- **LocationController** – Manages spatial locations and entity placement, movement, and removal.
+- **EntityController** – Manages entity creation, retrieval, renaming, and deletion.
 - **DebugController** – Provides testing and demonstration endpoints.
 
 Each path in the spec reflects a **clear mapping to a domain object**, ensuring maintainability and discoverability.
@@ -43,8 +43,12 @@ Key DTOs include:
 - `CreateEnvironmentRequest`
 - `UpdateEnvironmentNameRequest`
 - `GridDTO`
+- `UpdateGridNameRequest`
 - `LocationDTO`
 - `EntityDTO`
+- `CreateEntityRequest`
+- `UpdateEntityNameRequest`
+- `ErrorResponse`
 
 ---
 
@@ -56,6 +60,10 @@ Key DTOs include:
 2. **Test the API**
    - Start the Viron application locally.
    - Use the endpoints defined in `viron-api.json` to interact with the service.
+   - Send a JWT issued by the UserAuth service as `Authorization: Bearer <token>` on every request.
+     Every endpoint except `/actuator/health` and the OpenAPI/Swagger documentation itself requires it;
+     a request without a valid token is answered `401 Unauthorized` with an empty body. The spec does
+     not declare this requirement yet (#230).
 
 3. **Generate clients or servers**
    - Use OpenAPI code generation tools (e.g., `openapi-generator-cli`) to scaffold API clients or server stubs.
@@ -64,7 +72,7 @@ Key DTOs include:
 
 ## 📄 Related Documentation
 
-- [`../docs/MVP.md`](../docs/MVP.md) – Minimum Viable Product checklist, aligned with this specification.
+- [`../MVP.md`](../MVP.md) – Minimum Viable Product checklist, aligned with this specification.
 - [`../PLANNING.md`](../PLANNING.md) – Milestone and issue breakdown for implementing the MVP.
 - [`../REBUILD_PLAN.md`](../REBUILD_PLAN.md) – Step-by-step plan for rebuilding the Viron codebase in alignment with this spec.
 
