@@ -50,7 +50,7 @@ public class UsageReporter {
     static final String UNKNOWN_VERSION = "unknown";
 
     /** Where what is and is not sent, and every way to turn it off, is written up. */
-    static final String DETAILS_URL = "https://github.com/Stephenson-Software/trace#usage-reporting";
+    static final String DETAILS_URL = "https://danielstephenson.dev/usage-reporting";
 
     private final TraceClient client;
     private final String version;
