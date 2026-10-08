@@ -32,6 +32,7 @@ import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -137,6 +138,50 @@ class OpenApiSpecDriftTest {
         assertEquals(Set.of(), undeclared,
                 "These path variables carry an @Min bound that docs/openapi/viron-api.json does not "
                         + "express in the parameter schema.");
+    }
+
+    /**
+     * Every API route sits behind SecurityConfig's bearer-token check (#230), so both descriptions of
+     * the API have to say so: the live document (which drives Swagger UI's Authorize control) and the
+     * checked-in contract must declare the same scheme and apply it globally.
+     */
+    @Test
+    void liveAndStaticSpecDeclareTheSameBearerRequirement() throws Exception {
+        String liveJson = mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode liveSpec = mapper.readTree(liveJson);
+        JsonNode staticSpec = mapper.readTree(new File("docs/openapi/viron-api.json"));
+
+        for (JsonNode spec : new JsonNode[] {liveSpec, staticSpec}) {
+            JsonNode scheme = spec.path("components").path("securitySchemes").path("bearerAuth");
+            assertEquals("http", scheme.path("type").asText());
+            assertEquals("bearer", scheme.path("scheme").asText());
+            assertEquals("JWT", scheme.path("bearerFormat").asText());
+            assertTrue(spec.path("security").path(0).has("bearerAuth"),
+                    "the bearer scheme must be applied globally");
+        }
+    }
+
+    /** Any route can be answered 401 by the security filter before its handler runs. */
+    @Test
+    void everyRouteDocumentsTheUnauthorizedAnswer() throws Exception {
+        JsonNode staticSpec = new ObjectMapper().readTree(new File("docs/openapi/viron-api.json"));
+
+        Set<String> undocumented = new TreeSet<>();
+        forEachApiRoute((verb, path, handler) -> {
+            JsonNode operation = operationAt(staticSpec, path, verb);
+            assertNotNull(operation, verb + " " + path + " is missing from the spec entirely");
+            if (!operation.get("responses").has("401")) {
+                undocumented.add(verb + " " + path);
+            }
+        });
+
+        assertEquals(Set.of(), undocumented,
+                "These routes require a bearer token and so can answer 401, but docs/openapi/viron-api.json "
+                        + "does not document it. Add #/components/responses/Unauthorized.");
     }
 
     private interface RouteVisitor {
