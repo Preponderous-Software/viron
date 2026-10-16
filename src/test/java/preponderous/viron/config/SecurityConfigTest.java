@@ -3,7 +3,10 @@
 
 package preponderous.viron.config;
 
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -33,7 +36,21 @@ class SecurityConfigTest {
     @Test
     void apiRequestWithoutTokenIsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/v1/environments"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                // What docs/openapi/viron-api.json's shared Unauthorized response promises (#230).
+                .andExpect(header().string("WWW-Authenticate", "Bearer"))
+                .andExpect(content().string(""));
+    }
+
+    @Test
+    void apiRequestWithRejectedTokenIsUnauthorizedWithInvalidTokenChallenge() throws Exception {
+        mockMvc.perform(get("/api/v1/environments")
+                        .header("Authorization", "Bearer not-a-valid-jwt"))
+                .andExpect(status().isUnauthorized())
+                // The shared Unauthorized response's WWW-Authenticate description (#230).
+                .andExpect(header().string("WWW-Authenticate",
+                        startsWith("Bearer error=\"invalid_token\"")))
+                .andExpect(content().string(""));
     }
 
     @Test

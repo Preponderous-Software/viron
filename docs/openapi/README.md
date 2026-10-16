@@ -62,8 +62,9 @@ Key DTOs include:
    - Use the endpoints defined in `viron-api.json` to interact with the service.
    - Send a JWT issued by the UserAuth service as `Authorization: Bearer <token>` on every request.
      Every endpoint except `/actuator/health` and the OpenAPI/Swagger documentation itself requires it;
-     a request without a valid token is answered `401 Unauthorized` with an empty body. The spec does
-     not declare this requirement yet (#230).
+     a request without a valid token is answered `401 Unauthorized` with an empty body. The spec
+     declares this as the global `bearerAuth` security scheme, and every operation lists the shared
+     `Unauthorized` (401) response; Swagger UI's **Authorize** control accepts the token.
 
 3. **Generate clients or servers**
    - Use OpenAPI code generation tools (e.g., `openapi-generator-cli`) to scaffold API clients or server stubs.

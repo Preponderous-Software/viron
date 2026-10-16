@@ -5,6 +5,9 @@
     "version": "1.0.0",
     "description": "API specification for the Viron spatial simulation core using DTO-based request/response objects."
   },
+  "security": [
+    { "bearerAuth": [] }
+  ],
   "paths": {
     "/api/v1/environments": {
       "get": {
@@ -20,7 +23,8 @@
                 }
               }
             }
-          }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       },
       "post": {
@@ -38,7 +42,8 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentDTO" } }
             }
           },
-          "400": { "$ref": "#/components/responses/ValidationError" }
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -54,6 +59,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Environment not found with that id",
             "content": {
@@ -68,6 +74,7 @@
         "responses": {
           "204": { "description": "Environment deleted" },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Environment not found with that id",
             "content": {
@@ -95,6 +102,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentDTO" } }
             }
           },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Environment not found with that name",
             "content": {
@@ -116,6 +124,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Environment not found for entity",
             "content": {
@@ -138,6 +147,7 @@
         "responses": {
           "200": { "description": "Name updated" },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Environment not found with that id",
             "content": {
@@ -161,7 +171,8 @@
                 }
               }
             }
-          }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -177,6 +188,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Grid not found with that id",
             "content": {
@@ -209,7 +221,8 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/ValidationError" }
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -225,6 +238,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Grid not found for entity",
             "content": {
@@ -247,6 +261,7 @@
         "responses": {
           "200": { "description": "Name updated" },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Grid not found with that id",
             "content": {
@@ -270,7 +285,8 @@
                 }
               }
             }
-          }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -286,6 +302,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Location not found with that id",
             "content": {
@@ -311,7 +328,8 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/ValidationError" }
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -331,7 +349,8 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/ValidationError" }
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -351,7 +370,8 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/ValidationError" }
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -372,6 +392,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Location not found, or not in any grid",
             "content": {
@@ -392,6 +413,7 @@
         "responses": {
           "200": { "description": "Entity added, or already present at that location" },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Location or entity not found with that id",
             "content": {
@@ -416,6 +438,7 @@
         "responses": {
           "204": { "description": "Entity removed" },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "No location with that id, or the entity is not placed at that location",
             "content": {
@@ -442,6 +465,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
           },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Entity is not placed at any location, or target location not found",
             "content": {
@@ -475,6 +499,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Location not found",
             "content": {
@@ -496,6 +521,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Location not found",
             "content": {
@@ -517,6 +543,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Location not found for entity",
             "content": {
@@ -531,6 +558,7 @@
         "responses": {
           "204": { "description": "Entity removed" },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Location not found for entity",
             "content": {
@@ -555,7 +583,8 @@
                 }
               }
             }
-          }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       },
       "post": {
@@ -573,7 +602,8 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/EntityDTO" } }
             }
           },
-          "400": { "$ref": "#/components/responses/ValidationError" }
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -589,6 +619,7 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Entity not found with that id",
             "content": {
@@ -603,6 +634,7 @@
         "responses": {
           "204": { "description": "Entity deleted" },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Entity not found with that id",
             "content": {
@@ -625,6 +657,7 @@
         "responses": {
           "200": { "description": "Name updated" },
           "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Entity not found with that id",
             "content": {
@@ -650,7 +683,8 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/ValidationError" }
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -670,7 +704,8 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/ValidationError" }
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -690,7 +725,8 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/ValidationError" }
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -708,7 +744,8 @@
                 }
               }
             }
-          }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -728,7 +765,8 @@
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
-          }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -749,7 +787,8 @@
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
-          }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     }
@@ -862,7 +901,24 @@
         "schema": { "type": "string" }
       }
     },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "A JWT issued by the UserAuth service, sent as Authorization: Bearer <token>. Every endpoint requires it; only /actuator/health and the OpenAPI/Swagger documentation, neither of which this spec describes, are public."
+      }
+    },
     "responses": {
+      "Unauthorized": {
+        "description": "The request carried no bearer token, or one that failed validation (bad signature, expired, or an unexpected issuer). The body is empty.",
+        "headers": {
+          "WWW-Authenticate": {
+            "description": "The Bearer challenge; when a token was presented and rejected, it carries error=\"invalid_token\" and a description of the rejection",
+            "schema": { "type": "string" }
+          }
+        }
+      },
       "ValidationError": {
         "description": "A request parameter or body field failed validation. The message names the rejected field; several rejections are joined with '; '.",
         "content": {
