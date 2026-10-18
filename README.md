@@ -5,6 +5,10 @@ It manages **environments**, **grids**, **locations**, and **entities** through 
 
 It serves as a reusable backend component for simulation-based games, AI experiments, and virtual world applications.
 
+![Twelve entities random-walking on two 7x7 Viron grids, replayed in 3D](docs/images/viron-usd-replay.gif)
+
+*Viron has no UI of its own; this is a 150-tick random walk driven through a real local Viron's REST API, recorded tick by tick by [Viron USD](https://github.com/Preponderous-Software/viron-usd) and rendered in Blender. GIF reproduced from that repository (`docs/images/replay.gif`, commit `8a6bea2`), where the recording and render scripts live.*
+
 ---
 
 ## 🚀 Why Viron Exists
@@ -209,6 +213,10 @@ API will be available at: http://localhost:9999
 Once running, you can view the interactive API docs:  
 http://localhost:9999/swagger-ui.html  
 or refer to the `docs/openapi/viron-api.json` file.
+
+![Swagger UI served by a local Viron, listing the location endpoints](docs/images/swagger-ui.png)
+
+*The Swagger UI of a locally built Viron (`mvn package`, run with `--server.port=19999` against a throwaway PostgreSQL, usage reporting off), captured with headless Chromium.*
 
 Every endpoint except `/actuator/health` and these API docs requires a JWT issued by the
 UserAuth service, sent as `Authorization: Bearer <token>`; a request without a valid one is
