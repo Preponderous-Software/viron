@@ -15,6 +15,7 @@ import preponderous.viron.exceptions.ConflictException;
 import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.models.Location;
+import preponderous.viron.models.Placement;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -106,6 +107,34 @@ public class LocationService {
         } catch (Exception e) {
             log.error("Error getting unoccupied locations in grid {}: {}", gridId, e.getMessage());
             throw new ServiceException("Error getting unoccupied locations in grid: " + gridId, e);
+        }
+    }
+
+    public List<Placement> getPlacements() {
+        try {
+            ResponseEntity<Placement[]> response = restTemplate.getForEntity(baseUrl + "/placements", Placement[].class);
+            return response.getStatusCode() == HttpStatus.OK && response.getBody() != null
+                    ? Arrays.asList(response.getBody())
+                    : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error getting placements: {}", e.getMessage());
+            throw new ServiceException("Error getting placements", e);
+        }
+    }
+
+    public List<Placement> getPlacementsInEnvironment(int environmentId) {
+        try {
+            ResponseEntity<Placement[]> response = restTemplate.getForEntity(
+                    baseUrl + "/placements?environmentId={environmentId}",
+                    Placement[].class,
+                    environmentId
+            );
+            return response.getStatusCode() == HttpStatus.OK && response.getBody() != null
+                    ? Arrays.asList(response.getBody())
+                    : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error getting placements in environment {}: {}", environmentId, e.getMessage());
+            throw new ServiceException("Error getting placements in environment: " + environmentId, e);
         }
     }
 
