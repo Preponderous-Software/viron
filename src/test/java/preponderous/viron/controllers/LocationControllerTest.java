@@ -16,6 +16,7 @@ import preponderous.viron.dto.LocationDto;
 import preponderous.viron.mappers.LocationMapper;
 import preponderous.viron.models.Entity;
 import preponderous.viron.models.Location;
+import preponderous.viron.models.Placement;
 import preponderous.viron.repositories.EntityRepository;
 import preponderous.viron.repositories.LocationRepository;
 
@@ -333,6 +334,67 @@ class LocationControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.message").isString());
+    }
+
+    // --- GET /api/v1/locations/placements ---
+    // The placement mapper is left real rather than mocked, so these also pin the field names the
+    // response carries.
+
+    @Test
+    void getPlacements_Unscoped_ReturnsEveryPlacement() throws Exception {
+        when(locationRepository.findAllPlacements()).thenReturn(List.of(
+                new Placement(1, 7, 11, 110, 5, 6),
+                new Placement(2, 8, 20, 200, 13, 14)));
+
+        mockMvc.perform(get("/api/v1/locations/placements"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].entityId").value(1))
+                .andExpect(jsonPath("$[0].environmentId").value(7))
+                .andExpect(jsonPath("$[0].gridId").value(11))
+                .andExpect(jsonPath("$[0].locationId").value(110))
+                .andExpect(jsonPath("$[0].x").value(5))
+                .andExpect(jsonPath("$[0].y").value(6))
+                .andExpect(jsonPath("$[1].entityId").value(2))
+                .andExpect(jsonPath("$[1].environmentId").value(8));
+
+        verify(locationRepository).findAllPlacements();
+        verify(locationRepository, never()).findPlacementsByEnvironmentId(anyInt());
+    }
+
+    @Test
+    void getPlacements_ScopedToEnvironment_QueriesThatEnvironmentOnly() throws Exception {
+        when(locationRepository.findPlacementsByEnvironmentId(7)).thenReturn(List.of(
+                new Placement(2, 7, 10, 100, 1, 2),
+                new Placement(3, 7, 10, 100, 1, 2)));
+
+        mockMvc.perform(get("/api/v1/locations/placements").param("environmentId", "7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].entityId").value(2))
+                .andExpect(jsonPath("$[1].entityId").value(3))
+                .andExpect(jsonPath("$[1].locationId").value(100));
+
+        verify(locationRepository).findPlacementsByEnvironmentId(7);
+        verify(locationRepository, never()).findAllPlacements();
+    }
+
+    @Test
+    void getPlacements_EnvironmentWithNoPlacements_ReturnsEmptyList() throws Exception {
+        when(locationRepository.findPlacementsByEnvironmentId(99)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/v1/locations/placements").param("environmentId", "99"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void getPlacements_NonPositiveEnvironmentId_IsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/v1/locations/placements").param("environmentId", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+
+        verifyNoInteractions(locationRepository);
     }
 
     // --- PUT /api/v1/locations/{locationId}/entity/{entityId} ---

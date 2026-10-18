@@ -375,6 +375,28 @@
         }
       }
     },
+    "/api/v1/locations/placements": {
+      "get": {
+        "summary": "Get where every placed entity stands",
+        "description": "One element per placed entity, ordered by entityId, read in a single query so the result describes one consistent state. Unplaced entities are omitted. When environmentId is given, only entities placed in that environment are returned; an environment with no placed entities, including one that does not exist, is answered with an empty list.",
+        "parameters": [{ "name": "environmentId", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1 } }],
+        "responses": {
+          "200": {
+            "description": "List of placements",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/PlacementDTO" }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
     "/api/v1/locations/{locationId}/neighbors": {
       "get": {
         "summary": "Get the locations adjacent to a location within the same grid",
@@ -837,6 +859,17 @@
       "LocationDTO": {
         "type": "object",
         "properties": {
+          "locationId": { "type": "integer" },
+          "x": { "type": "integer" },
+          "y": { "type": "integer" }
+        }
+      },
+      "PlacementDTO": {
+        "type": "object",
+        "properties": {
+          "entityId": { "type": "integer" },
+          "environmentId": { "type": "integer" },
+          "gridId": { "type": "integer" },
           "locationId": { "type": "integer" },
           "x": { "type": "integer" },
           "y": { "type": "integer" }

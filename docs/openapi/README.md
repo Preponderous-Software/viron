@@ -10,7 +10,7 @@ The specification defines endpoints, request/response formats, and DTO schemas f
 - **viron-api.json** – The complete OpenAPI definition for the Viron API, covering:
   - **Environments** – Create, read, update (including renaming), and delete environments.
   - **Grids** – Retrieve and rename grids, and find their relationships to environments and entities.
-  - **Locations** – Manage locations, including entity placement, movement, and removal.
+  - **Locations** – Manage locations, including entity placement, movement, and removal, and read every placement in one call.
   - **Entities** – Access, create, rename, and delete entities in the simulation.
   - **Debug Utilities** – Endpoints for generating sample data and test scenarios.
 
@@ -45,6 +45,7 @@ Key DTOs include:
 - `GridDTO`
 - `UpdateGridNameRequest`
 - `LocationDTO`
+- `PlacementDTO`
 - `EntityDTO`
 - `CreateEntityRequest`
 - `UpdateEntityNameRequest`

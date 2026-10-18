@@ -14,6 +14,7 @@ import preponderous.viron.config.DbConfig;
 import preponderous.viron.database.DbInteractions;
 import preponderous.viron.exceptions.ConflictException;
 import preponderous.viron.mappers.LocationMapperImpl;
+import preponderous.viron.mappers.PlacementMapperImpl;
 import preponderous.viron.repositories.EntityRepositoryImpl;
 import preponderous.viron.repositories.LocationRepositoryImpl;
 
@@ -130,7 +131,8 @@ class ConcurrentMoveTest {
         LocationController controller = new LocationController(
                 new LockRacer(dbInteractions, beforeLock),
                 new EntityRepositoryImpl(dbInteractions),
-                new LocationMapperImpl());
+                new LocationMapperImpl(),
+                new PlacementMapperImpl());
         TransactionTemplate transactionTemplate =
                 new TransactionTemplate(new DataSourceTransactionManager(dataSource));
 

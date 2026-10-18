@@ -10,6 +10,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -18,6 +19,7 @@ import preponderous.viron.exceptions.ConflictException;
 import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.models.Location;
+import preponderous.viron.models.Placement;
 
 import java.util.List;
 
@@ -215,6 +217,79 @@ public class LocationServiceTest {
         assertThatThrownBy(() -> locationService.getUnoccupiedLocationsInGrid(7))
                 .isExactlyInstanceOf(ServiceException.class)
                 .hasMessage("Error getting unoccupied locations in grid: 7");
+    }
+
+    // getPlacements
+
+    @Test
+    void testGetPlacements_Success_ReturnsPlacements() {
+        Placement[] placements = {new Placement(1, 7, 11, 110, 5, 6), new Placement(2, 8, 20, 200, 13, 14)};
+        Mockito.when(restTemplate.getForEntity(eq(BASE_URL + "/placements"), eq(Placement[].class)))
+                .thenReturn(ResponseEntity.ok(placements));
+
+        assertThat(locationService.getPlacements()).containsExactly(placements);
+    }
+
+    @Test
+    void testGetPlacements_NullBody_ReturnsEmptyList() {
+        Mockito.when(restTemplate.getForEntity(eq(BASE_URL + "/placements"), eq(Placement[].class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        assertThat(locationService.getPlacements()).isEmpty();
+    }
+
+    @Test
+    void testGetPlacements_RestTemplateThrows_WrapsInServiceException() {
+        Mockito.when(restTemplate.getForEntity(eq(BASE_URL + "/placements"), eq(Placement[].class)))
+                .thenThrow(new RestClientException("boom"));
+
+        assertThatThrownBy(() -> locationService.getPlacements())
+                .isExactlyInstanceOf(ServiceException.class)
+                .hasMessage("Error getting placements");
+    }
+
+    // The client reads the response into the Placement model, which has no no-argument constructor.
+    // Jackson as Spring Boot configures it binds through the constructor's parameter names, so this
+    // pins that the field names the controller writes are the ones the model can be built from.
+    @Test
+    void testPlacementModel_DeserializesFromTheEndpointsJson() throws Exception {
+        Placement[] placements = Jackson2ObjectMapperBuilder.json().build().readValue(
+                "[{\"entityId\":1,\"environmentId\":7,\"gridId\":11,\"locationId\":110,\"x\":5,\"y\":6}]",
+                Placement[].class);
+
+        assertThat(placements).containsExactly(new Placement(1, 7, 11, 110, 5, 6));
+    }
+
+    // getPlacementsInEnvironment
+
+    @Test
+    void testGetPlacementsInEnvironment_Success_ReturnsPlacements() {
+        Placement[] placements = {new Placement(1, 7, 11, 110, 5, 6)};
+        Mockito.when(restTemplate.getForEntity(
+                        eq(BASE_URL + "/placements?environmentId={environmentId}"), eq(Placement[].class), eq(7)))
+                .thenReturn(ResponseEntity.ok(placements));
+
+        assertThat(locationService.getPlacementsInEnvironment(7)).containsExactly(placements);
+    }
+
+    @Test
+    void testGetPlacementsInEnvironment_NullBody_ReturnsEmptyList() {
+        Mockito.when(restTemplate.getForEntity(
+                        eq(BASE_URL + "/placements?environmentId={environmentId}"), eq(Placement[].class), eq(7)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        assertThat(locationService.getPlacementsInEnvironment(7)).isEmpty();
+    }
+
+    @Test
+    void testGetPlacementsInEnvironment_RestTemplateThrows_WrapsInServiceException() {
+        Mockito.when(restTemplate.getForEntity(
+                        eq(BASE_URL + "/placements?environmentId={environmentId}"), eq(Placement[].class), eq(7)))
+                .thenThrow(new RestClientException("boom"));
+
+        assertThatThrownBy(() -> locationService.getPlacementsInEnvironment(7))
+                .isExactlyInstanceOf(ServiceException.class)
+                .hasMessage("Error getting placements in environment: 7");
     }
 
     // getLocationOfEntity

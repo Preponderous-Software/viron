@@ -3,6 +3,7 @@ import logging
 import requests
 from dataclasses import dataclass
 from src.main.python.preponderous.viron.models.location import Location
+from src.main.python.preponderous.viron.models.placement import Placement
 
 class LocationService:
     def __init__(self, viron_host: str, viron_port: int, auth_token: Optional[str] = None):
@@ -56,6 +57,12 @@ class LocationService:
             raise Exception(f"Location not found for entity: {entity_id}")
         response.raise_for_status()
         return Location(**response.json())
+
+    def get_placements(self, environment_id: Optional[int] = None) -> List[Placement]:
+        params = {"environmentId": environment_id} if environment_id is not None else None
+        response = requests.get(f"{self.get_base_url()}/placements", params=params, headers=self.get_auth_headers())
+        response.raise_for_status()
+        return [Placement(**placement) for placement in response.json()]
 
     def add_entity_to_location(self, entity_id: int, location_id: int) -> None:
         response = requests.put(f"{self.get_base_url()}/{location_id}/entity/{entity_id}", headers=self.get_auth_headers())

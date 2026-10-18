@@ -12,6 +12,7 @@ import preponderous.viron.config.DbConfig;
 import preponderous.viron.database.DbInteractions;
 import preponderous.viron.exceptions.ConflictException;
 import preponderous.viron.mappers.LocationMapperImpl;
+import preponderous.viron.mappers.PlacementMapperImpl;
 import preponderous.viron.models.Location;
 import preponderous.viron.repositories.EntityRepositoryImpl;
 import preponderous.viron.repositories.LocationRepositoryImpl;
@@ -128,7 +129,8 @@ class ConcurrentPlacementTest {
         LocationController controller = new LocationController(
                 new GuardReadRacer(dbInteractions, afterGuardRead),
                 new EntityRepositoryImpl(dbInteractions),
-                new LocationMapperImpl());
+                new LocationMapperImpl(),
+                new PlacementMapperImpl());
 
         ExecutorService executor = Executors.newFixedThreadPool(REQUESTS);
         List<Future<Throwable>> futures = new ArrayList<>();

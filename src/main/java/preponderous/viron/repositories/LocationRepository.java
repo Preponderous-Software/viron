@@ -1,6 +1,7 @@
 package preponderous.viron.repositories;
 
 import preponderous.viron.models.Location;
+import preponderous.viron.models.Placement;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,16 @@ public interface LocationRepository {
 
     /** Locations in the given grid that currently have no entity placed at them. */
     List<Location> findUnoccupiedByGridId(int gridId);
+
+    /**
+     * Every placed entity with the environment, grid, and location it stands in, ordered by entity
+     * id. Read in one statement, so the result describes a single state of the world rather than
+     * one assembled from reads taken at different moments (#234). Unplaced entities are absent.
+     */
+    List<Placement> findAllPlacements();
+
+    /** As {@link #findAllPlacements()}, limited to entities placed in the given environment. */
+    List<Placement> findPlacementsByEnvironmentId(int environmentId);
 
     /** The grid a location belongs to, if any. */
     Optional<Integer> getGridIdOfLocation(int locationId);
