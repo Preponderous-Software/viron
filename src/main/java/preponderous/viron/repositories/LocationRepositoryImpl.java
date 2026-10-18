@@ -3,6 +3,7 @@ package preponderous.viron.repositories;
 import org.springframework.stereotype.Repository;
 import preponderous.viron.database.DbInteractions;
 import preponderous.viron.models.Location;
+import preponderous.viron.models.Placement;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -22,6 +23,25 @@ public class LocationRepositoryImpl implements LocationRepository {
         int x = rs.getInt("x");
         int y = rs.getInt("y");
         return new Location(id, x, y);
+    }
+
+    // Inner joins throughout: a placement whose location is in no grid, or whose grid is in no
+    // environment, has no environment to report and is left out rather than answered with zeros.
+    private static final String PLACEMENTS_QUERY =
+            "SELECT el.entity_id, ge.environment_id, lg.grid_id, l.location_id, l.x, l.y " +
+            "FROM viron.entity_location el " +
+            "JOIN viron.location l ON l.location_id = el.location_id " +
+            "JOIN viron.location_grid lg ON lg.location_id = el.location_id " +
+            "JOIN viron.grid_environment ge ON ge.grid_id = lg.grid_id";
+
+    private Placement mapResultSetToPlacement(ResultSet rs) throws SQLException {
+        return new Placement(
+                rs.getInt("entity_id"),
+                rs.getInt("environment_id"),
+                rs.getInt("grid_id"),
+                rs.getInt("location_id"),
+                rs.getInt("x"),
+                rs.getInt("y"));
     }
 
     @Override
@@ -96,6 +116,17 @@ public class LocationRepositoryImpl implements LocationRepository {
                 "(SELECT location_id FROM viron.location_grid WHERE grid_id = ?) " +
                 "AND location_id not in (SELECT location_id FROM viron.entity_location)";
         return dbInteractions.query(query, this::mapResultSetToLocation, gridId);
+    }
+
+    @Override
+    public List<Placement> findAllPlacements() {
+        return dbInteractions.query(PLACEMENTS_QUERY + " ORDER BY el.entity_id", this::mapResultSetToPlacement);
+    }
+
+    @Override
+    public List<Placement> findPlacementsByEnvironmentId(int environmentId) {
+        String query = PLACEMENTS_QUERY + " WHERE ge.environment_id = ? ORDER BY el.entity_id";
+        return dbInteractions.query(query, this::mapResultSetToPlacement, environmentId);
     }
 
     @Override

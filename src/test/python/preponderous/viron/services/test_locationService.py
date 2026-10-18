@@ -130,6 +130,36 @@ def test_get_location_of_entity(mock_get):
 
     mock_get.assert_called_with("http://localhost:9999/api/v1/locations/entity/1", headers={})
 
+@patch('requests.get')
+def test_get_placements(mock_get):
+    mock_response = Mock()
+    mock_response.json.return_value = [
+        {'entityId': 1, 'environmentId': 7, 'gridId': 11, 'locationId': 110, 'x': 5, 'y': 6},
+        {'entityId': 2, 'environmentId': 8, 'gridId': 20, 'locationId': 200, 'x': 13, 'y': 14}
+    ]
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    placements = service.get_placements()
+
+    assert [p.get_entity_id() for p in placements] == [1, 2]
+    assert placements[0].get_environment_id() == 7
+    assert placements[0].get_grid_id() == 11
+    assert placements[0].get_location_id() == 110
+    assert (placements[0].get_x(), placements[0].get_y()) == (5, 6)
+    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/placements", params=None, headers={})
+
+@patch('requests.get')
+def test_get_placements_in_environment(mock_get):
+    mock_response = Mock()
+    mock_response.json.return_value = []
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    assert service.get_placements(7) == []
+    mock_get.assert_called_with("http://localhost:9999/api/v1/locations/placements",
+                                params={"environmentId": 7}, headers={})
+
 @patch('requests.put')
 def test_add_entity_to_location(mock_put):
     mock_response = Mock()

@@ -8,12 +8,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import preponderous.viron.dto.LocationDto;
+import preponderous.viron.dto.PlacementDto;
 import preponderous.viron.exceptions.ConflictException;
 import preponderous.viron.exceptions.InvalidRequestException;
 import preponderous.viron.exceptions.NotFoundException;
 import preponderous.viron.exceptions.ServiceException;
 import preponderous.viron.mappers.LocationMapper;
+import preponderous.viron.mappers.PlacementMapper;
 import preponderous.viron.models.Location;
+import preponderous.viron.models.Placement;
 import preponderous.viron.repositories.EntityRepository;
 import preponderous.viron.repositories.LocationRepository;
 
@@ -31,6 +34,7 @@ public class LocationController {
     private final LocationRepository locationRepository;
     private final EntityRepository entityRepository;
     private final LocationMapper locationMapper;
+    private final PlacementMapper placementMapper;
 
     @GetMapping
     public List<LocationDto> getAllLocations() {
@@ -61,6 +65,20 @@ public class LocationController {
     public List<LocationDto> getUnoccupiedLocationsInGrid(@PathVariable @Min(1) int gridId) {
         List<Location> locations = locationRepository.findUnoccupiedByGridId(gridId);
         return locationMapper.toDtoList(locations);
+    }
+
+    /**
+     * Where every placed entity stands, optionally limited to one environment, answered from a
+     * single query so that the result is one consistent snapshot (#234). An environment with no
+     * placed entities — including one that does not exist, as with
+     * {@code GET /api/v1/entities/environment/{environmentId}} — is answered with an empty list.
+     */
+    @GetMapping("/placements")
+    public List<PlacementDto> getPlacements(@RequestParam(required = false) @Min(1) Integer environmentId) {
+        List<Placement> placements = environmentId == null
+                ? locationRepository.findAllPlacements()
+                : locationRepository.findPlacementsByEnvironmentId(environmentId);
+        return placementMapper.toDtoList(placements);
     }
 
     @GetMapping("/entity/{entityId}")

@@ -47,6 +47,7 @@ Deliver a working, tested API that supports:
 - [x] `GET /api/v1/locations/grid/{gridId}` – Retrieve locations in a grid.
 - [x] `GET /api/v1/locations/grid/{gridId}/unoccupied` – Retrieve locations in a grid that hold no entities.
 - [x] `GET /api/v1/locations/entity/{entityId}` – Retrieve the location of a specific entity.
+- [x] `GET /api/v1/locations/placements` – Retrieve where every placed entity stands (entity, environment, grid, location, and coordinates) in one consistent read, optionally limited to one environment with `?environmentId=`.
 - [x] `GET /api/v1/locations/{locationId}/entities` – Retrieve the IDs of the entities at a location.
 - [x] `GET /api/v1/locations/{locationId}/occupied` – Report whether a location holds any entities.
 - [x] `GET /api/v1/locations/{locationId}/neighbors` – Retrieve the locations adjacent to a location within its grid.
@@ -88,6 +89,7 @@ Deliver a working, tested API that supports:
 - [x] **GridDTO** – Public representation of a grid (includes an optional `name`).
 - [x] **UpdateGridNameRequest** – Request body for updating grid names.
 - [x] **LocationDTO** – Public representation of a location.
+- [x] **PlacementDTO** – Where a placed entity stands (`entityId`, `environmentId`, `gridId`, `locationId`, `x`, `y`).
 - [x] **EntityDTO** – Public representation of an entity.
 - [x] **CreateEntityRequest** – Request body for creating entities (name).
 - [x] **UpdateEntityNameRequest** – Request body for updating entity names.
