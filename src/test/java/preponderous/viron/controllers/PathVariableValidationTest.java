@@ -153,4 +153,40 @@ class PathVariableValidationTest {
 
         verifyNoInteractions(locationRepository);
     }
+
+    /**
+     * A path variable that cannot be converted to {@code int} is a client error, answered before
+     * the handler or the {@code @Min(1)} bound is reached (#236).
+     */
+    @Test
+    void getLocationById_NonIntegerId_ReturnsBadRequestNamingTheParameter() throws Exception {
+        mockMvc.perform(get("/api/v1/locations/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("id: must be an integer"));
+
+        verifyNoInteractions(locationRepository);
+    }
+
+    @Test
+    void addEntityToLocation_NonIntegerEntityId_ReturnsBadRequestNamingTheParameter() throws Exception {
+        mockMvc.perform(put("/api/v1/locations/1/entity/x"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("entityId: must be an integer"));
+
+        verifyNoInteractions(locationRepository);
+    }
+
+    /**
+     * A query parameter takes the same path as a path variable when its value cannot be converted.
+     */
+    @Test
+    void getPlacements_NonIntegerEnvironmentId_ReturnsBadRequestNamingTheParameter() throws Exception {
+        mockMvc.perform(get("/api/v1/locations/placements").param("environmentId", "abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("environmentId: must be an integer"));
+
+        verifyNoInteractions(locationRepository);
+    }
 }
