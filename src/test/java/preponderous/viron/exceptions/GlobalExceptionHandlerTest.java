@@ -4,6 +4,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.MethodParameter;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.ExceptionHandlerMethodResolver;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import preponderous.viron.dto.ErrorResponse;
 
 import java.lang.reflect.Method;
@@ -74,6 +76,12 @@ class GlobalExceptionHandlerTest {
                 .isEqualTo("handleCannotAcquireLockException");
     }
 
+    @Test
+    void aTypeMismatchReachesItsOwnHandlerRatherThanTheGenericOne() {
+        assertThat(resolvedHandlerFor(typeMismatch("abc", int.class, "id")))
+                .isEqualTo("handleMethodArgumentTypeMismatchException");
+    }
+
     // Client errors that quote the exception's message
 
     @Test
@@ -96,6 +104,28 @@ class GlobalExceptionHandlerTest {
                 HttpStatus.BAD_REQUEST, "Failed to create grid");
         assertError(handler.handleInvalidRequestException(new InvalidRequestException("No grids found in environment: 2")),
                 HttpStatus.BAD_REQUEST, "No grids found in environment: 2");
+    }
+
+    // Parameter type conversion
+
+    private static MethodArgumentTypeMismatchException typeMismatch(Object value, Class<?> requiredType, String name) {
+        return new MethodArgumentTypeMismatchException(value, requiredType, name, mock(MethodParameter.class), null);
+    }
+
+    @Test
+    void anIntegerParameterThatIsNotANumberAnswers400NamingTheParameter() {
+        assertError(handler.handleMethodArgumentTypeMismatchException(typeMismatch("abc", int.class, "id")),
+                HttpStatus.BAD_REQUEST, "id: must be an integer");
+        assertError(handler.handleMethodArgumentTypeMismatchException(typeMismatch("abc", Integer.class, "environmentId")),
+                HttpStatus.BAD_REQUEST, "environmentId: must be an integer");
+    }
+
+    @Test
+    void aTypeMismatchOnAnotherTypeNamesThatTypeWithoutQuotingTheValue() {
+        assertError(handler.handleMethodArgumentTypeMismatchException(typeMismatch("<script>", Long.class, "since")),
+                HttpStatus.BAD_REQUEST, "since: must be a valid Long");
+        assertError(handler.handleMethodArgumentTypeMismatchException(typeMismatch("x", null, "since")),
+                HttpStatus.BAD_REQUEST, "since: has an invalid value");
     }
 
     // Server errors

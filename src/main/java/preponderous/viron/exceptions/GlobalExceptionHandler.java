@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import preponderous.viron.dto.ErrorResponse;
 
 @RestControllerAdvice
@@ -112,6 +113,30 @@ public class GlobalExceptionHandler {
             name = node.getName();
         }
         return name == null ? propertyPath.toString() : name;
+    }
+
+    /**
+     * Answers a path variable or query parameter that could not be converted to the handler's
+     * parameter type — {@code /locations/abc} against an {@code int id} — as the client error it is.
+     * Spring raises this before validation or the handler body runs; without a handler of its own it
+     * reached {@link #handleGenericException} and was answered 500 (#236).
+     *
+     * <p>The message names the parameter in the {@code name: problem} form the constraint handler
+     * above uses, and does not quote the rejected value back.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        String message = ex.getName() + ": " + describeRequiredType(ex.getRequiredType());
+        log.warn("Type mismatch: {}", message);
+        ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    private static String describeRequiredType(Class<?> requiredType) {
+        if (requiredType == int.class || requiredType == Integer.class) {
+            return "must be an integer";
+        }
+        return requiredType == null ? "has an invalid value" : "must be a valid " + requiredType.getSimpleName();
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)
