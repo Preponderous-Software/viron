@@ -77,7 +77,7 @@ Each ticket is designed to:
   - `getEnvironmentByName(name)`
   - `getEnvironmentByEntityId(entityId)`
   - `updateEnvironmentName(id, name)`
-  - `deleteEnvironment(id)` — with cascade delete of grids, locations
+  - `deleteEnvironment(id)` — with cascade delete of the environment's grids, locations, and the entities placed in it
 - Implement `EnvironmentController` with all endpoints:
   - `GET /api/v1/environments`
   - `GET /api/v1/environments/{id}`
@@ -93,7 +93,7 @@ Each ticket is designed to:
 **Acceptance Criteria:**
 - All environment endpoints return correct DTOs
 - Creating environment generates grids and locations automatically
-- Deleting environment cascades to grids and locations
+- Deleting environment cascades to its grids, locations, and placed entities
 - All tests pass
 - Endpoints match OpenAPI specification
 
@@ -117,6 +117,7 @@ Each ticket is designed to:
   - `GET /api/v1/grids/{id}`
   - `GET /api/v1/grids/environment/{environmentId}`
   - `GET /api/v1/grids/entity/{entityId}`
+  - `PATCH /api/v1/grids/{id}/name` — JSON body: `name`
 - Add exception handling
 - Write controller and service tests
 
@@ -151,8 +152,14 @@ Each ticket is designed to:
   - `GET /api/v1/locations/{id}`
   - `GET /api/v1/locations/environment/{environmentId}`
   - `GET /api/v1/locations/grid/{gridId}`
+  - `GET /api/v1/locations/grid/{gridId}/unoccupied`
   - `GET /api/v1/locations/entity/{entityId}`
+  - `GET /api/v1/locations/placements` — optional `?environmentId=`
+  - `GET /api/v1/locations/{locationId}/entities`
+  - `GET /api/v1/locations/{locationId}/occupied`
+  - `GET /api/v1/locations/{locationId}/neighbors`
   - `PUT /api/v1/locations/{locationId}/entity/{entityId}`
+  - `PUT /api/v1/locations/{locationId}/entity/{entityId}/move`
   - `DELETE /api/v1/locations/{locationId}/entity/{entityId}`
   - `DELETE /api/v1/locations/entity/{entityId}`
 - Add business logic to ensure entity is in at most one location
@@ -162,7 +169,10 @@ Each ticket is designed to:
 **Acceptance Criteria:**
 - All location endpoints work correctly
 - Entity placement constraint enforced (one location max)
-- Adding entity to new location removes from old location
+- Placing an entity that is already placed elsewhere is answered `409 Conflict` naming its
+  current location, and placing it where it already stands is a no-op; relocating a placed
+  entity goes through the `/move` endpoint, which accepts only an adjacent, unoccupied location
+  in the same grid
 - All tests pass including edge cases
 - Endpoints match OpenAPI specification
 
@@ -178,14 +188,19 @@ Each ticket is designed to:
 
 **Scope:**
 - Implement `EntityService` with methods:
-  - `createEntity(name, type)` or similar
+  - `createEntity(name)`
   - `getAllEntities()`
   - `getEntityById(id)`
   - `deleteEntity(id)` — handle location detachment
 - Implement `EntityController` with all endpoints:
   - `GET /api/v1/entities`
   - `GET /api/v1/entities/{id}`
-  - `POST /api/v1/entities`
+  - `GET /api/v1/entities/environment/{environmentId}`
+  - `GET /api/v1/entities/grid/{gridId}`
+  - `GET /api/v1/entities/location/{locationId}`
+  - `GET /api/v1/entities/unassigned`
+  - `POST /api/v1/entities` — JSON body: `name`
+  - `PATCH /api/v1/entities/{id}/name` — JSON body: `name`
   - `DELETE /api/v1/entities/{id}`
 - Ensure deleting entity removes it from its location
 - Add exception handling
@@ -239,9 +254,12 @@ Each ticket is designed to:
 - Create global `@ControllerAdvice` exception handler
 - Map exceptions to appropriate HTTP status codes:
   - `NotFoundException` → 404
-  - `IllegalArgumentException` → 400
-  - `ServiceException` → 500 or 400 depending on type
-- Add consistent error response format (JSON with message, status, timestamp)
+  - `ConflictException` → 409
+  - `InvalidRequestException`, `EntityCreationException`, `EnvironmentCreationException`,
+    bean-validation failures, and a path or query parameter of the wrong type → 400
+  - `CannotAcquireLockException` (a row-lock wait past `database.lockTimeoutMs`) → 503 with `Retry-After`
+  - `ServiceException`, `EntityServiceException`, and anything unhandled → 500
+- Add consistent error response format (`ErrorResponse`: JSON with `status` and `message`)
 - Add bean validation annotations to request DTOs (`@NotNull`, `@NotBlank`, `@Min`, etc.)
 - Add validation tests
 - Create error catalog document (optional, in `docs/ERROR_CODES.md`)
