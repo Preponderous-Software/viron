@@ -13,4 +13,4 @@ The collection contains a number of requests that you can use to interact with t
 
 To use a request, click on it to open the request editor. You can then click the "Send" button to send the request to the API. The response will be displayed in the "Response" tab below the request editor.
 
-The requests in the `debug` folder only work when the service is started with `VIRON_DEBUG_ENABLED=true`; otherwise `/api/v1/debug/**` is not mapped.
+The requests in the `debug` folder only work when the service is started with `VIRON_DEBUG_ENABLED=true`; otherwise `/api/v1/debug/**` is not mapped. They also need the service started with `VIRON_CLIENT_AUTH_TOKEN` set to a JWT issued by UserAuth: the debug endpoints call the API back over HTTP with that token, and without it they answer `500` (see the Debug Utilities section of the top-level `README.md`).
