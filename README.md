@@ -84,6 +84,11 @@ The MVP implements the endpoints defined in `docs/openapi/viron-api.json` and do
 - Disabled by default — set `VIRON_DEBUG_ENABLED=true` (property `viron.debug.enabled`) to
   register `/api/v1/debug/**`. Left off, those endpoints are not mapped at all, so debug
   tooling does not ship to production.
+- The debug endpoints build their data by calling this API back over HTTP (at
+  `service.vironHost`:`service.vironPort`), so they need a bearer token of their own: set
+  `VIRON_CLIENT_AUTH_TOKEN` (property `service.authToken`) to a JWT issued by UserAuth.
+  Without it every call they make is answered `401`, and the debug request fails with `500`.
+  `compose.yml` does not yet pass this variable through to the container (#241).
 
 > For detailed endpoint definitions and request/response formats, see `docs/MVP.md` and `docs/openapi/viron-api.json`.
 
@@ -119,7 +124,7 @@ viron/
  │    ├── mappers/           # MapStruct mappers between models and DTOs  
  │    ├── models/            # Internal domain models  
  │    ├── repositories/      # Data access layer  
- │    ├── services/          # Business logic  
+ │    ├── services/          # Java HTTP client of this API (counterpart of the Python client), used by the debug endpoints  
  │    └── trace/             # Usage reporting (vendored trace client + the startup event)  
  ├── src/main/python/        # Python client SDK  
  ├── src/test/java/...       # Unit and integration tests  
