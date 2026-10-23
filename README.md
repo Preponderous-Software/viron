@@ -88,7 +88,7 @@ The MVP implements the endpoints defined in `docs/openapi/viron-api.json` and do
   `service.vironHost`:`service.vironPort`), so they need a bearer token of their own: set
   `VIRON_CLIENT_AUTH_TOKEN` (property `service.authToken`) to a JWT issued by UserAuth.
   Without it every call they make is answered `401`, and the debug request fails with `500`.
-  `compose.yml` does not yet pass this variable through to the container (#241).
+  `compose.yml` passes it through to the container from `.env` (see `sample.env`).
 
 > For detailed endpoint definitions and request/response formats, see `docs/MVP.md` and `docs/openapi/viron-api.json`.
 
