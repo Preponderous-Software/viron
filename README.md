@@ -254,6 +254,29 @@ JWT_SECRET=... python3 scripts/mint_read_token.py --subject arcade-viewer --days
 A read-only token is still a credential: it can read every environment. Give it a lifetime that
 matches how long the viewer needs it.
 
+### Browser clients (CORS)
+
+Viron sends no CORS headers by default, so a page on another origin cannot read it. To let one
+read, list its origin:
+
+```
+VIRON_CORS_ALLOWED_ORIGINS=https://arcade.example.com,http://localhost:8000
+```
+
+(property `viron.cors.allowed-origins`). Each entry is an exact origin, `scheme://host[:port]`
+with no path; `*` is refused at start-up. When the list is set:
+
+- pages on those origins may send `GET` and `HEAD` to `/api/v1/**` and `/actuator/health`, with
+  an `Authorization` header; `Retry-After` is exposed to them;
+- a preflight (`OPTIONS`) is answered before authentication, so it needs no token;
+- **no write method is ever allowed cross-origin**: a preflight for `POST`, `PUT`, `PATCH` or
+  `DELETE` and an actual cross-origin write are both answered `403`, whatever the token;
+- no cookies are involved (`Access-Control-Allow-Credentials` is never sent).
+
+Requests without an `Origin` header (curl, drivers, the client SDKs) are not affected. A page
+can still be handed any token, so give it a [read-only token](#read-only-tokens): CORS keeps
+the page itself to reads, and the scope keeps the token to reads wherever else it ends up.
+
 ---
 
 ## 🧪 Testing

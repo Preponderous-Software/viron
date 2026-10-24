@@ -32,6 +32,8 @@ services:
       VIRON_DEBUG_ENABLED: ${VIRON_DEBUG_ENABLED:-false}
       # Bearer token the debug endpoints send when they call this API back; see README.md.
       VIRON_CLIENT_AUTH_TOKEN: ${VIRON_CLIENT_AUTH_TOKEN:-}
+      # Origins whose pages may read the API from a browser; empty keeps CORS closed.
+      VIRON_CORS_ALLOWED_ORIGINS: ${VIRON_CORS_ALLOWED_ORIGINS:-}
       # Required — the service does not start without it. Must match UserAuth's secret.
       # The :? form makes compose refuse to start rather than pass an empty secret through.
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set; see sample.env}
