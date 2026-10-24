@@ -43,7 +43,8 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
         }
       }
     },
@@ -75,6 +76,7 @@
           "204": { "description": "Environment deleted" },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": {
             "description": "Environment not found with that id",
             "content": {
@@ -148,6 +150,7 @@
           "200": { "description": "Name updated" },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": {
             "description": "Environment not found with that id",
             "content": {
@@ -262,6 +265,7 @@
           "200": { "description": "Name updated" },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": {
             "description": "Grid not found with that id",
             "content": {
@@ -436,6 +440,7 @@
           "200": { "description": "Entity added, or already present at that location" },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": {
             "description": "Location or entity not found with that id",
             "content": {
@@ -461,6 +466,7 @@
           "204": { "description": "Entity removed" },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": {
             "description": "No location with that id, or the entity is not placed at that location",
             "content": {
@@ -488,6 +494,7 @@
             }
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": {
             "description": "Entity is not placed at any location, or target location not found",
             "content": {
@@ -581,6 +588,7 @@
           "204": { "description": "Entity removed" },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": {
             "description": "Location not found for entity",
             "content": {
@@ -625,7 +633,8 @@
             }
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
         }
       }
     },
@@ -657,6 +666,7 @@
           "204": { "description": "Entity deleted" },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": {
             "description": "Entity not found with that id",
             "content": {
@@ -680,6 +690,7 @@
           "200": { "description": "Name updated" },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": {
             "description": "Entity not found with that id",
             "content": {
@@ -788,7 +799,8 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
         }
       }
     },
@@ -810,7 +822,8 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
         }
       }
     }
@@ -939,7 +952,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "A JWT issued by the UserAuth service, sent as Authorization: Bearer <token>. Every endpoint requires it; only /actuator/health and the OpenAPI/Swagger documentation, neither of which this spec describes, are public."
+        "description": "A JWT issued by the UserAuth service, sent as Authorization: Bearer <token>. Every endpoint requires it. A token whose scope claim grants viron:read and not viron:write is read-only: GET routes answer it as usual and every write answers 403 (issue #245); a token without a scope claim keeps full access. Only /actuator/health and the OpenAPI/Swagger documentation, neither of which this spec describes, are public."
       }
     },
     "responses": {
@@ -948,6 +961,15 @@
         "headers": {
           "WWW-Authenticate": {
             "description": "The Bearer challenge; when a token was presented and rejected, it carries error=\"invalid_token\" and a description of the rejection",
+            "schema": { "type": "string" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "The token is valid but read-only: its scope grants viron:read and not viron:write, so it may only call GET routes (issue #245). Nothing was changed. The body is empty.",
+        "headers": {
+          "WWW-Authenticate": {
+            "description": "The Bearer challenge, with error=\"insufficient_scope\"",
             "schema": { "type": "string" }
           }
         }

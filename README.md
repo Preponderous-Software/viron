@@ -228,6 +228,32 @@ UserAuth service, sent as `Authorization: Bearer <token>`; a request without a v
 answered `401 Unauthorized`. The Postman collection under `postman/` sends the token from its
 `authToken` variable.
 
+### Read-only tokens
+
+A token can be limited to reading, so that a viewer (a browser page, or a desktop client on
+someone else's machine) holds a credential that cannot change or delete anything:
+
+| Token's `scope` (or `scp`) claim | `GET` / `HEAD` routes | Every other method |
+|---|---|---|
+| no `scope` claim (what UserAuth issues today) | allowed | allowed (unchanged) |
+| includes `viron:read`, not `viron:write` | allowed | `403 Forbidden`, `WWW-Authenticate: Bearer error="insufficient_scope"` |
+| includes `viron:write` | allowed | allowed |
+| other scopes only | allowed | allowed |
+
+Existing tokens keep exactly the access they had; only a token that asks for `viron:read` alone
+is narrowed. The check runs before any controller, so a refused write touches nothing.
+
+`scripts/mint_read_token.py` mints one with the standard library only, signed with the same
+`JWT_SECRET` Viron validates against. The secret is read from the environment, never from the
+command line:
+
+```
+JWT_SECRET=... python3 scripts/mint_read_token.py --subject arcade-viewer --days 30
+```
+
+A read-only token is still a credential: it can read every environment. Give it a lifetime that
+matches how long the viewer needs it.
+
 ---
 
 ## 🧪 Testing
