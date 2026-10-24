@@ -5,6 +5,7 @@ package preponderous.viron.config;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -65,9 +66,22 @@ public class SecurityConfig {
     private static final String WRITE_AUTHORITY = "SCOPE_" + WRITE_SCOPE;
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            @Value("${viron.cors.allowed-origins:}") String allowedOrigins) throws Exception {
+        List<String> corsOrigins = CorsConfig.parseOrigins(allowedOrigins);
         http
                 .csrf(csrf -> csrf.disable())
+                // CORS (#244): closed unless viron.cors.allowed-origins is set, and then reads
+                // only. Preflights are answered by the CORS filter, before authentication, so
+                // they need no token.
+                .cors(cors -> {
+                    if (corsOrigins.isEmpty()) {
+                        cors.disable();
+                    } else {
+                        cors.configurationSource(CorsConfig.source(corsOrigins));
+                    }
+                })
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
