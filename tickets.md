@@ -8,7 +8,9 @@
 
 Each ticket is designed to:
 - Complete a cohesive unit of functionality in one session
-- Include all layers (model → repository → service → controller)
+- Include all layers (model → repository → controller); controllers call the repositories directly
+  and map models to DTOs, and the `services/*Service.java` classes are `RestTemplate` clients of the
+  API (the Java counterpart of the Python client), not a server-side business layer
 - Contain its own tests
 - Minimize dependencies on other tickets where possible
 - Reference the OpenAPI specification at `docs/openapi/viron-api.json`
@@ -21,15 +23,17 @@ Each ticket is designed to:
 **Session Goal:** Establish all domain models and their DTOs in one session.
 
 **Scope:**
-- Create/update domain models: `Environment`, `Grid`, `Location`, `Entity` with proper JPA relationships
-- Create DTOs: `EnvironmentDTO`, `GridDTO`, `LocationDTO`, `EntityDTO`
+- Create/update domain models: `Environment`, `Grid`, `Location`, `Entity` as plain Lombok classes
+  (no JPA — the models hold ids, and relationships live in the `viron.entity_location`,
+  `viron.location_grid`, and `viron.grid_environment` join tables)
+- Create DTOs: `EnvironmentDto`, `GridDto`, `LocationDto`, `EntityDto`
 - Create request DTOs: `CreateEnvironmentRequest`, `UpdateEnvironmentNameRequest`, `CreateEntityRequest`
-- Implement model-to-DTO mapping utilities (manual or MapStruct)
+- Implement model-to-DTO mapping with MapStruct mappers under `mappers/`
 - Add Lombok annotations for boilerplate reduction
-- Ensure proper bidirectional relationships and cascade configurations
 
 **Acceptance Criteria:**
-- All models have proper JPA annotations (@Entity, @Id, @GeneratedValue, relationships)
+- Models carry no persistence annotations; their fields mirror the columns in
+  `db-scripts/setup/create_tables.sql`
 - DTOs expose only necessary fields (no internal IDs exposed unless needed)
 - Mapping functions convert between models and DTOs accurately
 - Code compiles without errors
@@ -44,21 +48,25 @@ Each ticket is designed to:
 **Session Goal:** Implement all repository interfaces and test database connectivity.
 
 **Scope:**
-- Create JPA repositories: `EnvironmentRepository`, `GridRepository`, `LocationRepository`, `EntityRepository`
-- Implement custom query methods for:
+- Create repository interfaces `EnvironmentRepository`, `GridRepository`, `LocationRepository`,
+  `EntityRepository`, each implemented by a `*RepositoryImpl` that issues SQL through
+  `DbInteractions` (Spring JDBC via `spring-boot-starter-jdbc`)
+- Implement query methods for:
   - Find environment by name
   - Find environment/grid/location containing an entity
   - Find all grids/locations in an environment
   - Find location by grid
-- Configure PostgreSQL datasource in `application.properties`
-- Add Flyway or JPA schema generation for initial setup
-- Write basic repository tests using @DataJpaTest
+- Configure the PostgreSQL datasource through the `database.*` properties in `application.properties`
+  (bound by `DbConfig`)
+- Create the schema with the SQL scripts in `db-scripts/setup/`, which `compose.yml` mounts into
+  the Postgres container's init directory
+- Write repository tests
 
 **Acceptance Criteria:**
-- All repository interfaces extend JpaRepository
-- Custom queries work correctly
-- Database schema auto-generates or is managed by Flyway
-- Repository tests pass with in-memory or test database
+- Every repository is a plain interface with a JDBC implementation
+- Queries work correctly
+- The schema is defined by `db-scripts/setup/`; later changes ship as scripts in `db-scripts/migrations/`
+- Repository tests pass against mocked `DbInteractions` or an in-memory H2 schema
 
 **References:**
 - `docs/MVP.md` — Feature checklists for query requirements
@@ -66,18 +74,13 @@ Each ticket is designed to:
 
 ---
 
-### **Ticket 3: Environment Service & API Complete**
+### **Ticket 3: Environment API Complete**
 **Session Goal:** Fully implement environment management end-to-end in one session.
 
 **Scope:**
-- Implement `EnvironmentService` with methods:
-  - `createEnvironment(name, numGrids, gridSize)` — creates environment with grids and locations
-  - `getAllEnvironments()`
-  - `getEnvironmentById(id)`
-  - `getEnvironmentByName(name)`
-  - `getEnvironmentByEntityId(entityId)`
-  - `updateEnvironmentName(id, name)`
-  - `deleteEnvironment(id)` — with cascade delete of the environment's grids, locations, and the entities placed in it
+- Implement `EnvironmentController` over `EnvironmentRepository`, with `EnvironmentFactory` creating
+  an environment together with its grids and locations; deleting an environment cascades, in one
+  transaction, to its grids, its locations, and the entities placed in it
 - Implement `EnvironmentController` with all endpoints:
   - `GET /api/v1/environments`
   - `GET /api/v1/environments/{id}`
@@ -88,7 +91,9 @@ Each ticket is designed to:
   - `DELETE /api/v1/environments/{id}`
 - Add exception handling and proper HTTP status codes
 - Write controller tests (@WebMvcTest or @SpringBootTest)
-- Write service unit tests
+- Add the matching `EnvironmentService` API-client methods (`getAllEnvironments`, `getEnvironmentById`,
+  `getEnvironmentByName`, `getEnvironmentOfEntity`, `createEnvironment`, `updateEnvironmentName`,
+  `deleteEnvironment`) and their tests
 
 **Acceptance Criteria:**
 - All environment endpoints return correct DTOs
@@ -103,23 +108,20 @@ Each ticket is designed to:
 
 ---
 
-### **Ticket 4: Grid Service & API Complete**
+### **Ticket 4: Grid API Complete**
 **Session Goal:** Fully implement grid management end-to-end in one session.
 
 **Scope:**
-- Implement `GridService` with methods:
-  - `getAllGrids()`
-  - `getGridById(id)`
-  - `getGridsByEnvironmentId(environmentId)`
-  - `getGridByEntityId(entityId)`
-- Implement `GridController` with all endpoints:
+- Implement `GridController` over `GridRepository` with all endpoints:
   - `GET /api/v1/grids`
   - `GET /api/v1/grids/{id}`
   - `GET /api/v1/grids/environment/{environmentId}`
   - `GET /api/v1/grids/entity/{entityId}`
   - `PATCH /api/v1/grids/{id}/name` — JSON body: `name`
 - Add exception handling
-- Write controller and service tests
+- Write controller tests
+- Add the matching `GridService` API-client methods (`getAllGrids`, `getGridById`,
+  `getGridsInEnvironment`, `getGridOfEntity`, `updateGridName`) and their tests
 
 **Acceptance Criteria:**
 - All grid endpoints return correct DTOs
@@ -134,20 +136,11 @@ Each ticket is designed to:
 
 ---
 
-### **Ticket 5: Location Service & API Complete**
+### **Ticket 5: Location API Complete**
 **Session Goal:** Fully implement location management end-to-end in one session.
 
 **Scope:**
-- Implement `LocationService` with methods:
-  - `getAllLocations()`
-  - `getLocationById(id)`
-  - `getLocationsByEnvironmentId(environmentId)`
-  - `getLocationsByGridId(gridId)`
-  - `getLocationByEntityId(entityId)`
-  - `addEntityToLocation(locationId, entityId)` — enforce single location per entity
-  - `removeEntityFromLocation(locationId, entityId)`
-  - `removeEntityFromCurrentLocation(entityId)`
-- Implement `LocationController` with all endpoints:
+- Implement `LocationController` over `LocationRepository` and `EntityRepository` with all endpoints:
   - `GET /api/v1/locations`
   - `GET /api/v1/locations/{id}`
   - `GET /api/v1/locations/environment/{environmentId}`
@@ -164,7 +157,12 @@ Each ticket is designed to:
   - `DELETE /api/v1/locations/entity/{entityId}`
 - Add business logic to ensure entity is in at most one location
 - Add exception handling
-- Write controller and service tests including constraint tests
+- Write controller tests including constraint tests
+- Add the matching `LocationService` API-client methods (`getAllLocations`, `getLocationById`,
+  `getLocationsInEnvironment`, `getLocationsInGrid`, `getUnoccupiedLocationsInGrid`, `getPlacements`,
+  `getPlacementsInEnvironment`, `getLocationOfEntity`, `getEntityIdsAtLocation`, `isLocationOccupied`,
+  `getNeighbors`, `addEntityToLocation`, `moveEntityToLocation`, `removeEntityFromLocation`,
+  `removeEntityFromCurrentLocation`) and their tests
 
 **Acceptance Criteria:**
 - All location endpoints work correctly
@@ -183,16 +181,12 @@ Each ticket is designed to:
 
 ---
 
-### **Ticket 6: Entity Service & API Complete**
+### **Ticket 6: Entity API Complete**
 **Session Goal:** Fully implement entity management end-to-end in one session.
 
 **Scope:**
-- Implement `EntityService` with methods:
-  - `createEntity(name)`
-  - `getAllEntities()`
-  - `getEntityById(id)`
-  - `deleteEntity(id)` — handle location detachment
-- Implement `EntityController` with all endpoints:
+- Implement `EntityController` over `EntityRepository`, with `EntityFactory` creating entities, and
+  with all endpoints:
   - `GET /api/v1/entities`
   - `GET /api/v1/entities/{id}`
   - `GET /api/v1/entities/environment/{environmentId}`
@@ -204,7 +198,10 @@ Each ticket is designed to:
   - `DELETE /api/v1/entities/{id}`
 - Ensure deleting entity removes it from its location
 - Add exception handling
-- Write controller and service tests
+- Write controller tests
+- Add the matching `EntityService` API-client methods (`getAllEntities`, `getEntityById`,
+  `getEntitiesInEnvironment`, `getEntitiesInGrid`, `getEntitiesInLocation`,
+  `getEntitiesNotInAnyLocation`, `createEntity`, `updateEntityName`, `deleteEntity`) and their tests
 
 **Acceptance Criteria:**
 - All entity endpoints work correctly
