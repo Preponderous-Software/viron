@@ -253,7 +253,10 @@ Each ticket is designed to:
   - `NotFoundException` → 404
   - `ConflictException` → 409
   - `InvalidRequestException`, `EntityCreationException`, `EnvironmentCreationException`,
-    bean-validation failures, and a path or query parameter of the wrong type → 400
+    bean-validation failures, a path or query parameter of the wrong type, and a request body
+    that is missing, is not valid JSON, or has a field of the wrong type → 400
+  - A rejection Spring MVC raises itself with a 4xx status (an unmapped path → 404, an unmapped
+    verb → 405 with `Allow`, an unsupported content type → 415) → that status
   - `CannotAcquireLockException` (a row-lock wait past `database.lockTimeoutMs`) → 503 with `Retry-After`
   - `ServiceException`, `EntityServiceException`, and anything unhandled → 500
 - Add consistent error response format (`ErrorResponse`: JSON with `status` and `message`)

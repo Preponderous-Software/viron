@@ -7,6 +7,7 @@ import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -167,8 +168,41 @@ public class GlobalExceptionHandler {
                 .body(error);
     }
 
+    /**
+     * Answers a request body that is absent, cannot be parsed as JSON, or holds a field that cannot be
+     * converted to its declared type ({@code "numGrids": "abc"}) as the client error it is.
+     * Spring raises this while reading the body, before validation or the handler runs; without a
+     * handler of its own it reached {@link #handleGenericException} and was answered 500 (#250).
+     *
+     * <p>The parser's own message quotes the rejected input and names Jackson's internals, so a
+     * fixed message is sent instead.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        log.warn("Unreadable request body: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(),
+                "Request body is missing, is not valid JSON, or has a field of the wrong type");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * The last resort. A rejection Spring MVC raises on its own — an unmapped verb (405), an
+     * unsupported content type (415), a path no controller maps (404) — carries its status as a
+     * {@link org.springframework.web.ErrorResponse}, and is answered with that status, its headers
+     * ({@code Allow} on a 405) and its detail, rather than the 500 this handler gave it before
+     * (#250). Anything else, a 5xx rejection included, is a fault of the service and is answered
+     * 500.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        if (ex instanceof org.springframework.web.ErrorResponse rejection
+                && rejection.getStatusCode().is4xxClientError()) {
+            int status = rejection.getStatusCode().value();
+            String detail = rejection.getBody().getDetail();
+            log.warn("Request rejected: {}", ex.getMessage());
+            ErrorResponse error = new ErrorResponse(status, detail != null ? detail : "Request rejected");
+            return ResponseEntity.status(status).headers(rejection.getHeaders()).body(error);
+        }
         log.error("Unexpected error: {}", ex.getMessage(), ex);
         ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);

@@ -93,7 +93,7 @@ Deliver a working, tested API that supports:
 - [x] **EntityDTO** – Public representation of an entity.
 - [x] **CreateEntityRequest** – Request body for creating entities (name).
 - [x] **UpdateEntityNameRequest** – Request body for updating entity names.
-- [x] **ErrorResponse** – Body returned for every 4xx and 5xx response the API answers itself (`status`, `message`); the `401` Spring Security returns for a missing or invalid bearer token carries no body.
+- [x] **ErrorResponse** – Body returned for every 4xx and 5xx response the API answers itself (`status`, `message`), including the `400`, `404`, `405`, and `415` Spring MVC raises for a missing, malformed, or wrongly typed body, an unmapped path or verb, or an unsupported content type; the `401` (missing or invalid bearer token) and `403` (read-only token on a write) that Spring Security returns carry no body.
 
 ---
 

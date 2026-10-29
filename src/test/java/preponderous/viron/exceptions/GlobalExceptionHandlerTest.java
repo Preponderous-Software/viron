@@ -9,9 +9,14 @@ import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.method.annotation.ExceptionHandlerMethodResolver;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -82,6 +87,12 @@ class GlobalExceptionHandlerTest {
                 .isEqualTo("handleMethodArgumentTypeMismatchException");
     }
 
+    @Test
+    void anUnreadableBodyReachesItsOwnHandlerRatherThanTheGenericOne() {
+        assertThat(resolvedHandlerFor(unreadableBody()))
+                .isEqualTo("handleHttpMessageNotReadableException");
+    }
+
     // Client errors that quote the exception's message
 
     @Test
@@ -126,6 +137,38 @@ class GlobalExceptionHandlerTest {
                 HttpStatus.BAD_REQUEST, "since: must be a valid Long");
         assertError(handler.handleMethodArgumentTypeMismatchException(typeMismatch("x", null, "since")),
                 HttpStatus.BAD_REQUEST, "since: has an invalid value");
+    }
+
+    // Request bodies and framework rejections
+
+    private static HttpMessageNotReadableException unreadableBody() {
+        return new HttpMessageNotReadableException("JSON parse error: Unrecognized token 'nope'",
+                new ServletServerHttpRequest(new MockHttpServletRequest()));
+    }
+
+    @Test
+    void anUnreadableBodyAnswers400WithoutQuotingTheParsersMessage() {
+        assertError(handler.handleHttpMessageNotReadableException(unreadableBody()),
+                HttpStatus.BAD_REQUEST, "Request body is missing, is not valid JSON, or has a field of the wrong type");
+    }
+
+    @Test
+    void aClientErrorSpringRaisesItselfAnswersItsOwnStatusAndHeaders() {
+        ResponseEntity<ErrorResponse> response = handler.handleGenericException(
+                new HttpRequestMethodNotSupportedException("DELETE", List.of("GET")));
+
+        assertError(response, HttpStatus.METHOD_NOT_ALLOWED, "Method 'DELETE' is not supported.");
+        assertThat(response.getHeaders().getAllow()).containsExactly(org.springframework.http.HttpMethod.GET);
+    }
+
+    /**
+     * Only a 4xx rejection is passed through: a 5xx one is still a fault of the service, answered
+     * in the generic 500 manner.
+     */
+    @Test
+    void aServerErrorSpringRaisesItselfIsStillAnswered500() {
+        assertError(handler.handleGenericException(new AsyncRequestTimeoutException()),
+                HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
     }
 
     // Server errors
