@@ -149,7 +149,7 @@ class GlobalExceptionHandlerTest {
     @Test
     void anUnreadableBodyAnswers400WithoutQuotingTheParsersMessage() {
         assertError(handler.handleHttpMessageNotReadableException(unreadableBody()),
-                HttpStatus.BAD_REQUEST, "Request body is missing or is not valid JSON");
+                HttpStatus.BAD_REQUEST, "Request body is missing, is not valid JSON, or has a field of the wrong type");
     }
 
     @Test

@@ -169,7 +169,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Answers a request body that is absent or cannot be parsed as JSON as the client error it is.
+     * Answers a request body that is absent, cannot be parsed as JSON, or holds a field that cannot be
+     * converted to its declared type ({@code "numGrids": "abc"}) as the client error it is.
      * Spring raises this while reading the body, before validation or the handler runs; without a
      * handler of its own it reached {@link #handleGenericException} and was answered 500 (#250).
      *
@@ -180,7 +181,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         log.warn("Unreadable request body: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(),
-                "Request body is missing or is not valid JSON");
+                "Request body is missing, is not valid JSON, or has a field of the wrong type");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 

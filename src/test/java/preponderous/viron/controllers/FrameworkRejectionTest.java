@@ -67,7 +67,7 @@ class FrameworkRejectionTest {
                         .content("{\"name\":"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Request body is missing or is not valid JSON"));
+                .andExpect(jsonPath("$.message").value("Request body is missing, is not valid JSON, or has a field of the wrong type"));
 
         verifyNoInteractions(entityRepository);
     }
@@ -78,7 +78,24 @@ class FrameworkRejectionTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Request body is missing or is not valid JSON"));
+                .andExpect(jsonPath("$.message").value("Request body is missing, is not valid JSON, or has a field of the wrong type"));
+
+        verifyNoInteractions(environmentRepository);
+    }
+
+    /**
+     * Valid JSON whose field cannot be converted to the request's declared type is rejected by the
+     * same reader, before bean validation runs.
+     */
+    @Test
+    void createEnvironment_FieldOfTheWrongType_ReturnsBadRequestErrorResponse() throws Exception {
+        mockMvc.perform(post("/api/v1/environments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"x\",\"numGrids\":\"abc\",\"gridSize\":1}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(
+                        "Request body is missing, is not valid JSON, or has a field of the wrong type"));
 
         verifyNoInteractions(environmentRepository);
     }
