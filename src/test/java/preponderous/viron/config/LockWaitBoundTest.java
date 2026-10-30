@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.transaction.support.TransactionTemplate;
 import preponderous.viron.database.DbInteractions;
+import preponderous.viron.repositories.EntityRepositoryImpl;
 import preponderous.viron.repositories.LocationRepositoryImpl;
 
 import javax.sql.DataSource;
@@ -49,6 +50,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LockWaitBoundTest {
 
     private static final int LOCATION_ID = 1;
+    private static final int ENTITY_ID = 2;
     private static final int LOCK_TIMEOUT_MS = 300;
     private static final long MUST_FAIL_WITHIN_MS = 1500;
     private static final int TIMEOUT_SECONDS = 30;
@@ -56,6 +58,7 @@ class LockWaitBoundTest {
     private DataSource dataSource;
     private DbInteractions dbInteractions;
     private LocationRepositoryImpl locationRepository;
+    private EntityRepositoryImpl entityRepository;
     private TransactionTemplate transactionTemplate;
 
     @BeforeEach
@@ -65,10 +68,19 @@ class LockWaitBoundTest {
         locationRepository = new LocationRepositoryImpl(dbInteractions);
         transactionTemplate = new TransactionTemplate(new DataSourceConfig().transactionManager(dataSource));
 
+        entityRepository = new EntityRepositoryImpl(dbInteractions);
+
+        dbInteractions.update("DROP TABLE IF EXISTS viron.entity_location");
+        dbInteractions.update("DROP TABLE IF EXISTS viron.entity");
         dbInteractions.update("DROP TABLE IF EXISTS viron.location");
         dbInteractions.update("CREATE SCHEMA IF NOT EXISTS viron");
         dbInteractions.update("CREATE TABLE viron.location (location_id INT PRIMARY KEY, x INT, y INT)");
         dbInteractions.update("INSERT INTO viron.location (location_id, x, y) VALUES (?, ?, ?)", LOCATION_ID, 0, 0);
+        dbInteractions.update("CREATE TABLE viron.entity (entity_id INT PRIMARY KEY, name VARCHAR(255), creation_date VARCHAR(64))");
+        dbInteractions.update("INSERT INTO viron.entity (entity_id, name) VALUES (?, ?)", ENTITY_ID, "Placed");
+        dbInteractions.update("CREATE TABLE viron.entity_location (entity_id INT PRIMARY KEY, location_id INT)");
+        dbInteractions.update("INSERT INTO viron.entity_location (entity_id, location_id) VALUES (?, ?)",
+                ENTITY_ID, LOCATION_ID);
     }
 
     @AfterEach
@@ -104,6 +116,42 @@ class LockWaitBoundTest {
             release.countDown();
             holder.shutdownNow();
         }
+    }
+
+    // #252: a write that waits on a locked row is held to the same bound, and reports the expired
+    // wait as the lock failure it is rather than as a write that did not take effect — deleting an
+    // entity whose placement a move holds was answered 500 instead of 503.
+    @Test
+    void aWriteWaitingOnALockedPlacement_reportsTheExpiredWaitAsALockFailure() throws Exception {
+        CountDownLatch lockHeld = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ExecutorService holder = Executors.newSingleThreadExecutor();
+        try {
+            Future<?> holding = holder.submit(() -> transactionTemplate.executeWithoutResult(status -> {
+                assertThat(locationRepository.lockPlacementOfEntity(ENTITY_ID)).isTrue();
+                lockHeld.countDown();
+                await(release);
+            }));
+            assertThat(lockHeld.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)).isTrue();
+
+            long started = System.nanoTime();
+            assertThatThrownBy(() -> entityRepository.deleteById(ENTITY_ID))
+                    .isInstanceOf(CannotAcquireLockException.class);
+            long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
+
+            assertThat(elapsedMs)
+                    .as("a lock wait bounded at %d ms must not run to %d ms", LOCK_TIMEOUT_MS, elapsedMs)
+                    .isLessThan(MUST_FAIL_WITHIN_MS);
+
+            release.countDown();
+            holding.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } finally {
+            release.countDown();
+            holder.shutdownNow();
+        }
+
+        // The delete gave up before touching anything, so the entity is still there.
+        assertThat(entityRepository.findById(ENTITY_ID)).isPresent();
     }
 
     private static void await(CountDownLatch latch) {

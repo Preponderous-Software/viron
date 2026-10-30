@@ -201,6 +201,8 @@ of the pool the wait is drawn against.
 
 A request whose lock wait runs past the bound is answered `503 Service Unavailable` with a
 `Retry-After` header rather than held; the data is untouched and the request can be retried.
+The same holds for a write that waits on a row one of those paths has locked — deleting an
+entity whose placement is being moved, or an environment whose locations are.
 The lock timeout is applied as `lock_timeout` on every connection the pool opens, so it must
 stay below the pool's 30-second connection timeout. `0` leaves the database's own default in
 place, which for PostgreSQL means waiting indefinitely. No `statement_timeout` is set: the

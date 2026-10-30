@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -47,6 +48,13 @@ public class DbInteractions {
 
     /** SQL state for a unique/primary-key violation, as reported by both Postgres and H2. */
     private static final String SQL_STATE_UNIQUE_VIOLATION = "23505";
+
+    /**
+     * SQL states for a statement that gave up waiting on a row lock: Postgres's
+     * {@code lock_not_available} (a wait past {@code lock_timeout}) and {@code deadlock_detected},
+     * and H2's lock timeout, which the tests run against.
+     */
+    private static final Set<String> SQL_STATES_LOCK_NOT_ACQUIRED = Set.of("55P03", "40P01", "HYT00");
 
     private final DataSource dataSource;
 
@@ -158,7 +166,10 @@ public class DbInteractions {
      *
      * @param query  SQL with {@code ?} placeholders for each parameter
      * @param params values to bind to the placeholders, in order
-     * @return {@code true} if at least one row was affected, {@code false} otherwise (including on error)
+     * @return {@code true} if at least one row was affected, {@code false} otherwise (including on
+     *         any error that is not a failure to take a row lock)
+     * @throws CannotAcquireLockException if the statement gave up waiting on a row lock, for the
+     *         reason given on {@link #updateReportingDuplicateKey(String, Object...)}
      */
     public boolean update(String query, Object... params) {
         try {
@@ -183,14 +194,21 @@ public class DbInteractions {
      * needs the distinction to answer 409 rather than 500.
      *
      * <p>Detection is by SQL state {@code 23505} (unique violation), which Postgres and the H2
-     * database the tests run against both report. Every other failure is logged and reported as
-     * {@code false}, exactly as before.
+     * database the tests run against both report.
+     *
+     * <p>A statement that gave up waiting on a row lock is reported too, as the
+     * {@link CannotAcquireLockException} {@link #lock(String, Object...)} raises (#252). A write
+     * can wait on a row another request has locked — deleting an entity whose placement a move
+     * holds — and flattening that wait to {@code false} told the client about a server fault when
+     * the condition is transient. Every other failure is logged and reported as {@code false},
+     * exactly as before.
      *
      * @param query  SQL with {@code ?} placeholders for each parameter
      * @param params values to bind to the placeholders, in order
      * @return {@code true} if at least one row was affected, {@code false} otherwise (including on
-     *         any error that is not a unique/primary-key violation)
+     *         any error that is not a unique/primary-key violation or a failure to take a row lock)
      * @throws DuplicateKeyException if the statement violated a unique or primary-key constraint
+     * @throws CannotAcquireLockException if the statement gave up waiting on a row lock
      */
     public boolean updateReportingDuplicateKey(String query, Object... params) {
         Connection connection = DataSourceUtils.getConnection(dataSource);
@@ -200,6 +218,10 @@ public class DbInteractions {
         } catch (SQLException e) {
             if (isUniqueViolation(e)) {
                 throw new DuplicateKeyException("Update violated a unique constraint: " + e.getMessage(), e);
+            }
+            if (SQL_STATES_LOCK_NOT_ACQUIRED.contains(e.getSQLState())) {
+                log.warn("Update gave up waiting on a lock: {}", e.getMessage());
+                throw new CannotAcquireLockException("Could not take lock: " + e.getMessage(), e);
             }
             log.error("Error executing update: {}", e.getMessage());
         } finally {
