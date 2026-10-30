@@ -10,6 +10,8 @@ import preponderous.viron.config.DataSourceConfig;
 import preponderous.viron.config.DbConfig;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,9 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Exercises {@link DbInteractions} against an in-memory H2 database to verify
@@ -165,6 +170,40 @@ public class DbInteractionsTest {
     @Test
     void updateReportingDuplicateKey_onAnyOtherFailure_returnsFalseAndDoesNotThrow() {
         assertThat(dbInteractions.updateReportingDuplicateKey("UPDATE does_not_exist SET name = ?", "x")).isFalse();
+    }
+
+    // #252: Postgres reports a write that gave up on a row lock as 55P03 and a broken deadlock as
+    // 40P01. Neither is evidence the row is absent, so both are reported rather than flattened to
+    // false — through update() as well, which only flattens a duplicate key.
+    @Test
+    void update_onPostgresLockFailure_throwsCannotAcquireLock() throws SQLException {
+        for (String sqlState : List.of("55P03", "40P01")) {
+            DbInteractions failing = new DbInteractions(dataSourceFailingUpdatesWith(sqlState));
+
+            assertThatThrownBy(() -> failing.update("DELETE FROM person WHERE id = ?", 1))
+                    .as("SQL state %s", sqlState)
+                    .isInstanceOf(CannotAcquireLockException.class);
+            assertThatThrownBy(() -> failing.updateReportingDuplicateKey("DELETE FROM person WHERE id = ?", 1))
+                    .as("SQL state %s", sqlState)
+                    .isInstanceOf(CannotAcquireLockException.class);
+        }
+    }
+
+    @Test
+    void update_onAFailureThatIsNotALockFailure_stillReturnsFalse() throws SQLException {
+        DbInteractions failing = new DbInteractions(dataSourceFailingUpdatesWith("23503"));
+
+        assertThat(failing.update("DELETE FROM person WHERE id = ?", 1)).isFalse();
+    }
+
+    private static DataSource dataSourceFailingUpdatesWith(String sqlState) throws SQLException {
+        PreparedStatement statement = mock(PreparedStatement.class);
+        when(statement.executeUpdate()).thenThrow(new SQLException("failed", sqlState));
+        Connection connection = mock(Connection.class);
+        when(connection.prepareStatement(anyString())).thenReturn(statement);
+        DataSource failingDataSource = mock(DataSource.class);
+        when(failingDataSource.getConnection()).thenReturn(connection);
+        return failingDataSource;
     }
 
     @Test
