@@ -27,7 +27,8 @@ jobs:
         run: ./mvnw test -B
 
   python-client:
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest is Ubuntu 26.04, which setup-python has no 3.8 build for.
+    runs-on: ubuntu-24.04
 
     strategy:
       fail-fast: false
