@@ -165,6 +165,26 @@ class OpenApiSpecDriftTest {
         }
     }
 
+    /**
+     * Swagger UI shows the live document's {@code info} block, so a reader there should see the same
+     * title, version and description as the checked-in contract rather than a second, stale identity.
+     */
+    @Test
+    void liveAndStaticSpecDeclareTheSameInfo() throws Exception {
+        String liveJson = mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode liveInfo = mapper.readTree(liveJson).path("info");
+        JsonNode staticInfo = mapper.readTree(new File("docs/openapi/viron-api.json")).path("info");
+
+        for (String field : new String[] {"title", "version", "description"}) {
+            assertEquals(staticInfo.path(field).asText(), liveInfo.path(field).asText(),
+                    "info." + field + " served at /v3/api-docs differs from docs/openapi/viron-api.json");
+        }
+    }
+
     /** Any route can be answered 401 by the security filter before its handler runs. */
     @Test
     void everyRouteDocumentsTheUnauthorizedAnswer() throws Exception {

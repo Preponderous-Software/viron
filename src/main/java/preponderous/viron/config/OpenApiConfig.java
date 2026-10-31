@@ -16,9 +16,12 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
+                // Mirrors info in docs/openapi/viron-api.json, which is what Swagger UI should show.
                 .info(new Info()
                         .title("Viron API")
-                        .version("0.5.0"))
+                        .version("1.0.0")
+                        .description("API specification for the Viron spatial simulation core using "
+                                + "DTO-based request/response objects."))
                 // Every API route requires a UserAuth-issued JWT (see SecurityConfig), so declare it
                 // once globally; this is also what gives Swagger UI its Authorize control.
                 .components(new Components()
