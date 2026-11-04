@@ -3,6 +3,7 @@
 # MIT License
 
 from typing import List, Optional
+from urllib.parse import quote
 import requests
 from src.main.python.preponderous.viron.models.environment import Environment
 
@@ -29,7 +30,9 @@ class EnvironmentService:
         return Environment(**response.json())
 
     def get_environment_by_name(self, name: str) -> Environment:
-        response = requests.get(f"{self.get_base_url()}/name/{name}", headers=self.get_auth_headers())
+        # A name is free text, so it is encoded to stay one path segment: left as it is, "a?b"
+        # would look up the environment "a", and "../1" would fetch environment 1.
+        response = requests.get(f"{self.get_base_url()}/name/{quote(name, safe='')}", headers=self.get_auth_headers())
         response.raise_for_status()
         return Environment(**response.json())
 

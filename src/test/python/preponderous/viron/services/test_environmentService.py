@@ -70,6 +70,25 @@ def test_get_environment_by_name(mock_get):
     assert environment.getName() == 'Environment1'
     mock_get.assert_called_once_with("http://localhost:9999/api/v1/environments/name/Environment1", headers={})
 
+@pytest.mark.parametrize("name, encoded", [
+    ("alpha?beta", "alpha%3Fbeta"),
+    ("alpha#1", "alpha%231"),
+    ("a/b", "a%2Fb"),
+    ("../1", "..%2F1"),
+    ("50%", "50%25"),
+    ("two words", "two%20words"),
+])
+@patch('requests.get')
+def test_get_environment_by_name_keeps_the_name_one_path_segment(mock_get, name, encoded):
+    mock_response = Mock()
+    mock_response.json.return_value = {'environmentId': 1, 'name': name, 'creationDate': '2024-01-01'}
+    mock_response.raise_for_status = Mock()
+    mock_get.return_value = mock_response
+
+    service.get_environment_by_name(name)
+
+    mock_get.assert_called_once_with(f"http://localhost:9999/api/v1/environments/name/{encoded}", headers={})
+
 @patch('requests.get')
 def test_get_environment_of_entity(mock_get):
     mock_response = Mock()

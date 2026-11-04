@@ -31,6 +31,10 @@ def test_setCreationDate(entity):
     entity.setCreationDate("2024-02-01")
     assert entity.getCreationDate() == "2024-02-01"
 
+def test_setCreationDate_accepts_what_the_service_answers(entity):
+    entity.setCreationDate("2026-11-04 01:18:17")
+    assert entity.getCreationDate() == "2026-11-04 01:18:17"
+
 def test_str(entity):
     assert str(entity) == "Entity{entityId=1, name=Test Entity, creationDate=2024-01-01}"
 

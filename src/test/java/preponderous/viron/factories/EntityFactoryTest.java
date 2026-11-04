@@ -8,6 +8,7 @@ import preponderous.viron.database.DbInteractions;
 import preponderous.viron.exceptions.EntityCreationException;
 import preponderous.viron.models.Entity;
 
+import java.sql.Timestamp;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,6 +39,9 @@ public class EntityFactoryTest {
         assertThat(result).isNotNull();
         assertThat(result.getEntityId()).isEqualTo(5);
         assertThat(result.getName()).isEqualTo("Bob");
+        // A create answers the same format as a read, which the Python client validates.
+        assertThat(result.getCreationDate()).matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}");
+        verify(dbInteractions).update(anyString(), eq(5), eq("Bob"), any(Timestamp.class));
     }
 
     // #138: a nextval query that yields no id (failed query or no row) must not be inserted

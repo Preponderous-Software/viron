@@ -49,9 +49,9 @@ public class EnvironmentFactory {
             log.error("Failed to get next environment id");
             throw new EnvironmentCreationException("Failed to get next environment id");
         }
-        String creationDate = new java.util.Date().toString();
+        CreationTimestamp creationDate = CreationTimestamp.now();
         String query = "INSERT INTO viron.environment (environment_id, name, creation_date) VALUES (?, ?, ?)";
-        boolean success = dbInteractions.update(query, id, name, creationDate);
+        boolean success = dbInteractions.update(query, id, name, creationDate.toColumnValue());
         if (!success) {
             log.error("Failed to create environment");
             throw new EnvironmentCreationException("Failed to create environment");
@@ -112,7 +112,7 @@ public class EnvironmentFactory {
         }
         log.info("Grids created: {}", gridIds);
 
-        Environment environment = new Environment(id, name, creationDate);
+        Environment environment = new Environment(id, name, creationDate.toString());
         log.info("Successfully created environment: '{}' with id: {} and creation date: {}", name, id, creationDate);
         
         return environment;
