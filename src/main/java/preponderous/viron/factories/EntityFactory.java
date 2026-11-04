@@ -27,12 +27,12 @@ public class EntityFactory {
             log.error("Failed to get next entity id");
             throw new EntityCreationException("Failed to get next entity id");
         }
-        String creationDate = new java.util.Date().toString();
+        CreationTimestamp creationDate = CreationTimestamp.now();
         String query = "INSERT INTO viron.entity (entity_id, name, creation_date) VALUES (?, ?, ?)";
-        boolean success = dbInteractions.update(query, id, name, creationDate);
+        boolean success = dbInteractions.update(query, id, name, creationDate.toColumnValue());
         if (success) {
             log.info("Successfully created entity with name: {} and id: {} and creation date: {}", name, id, creationDate);
-            return new Entity(id, name, creationDate);
+            return new Entity(id, name, creationDate.toString());
         }
         throw new EntityCreationException("Error creating entity with name: " + name);
     }
