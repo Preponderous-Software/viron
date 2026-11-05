@@ -188,6 +188,10 @@ It is on by default and configured by the `usage-reporting.*` properties in
 Set `USAGE_REPORTING_ENABLED=false` to turn it off; every opt-out is listed under
 [Usage reporting](#usage-reporting) below.
 
+`compose.yml` passes `USAGE_REPORTING_ENDPOINT`, `USAGE_REPORTING_KEY` and `TRACE_INSTALL_ID`
+through from the shell or `.env` only when they are set. Leave the endpoint and key out rather
+than empty: set but empty, either one turns reporting off.
+
 #### Database pool and lock wait
 The write paths that lock a row before deciding on it (moving an entity, removing a placement)
 hold a pooled connection for as long as they wait for that lock. Two `database.*` properties
@@ -312,11 +316,13 @@ hosts, addresses or data is ever included.
 Turn it off any of these ways:
 
 - `USAGE_REPORTING_ENABLED=false` in the environment (`usage-reporting.enabled=false` in
-  `application.properties`; `compose.yml` passes the variable through)
+  `application.properties`)
 - `TRACE_USAGE_REPORTING=off` in the environment (also `false`, `0`, `no`; shared by every
   program that reports to trace, and it wins over the setting above)
 - `DO_NOT_TRACK=1` in the environment (also `true`, `yes`; see
   [consoledonottrack.com](https://consoledonottrack.com))
+
+`compose.yml` passes all three through from the shell or `.env`.
 
 One line is logged at start-up saying whether reporting is on and, if it is off, which switch
 turned it off. Details: https://danielstephenson.dev/usage-reporting

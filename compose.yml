@@ -41,6 +41,14 @@ services:
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       # One "startup" usage event goes to the trace service on start-up; false turns it off.
       USAGE_REPORTING_ENABLED: ${USAGE_REPORTING_ENABLED:-true}
+      # No value: passed only when set in the shell or .env, and left unset in the container
+      # otherwise. A ${VAR:-} empty string would not do: an empty endpoint or key turns
+      # reporting off, while unset falls back to the defaults in application.properties.
+      USAGE_REPORTING_ENDPOINT:
+      USAGE_REPORTING_KEY:
+      TRACE_USAGE_REPORTING:
+      DO_NOT_TRACK:
+      TRACE_INSTALL_ID:
     depends_on:
       - postgres
 
