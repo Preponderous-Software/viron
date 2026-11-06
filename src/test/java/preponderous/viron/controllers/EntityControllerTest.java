@@ -7,6 +7,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import preponderous.viron.database.DbInteractions;
@@ -343,6 +344,21 @@ class EntityControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("Entity not found with id: 999"));
+    }
+
+    /** A rename can wait on a row an environment delete has removed but not committed (#259). */
+    @Test
+    void updateEntityName_LockWaitTimedOutIsServiceUnavailable() throws Exception {
+        when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "OldName", "2024-01-01")));
+        when(entityRepository.updateName(1, "Name"))
+                .thenThrow(new CannotAcquireLockException("Could not take lock: lock timeout"));
+
+        mockMvc.perform(patch("/api/v1/entities/1/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Name\"}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("Retry-After", "1"))
+                .andExpect(jsonPath("$.status").value(503));
     }
 
     @Test

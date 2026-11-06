@@ -204,6 +204,36 @@ class OpenApiSpecDriftTest {
                         + "does not document it. Add #/components/responses/Unauthorized.");
     }
 
+    /**
+     * A {@code PUT}, {@code PATCH} or {@code DELETE} writes to a row that already exists, so it can
+     * wait on a lock another request holds on that row and be answered 503 when the wait runs past
+     * {@code database.lockTimeoutMs}. That includes a route that takes no lock itself: a placement's
+     * foreign-key check waits on a location a move has locked, and a rename waits on a row a cascade
+     * delete has removed but not committed (#259). A {@code POST} is left out because the rows it
+     * inserts draw their ids from sequences, so there is no existing row for it to wait on.
+     */
+    @Test
+    void routesThatWriteToExistingRowsDocumentTheLockTimeout() throws Exception {
+        JsonNode staticSpec = new ObjectMapper().readTree(new File("docs/openapi/viron-api.json"));
+
+        Set<String> undocumented = new TreeSet<>();
+        forEachApiRoute((verb, path, handler) -> {
+            if (!Set.of("PUT", "PATCH", "DELETE").contains(verb)) {
+                return;
+            }
+            JsonNode operation = operationAt(staticSpec, path, verb);
+            assertNotNull(operation, verb + " " + path + " is missing from the spec entirely");
+            if (!operation.get("responses").has("503")) {
+                undocumented.add(verb + " " + path);
+            }
+        });
+
+        assertEquals(Set.of(), undocumented,
+                "These routes write to an existing row and so can answer 503 after a lock wait, but "
+                        + "docs/openapi/viron-api.json does not document it. Add "
+                        + "#/components/responses/LockTimeout.");
+    }
+
     private interface RouteVisitor {
         void visit(String verb, String path, HandlerMethod handler);
     }
