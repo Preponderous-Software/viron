@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -51,6 +52,7 @@ class LockWaitBoundTest {
 
     private static final int LOCATION_ID = 1;
     private static final int ENTITY_ID = 2;
+    private static final int UNPLACED_ENTITY_ID = 3;
     private static final int LOCK_TIMEOUT_MS = 300;
     private static final long MUST_FAIL_WITHIN_MS = 1500;
     private static final int TIMEOUT_SECONDS = 30;
@@ -78,6 +80,7 @@ class LockWaitBoundTest {
         dbInteractions.update("INSERT INTO viron.location (location_id, x, y) VALUES (?, ?, ?)", LOCATION_ID, 0, 0);
         dbInteractions.update("CREATE TABLE viron.entity (entity_id INT PRIMARY KEY, name VARCHAR(255), creation_date VARCHAR(64))");
         dbInteractions.update("INSERT INTO viron.entity (entity_id, name) VALUES (?, ?)", ENTITY_ID, "Placed");
+        dbInteractions.update("INSERT INTO viron.entity (entity_id, name) VALUES (?, ?)", UNPLACED_ENTITY_ID, "Unplaced");
         dbInteractions.update("CREATE TABLE viron.entity_location (entity_id INT PRIMARY KEY, location_id INT)");
         dbInteractions.update("INSERT INTO viron.entity_location (entity_id, location_id) VALUES (?, ?)",
                 ENTITY_ID, LOCATION_ID);
@@ -152,6 +155,61 @@ class LockWaitBoundTest {
 
         // The delete gave up before touching anything, so the entity is still there.
         assertThat(entityRepository.findById(ENTITY_ID)).isPresent();
+    }
+
+    // #259: a placement takes no lock of its own, but its insert still waits on a row another
+    // transaction holds. The foreign-key wait on a location a move has locked is specific to
+    // Postgres, whose check takes FOR KEY SHARE; H2's does not wait, so the same expired wait is
+    // shown here through the second route to it, an uncommitted placement of the same entity.
+    @Test
+    void aPlacementWaitingOnAnUncommittedPlacement_reportsTheExpiredWaitAsALockFailure() throws Exception {
+        assertWaiterFailsWithinTheBound(
+                () -> locationRepository.addEntityToLocation(UNPLACED_ENTITY_ID, LOCATION_ID),
+                () -> locationRepository.addEntityToLocation(UNPLACED_ENTITY_ID, LOCATION_ID));
+
+        // The holder committed its placement; the waiter added nothing of its own.
+        assertThat(locationRepository.getEntityIdsAtLocation(LOCATION_ID))
+                .containsExactlyInAnyOrder(ENTITY_ID, UNPLACED_ENTITY_ID);
+    }
+
+    // #259: a rename takes no lock either, but waits on a row an environment delete has removed
+    // and not yet committed.
+    @Test
+    void aRenameWaitingOnAnUncommittedDelete_reportsTheExpiredWaitAsALockFailure() throws Exception {
+        assertWaiterFailsWithinTheBound(
+                () -> dbInteractions.update("DELETE FROM viron.entity WHERE entity_id = ?", UNPLACED_ENTITY_ID),
+                () -> entityRepository.updateName(UNPLACED_ENTITY_ID, "Renamed"));
+
+        assertThat(entityRepository.findById(UNPLACED_ENTITY_ID)).isEmpty();
+    }
+
+    /** Runs {@code holderWrite} in a transaction kept open while {@code waiter} reaches for the same row. */
+    private void assertWaiterFailsWithinTheBound(BooleanSupplier holderWrite, BooleanSupplier waiter) throws Exception {
+        CountDownLatch rowHeld = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ExecutorService holder = Executors.newSingleThreadExecutor();
+        try {
+            Future<?> holding = holder.submit(() -> transactionTemplate.executeWithoutResult(status -> {
+                assertThat(holderWrite.getAsBoolean()).isTrue();
+                rowHeld.countDown();
+                await(release);
+            }));
+            assertThat(rowHeld.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)).isTrue();
+
+            long started = System.nanoTime();
+            assertThatThrownBy(waiter::getAsBoolean).isInstanceOf(CannotAcquireLockException.class);
+            long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
+
+            assertThat(elapsedMs)
+                    .as("a lock wait bounded at %d ms must not run to %d ms", LOCK_TIMEOUT_MS, elapsedMs)
+                    .isLessThan(MUST_FAIL_WITHIN_MS);
+
+            release.countDown();
+            holding.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } finally {
+            release.countDown();
+            holder.shutdownNow();
+        }
     }
 
     private static void await(CountDownLatch latch) {

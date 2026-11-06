@@ -157,7 +157,8 @@
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
-          }
+          },
+          "503": { "$ref": "#/components/responses/LockTimeout" }
         }
       }
     },
@@ -272,7 +273,8 @@
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
-          }
+          },
+          "503": { "$ref": "#/components/responses/LockTimeout" }
         }
       }
     },
@@ -453,7 +455,8 @@
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
-          }
+          },
+          "503": { "$ref": "#/components/responses/LockTimeout" }
         }
       },
       "delete": {
@@ -698,7 +701,8 @@
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
-          }
+          },
+          "503": { "$ref": "#/components/responses/LockTimeout" }
         }
       }
     },

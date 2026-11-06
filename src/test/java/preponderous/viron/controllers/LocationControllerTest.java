@@ -527,6 +527,25 @@ class LocationControllerTest {
                         "Entity 1 was placed by a concurrent request and could not be added to location 2"));
     }
 
+    /**
+     * The placement takes no lock of its own, but its insert can still wait on a row another
+     * request holds, and a wait past the bound is told to the client as the transient condition it
+     * is rather than as a conflict (#259).
+     */
+    @Test
+    void addEntityToLocation_LockWaitTimedOutIsServiceUnavailable() throws Exception {
+        when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
+        when(entityRepository.findById(1)).thenReturn(Optional.of(new Entity(1, "Entity1", "2024-01-01")));
+        when(locationRepository.findByEntityId(1)).thenReturn(Optional.empty());
+        when(locationRepository.addEntityToLocation(1, 2))
+                .thenThrow(new CannotAcquireLockException("Could not take lock: lock timeout"));
+
+        mockMvc.perform(put("/api/v1/locations/2/entity/1"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("Retry-After", "1"))
+                .andExpect(jsonPath("$.status").value(503));
+    }
+
     @Test
     void addEntityToLocation_RepositoryThrowsException() throws Exception {
         when(locationRepository.findById(2)).thenReturn(Optional.of(new Location(2, 10, 20)));
