@@ -205,15 +205,16 @@ class OpenApiSpecDriftTest {
     }
 
     /**
-     * A {@code PUT}, {@code PATCH} or {@code DELETE} writes to a row that already exists, so it can
+     * A {@code PUT}, {@code PATCH} or {@code DELETE} depends on a row that already exists, so it can
      * wait on a lock another request holds on that row and be answered 503 when the wait runs past
-     * {@code database.lockTimeoutMs}. That includes a route that takes no lock itself: a placement's
-     * foreign-key check waits on a location a move has locked, and a rename waits on a row a cascade
-     * delete has removed but not committed (#259). A {@code POST} is left out because the rows it
-     * inserts draw their ids from sequences, so there is no existing row for it to wait on.
+     * {@code database.lockTimeoutMs}. That includes a route that takes no lock itself: a placement
+     * inserts a new row, but its foreign-key check waits on a location a move has locked, and a
+     * rename waits on a row a cascade delete has removed but not committed (#259). A {@code POST} is
+     * left out because the rows it inserts take their ids from sequences and reference only rows
+     * the same request created, so there is nothing held by another request for it to wait on.
      */
     @Test
-    void routesThatWriteToExistingRowsDocumentTheLockTimeout() throws Exception {
+    void routesThatDependOnExistingRowsDocumentTheLockTimeout() throws Exception {
         JsonNode staticSpec = new ObjectMapper().readTree(new File("docs/openapi/viron-api.json"));
 
         Set<String> undocumented = new TreeSet<>();
@@ -229,7 +230,7 @@ class OpenApiSpecDriftTest {
         });
 
         assertEquals(Set.of(), undocumented,
-                "These routes write to an existing row and so can answer 503 after a lock wait, but "
+                "These routes depend on an existing row and so can answer 503 after a lock wait, but "
                         + "docs/openapi/viron-api.json does not document it. Add "
                         + "#/components/responses/LockTimeout.");
     }
