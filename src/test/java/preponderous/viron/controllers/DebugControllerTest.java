@@ -193,6 +193,25 @@ class DebugControllerTest {
                 .andExpect(jsonPath("$.message").isString());
     }
 
+    @Test
+    void createWorldAndPlaceEntity_BlankName_Returns400BeforeCreatingAnything() throws Exception {
+        mockMvc.perform(post("/api/v1/debug/create-world-and-place-entity/{name}", " "))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("environmentName: must not be blank"));
+
+        verifyNoInteractions(environmentService);
+    }
+
+    /** The name becomes the environment's, so it is held to the bound on that column's requests. */
+    @Test
+    void createWorldAndPlaceEntity_OverlongName_Returns400BeforeCreatingAnything() throws Exception {
+        mockMvc.perform(post("/api/v1/debug/create-world-and-place-entity/" + "n".repeat(256)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("environmentName: size must be between 0 and 255"));
+
+        verifyNoInteractions(environmentService);
+    }
+
     /**
      * Builds a list of locations covering all coordinates in a grid of the given size.
      * Location IDs are assigned sequentially starting from 1.

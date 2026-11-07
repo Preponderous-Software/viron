@@ -95,6 +95,8 @@ Deliver a working, tested API that supports:
 - [x] **UpdateEntityNameRequest** – Request body for updating entity names.
 - [x] **ErrorResponse** – Body returned for every 4xx and 5xx response the API answers itself (`status`, `message`), including the `400`, `404`, `405`, and `415` Spring MVC raises for a missing, malformed, or wrongly typed body, an unmapped path or verb, or an unsupported content type; the `401` (missing or invalid bearer token) and `403` (read-only token on a write) that Spring Security returns carry no body.
 
+Every `name` in a request body is required, must not be blank, and is limited to 255 characters, the length of the column that stores it; a longer one is answered `400`.
+
 ---
 
 ## ✅ Completion Criteria

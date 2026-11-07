@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.MethodParameter;
@@ -23,6 +25,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.condition.PathPatternsRequestCondition;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import preponderous.viron.dto.CreateEntityRequest;
+import preponderous.viron.dto.CreateEnvironmentRequest;
+import preponderous.viron.dto.UpdateEntityNameRequest;
+import preponderous.viron.dto.UpdateEnvironmentNameRequest;
+import preponderous.viron.dto.UpdateGridNameRequest;
 
 import java.io.File;
 import java.util.Iterator;
@@ -138,6 +145,27 @@ class OpenApiSpecDriftTest {
         assertEquals(Set.of(), undeclared,
                 "These path variables carry an @Min bound that docs/openapi/viron-api.json does not "
                         + "express in the parameter schema.");
+    }
+
+    /**
+     * The same rule for the {@code @Size} bound on a request body's name: the longest name the API
+     * accepts is part of the contract, and the spec states it in the {@code maxLength} a client
+     * would otherwise have to learn from a 400.
+     */
+    @Test
+    void boundedRequestNamesDeclareTheirBoundInTheSpec() throws Exception {
+        JsonNode schemas = new ObjectMapper().readTree(new File("docs/openapi/viron-api.json"))
+                .path("components").path("schemas");
+
+        for (Class<?> request : new Class<?>[] {
+                CreateEntityRequest.class, CreateEnvironmentRequest.class, UpdateEntityNameRequest.class,
+                UpdateEnvironmentNameRequest.class, UpdateGridNameRequest.class}) {
+            Size size = request.getDeclaredField("name").getAnnotation(Size.class);
+            assertNotNull(size, request.getSimpleName() + ".name carries no @Size bound");
+            assertEquals(size.max(), schemas.path(request.getSimpleName()).path("properties").path("name")
+                            .path("maxLength").asInt(),
+                    request.getSimpleName() + ".name should declare maxLength in docs/openapi/viron-api.json");
+        }
     }
 
     /**
@@ -260,7 +288,8 @@ class OpenApiSpecDriftTest {
     /** True when the handler declares a constraint Spring will enforce before its body runs. */
     private boolean validatesAnyInput(HandlerMethod handler) {
         for (MethodParameter parameter : handler.getMethodParameters()) {
-            if (parameter.hasParameterAnnotation(Min.class) || parameter.hasParameterAnnotation(Valid.class)) {
+            if (parameter.hasParameterAnnotation(Min.class) || parameter.hasParameterAnnotation(NotBlank.class)
+                    || parameter.hasParameterAnnotation(Valid.class)) {
                 return true;
             }
         }
