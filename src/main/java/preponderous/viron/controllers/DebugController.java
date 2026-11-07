@@ -3,6 +3,7 @@ package preponderous.viron.controllers;
 import java.util.List;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
@@ -105,7 +106,7 @@ public class DebugController {
      */
     @PostMapping("/create-world-and-place-entity/{environmentName}")
     @ResponseStatus(HttpStatus.CREATED)
-    public EntityDto createWorldAndPlaceEntity(@PathVariable @NotBlank String environmentName) {
+    public EntityDto createWorldAndPlaceEntity(@PathVariable @NotBlank @Size(max = 255) String environmentName) {
         // create an environment
         int numGrids = 1;
         int gridSize = 5;

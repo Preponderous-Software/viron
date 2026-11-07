@@ -105,6 +105,7 @@
               "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentDTO" } }
             }
           },
+          "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": {
             "description": "Environment not found with that name",
@@ -823,7 +824,7 @@
             }
           },
           "400": {
-            "description": "The generated environment has no grids, or has no location at the sampled coordinates",
+            "description": "The environment name is blank or too long, or the generated environment has no grids, or has no location at the sampled coordinates",
             "content": {
               "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
             }
@@ -849,7 +850,7 @@
         "description": "Grid dimensions must be fully specified: supply either gridSize (square shorthand) or both numRows and numColumns. numRows/numColumns take precedence over gridSize; supplying only one of them is rejected.",
         "required": ["name", "numGrids"],
         "properties": {
-          "name": { "type": "string" },
+          "name": { "type": "string", "maxLength": 255 },
           "numGrids": { "type": "integer", "minimum": 1 },
           "gridSize": { "type": "integer", "minimum": 1 },
           "numRows": { "type": "integer", "minimum": 1 },
@@ -859,7 +860,7 @@
       "UpdateEnvironmentNameRequest": {
         "type": "object",
         "required": ["name"],
-        "properties": { "name": { "type": "string" } }
+        "properties": { "name": { "type": "string", "maxLength": 255 } }
       },
       "GridDTO": {
         "type": "object",
@@ -873,7 +874,7 @@
       "UpdateGridNameRequest": {
         "type": "object",
         "required": ["name"],
-        "properties": { "name": { "type": "string" } }
+        "properties": { "name": { "type": "string", "maxLength": 255 } }
       },
       "LocationDTO": {
         "type": "object",
@@ -905,16 +906,16 @@
       "CreateEntityRequest": {
         "type": "object",
         "required": ["name"],
-        "properties": { "name": { "type": "string" } }
+        "properties": { "name": { "type": "string", "maxLength": 255 } }
       },
       "UpdateEntityNameRequest": {
         "type": "object",
         "required": ["name"],
-        "properties": { "name": { "type": "string" } }
+        "properties": { "name": { "type": "string", "maxLength": 255 } }
       },
       "ErrorResponse": {
         "type": "object",
-        "description": "Standard error response body, returned for every 4xx and 5xx response.",
+        "description": "Standard error response body, returned for every 4xx and 5xx response the API answers itself. The 401 and 403 that Spring Security returns carry no body.",
         "properties": {
           "status": { "type": "integer", "description": "HTTP status code" },
           "message": { "type": "string", "description": "Error message describing what went wrong" }
@@ -950,7 +951,7 @@
         "name": "environmentName",
         "in": "path",
         "required": true,
-        "schema": { "type": "string" }
+        "schema": { "type": "string", "maxLength": 255 }
       }
     },
     "securitySchemes": {

@@ -189,4 +189,15 @@ class PathVariableValidationTest {
 
         verifyNoInteractions(locationRepository);
     }
+
+    /** The name path variable carries {@code @NotBlank}, so a blank one is refused, not looked up. */
+    @Test
+    void getEnvironmentByName_BlankName_ReturnsBadRequestNamingTheParameter() throws Exception {
+        mockMvc.perform(get("/api/v1/environments/name/{name}", " "))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("name: must not be blank"));
+
+        verifyNoInteractions(environmentRepository);
+    }
 }
