@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch, Mock
+from requests.exceptions import ConnectionError, HTTPError
 from src.main.python.preponderous.viron.services.entityService import EntityService
 from src.main.python.preponderous.viron.models.entity import Entity
 
@@ -176,4 +177,97 @@ def test_get_all_entities_sends_bearer_token(mock_get):
         authed_service.get_base_url(),
         headers={"Authorization": "Bearer test-token"},
     )
+
+
+# Failure paths. The reads and create_entity let the HTTPError from raise_for_status propagate
+# as it is; delete_entity and update_entity_name catch it and re-raise a bare Exception that
+# carries a fixed message and the original error as its second argument.
+def _error_response(status):
+    response = Mock()
+    response.raise_for_status.side_effect = HTTPError(f"{status} Client Error")
+    return response
+
+
+@patch('requests.get')
+def test_get_entity_by_id_not_found_raises_http_error(mock_get):
+    mock_get.return_value = _error_response(404)
+
+    with pytest.raises(HTTPError) as exc_info:
+        service.get_entity_by_id(99)
+    assert "404" in str(exc_info.value)
+    mock_get.return_value.json.assert_not_called()
+
+
+@patch('requests.get')
+def test_get_entity_by_id_empty_body_returns_none(mock_get):
+    mock_response = Mock()
+    mock_response.json.return_value = None
+    mock_get.return_value = mock_response
+
+    assert service.get_entity_by_id(1) is None
+
+
+@patch('requests.get')
+def test_get_entities_in_environment_empty_body_returns_empty_list(mock_get):
+    mock_response = Mock()
+    mock_response.json.return_value = None
+    mock_get.return_value = mock_response
+
+    assert service.get_entities_in_environment(1) == []
+
+
+@patch('requests.post')
+def test_create_entity_rejected_raises_http_error(mock_post):
+    mock_post.return_value = _error_response(400)
+
+    with pytest.raises(HTTPError) as exc_info:
+        service.create_entity("x" * 256)
+    assert "400" in str(exc_info.value)
+    mock_post.return_value.json.assert_not_called()
+
+
+@patch('requests.delete')
+def test_delete_entity_not_found_wraps_the_http_error(mock_delete):
+    mock_delete.return_value = _error_response(404)
+
+    with pytest.raises(Exception) as exc_info:
+        service.delete_entity(99)
+    assert exc_info.type is Exception
+    assert exc_info.value.args[0] == "Error deleting entity"
+    assert isinstance(exc_info.value.args[1], HTTPError)
+    assert "404" in str(exc_info.value.args[1])
+
+
+@patch('requests.delete')
+def test_delete_entity_network_error_is_wrapped(mock_delete):
+    mock_delete.side_effect = ConnectionError("connection refused")
+
+    with pytest.raises(Exception) as exc_info:
+        service.delete_entity(1)
+    assert exc_info.type is Exception
+    assert exc_info.value.args[0] == "Error deleting entity"
+    assert isinstance(exc_info.value.args[1], ConnectionError)
+
+
+@patch('requests.patch')
+def test_update_entity_name_not_found_wraps_the_http_error(mock_patch):
+    mock_patch.return_value = _error_response(404)
+
+    with pytest.raises(Exception) as exc_info:
+        service.update_entity_name(99, "NewName")
+    assert exc_info.type is Exception
+    assert exc_info.value.args[0] == "Error updating entity name"
+    assert isinstance(exc_info.value.args[1], HTTPError)
+    assert "404" in str(exc_info.value.args[1])
+
+
+@patch('requests.patch')
+def test_update_entity_name_rejected_wraps_the_http_error(mock_patch):
+    mock_patch.return_value = _error_response(400)
+
+    with pytest.raises(Exception) as exc_info:
+        service.update_entity_name(1, "x" * 256)
+    assert exc_info.type is Exception
+    assert exc_info.value.args[0] == "Error updating entity name"
+    assert "400" in str(exc_info.value.args[1])
 
