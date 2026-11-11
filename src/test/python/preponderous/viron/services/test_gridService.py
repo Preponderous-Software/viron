@@ -201,3 +201,119 @@ class TestUpdateGridName:
         with pytest.raises(Exception) as exc_info:
             service.update_grid_name(1, "NewName")
         assert str(exc_info.value) == "Test error"
+
+
+# Failure paths. Unlike EntityService.update_entity_name, every GridService method lets the
+# error from requests or from raise_for_status propagate as it is, so a caller can catch
+# HTTPError on the write as well as on the reads. None of the methods guards an empty body.
+def _error_response(status):
+    response = Mock()
+    response.raise_for_status.side_effect = HTTPError(f"{status} Error")
+    return response
+
+
+class TestFailurePaths:
+    @patch('requests.get')
+    def test_get_all_grids_server_error_raises_http_error(self, mock_get):
+        mock_get.return_value = _error_response(503)
+
+        with pytest.raises(HTTPError) as exc_info:
+            service.get_all_grids()
+        assert "503" in str(exc_info.value)
+        mock_get.return_value.json.assert_not_called()
+
+    @patch('requests.get')
+    def test_get_grid_by_id_not_found_raises_http_error(self, mock_get):
+        mock_get.return_value = _error_response(404)
+
+        with pytest.raises(HTTPError) as exc_info:
+            service.get_grid_by_id(99)
+        assert "404" in str(exc_info.value)
+        mock_get.return_value.json.assert_not_called()
+
+    @patch('requests.get')
+    def test_get_grids_in_environment_not_found_raises_http_error(self, mock_get):
+        mock_get.return_value = _error_response(404)
+
+        with pytest.raises(HTTPError) as exc_info:
+            service.get_grids_in_environment(99)
+        assert "404" in str(exc_info.value)
+        mock_get.return_value.json.assert_not_called()
+
+    @patch('requests.get')
+    def test_get_grid_of_entity_not_found_raises_http_error(self, mock_get):
+        mock_get.return_value = _error_response(404)
+
+        with pytest.raises(HTTPError) as exc_info:
+            service.get_grid_of_entity(99)
+        assert "404" in str(exc_info.value)
+        mock_get.return_value.json.assert_not_called()
+
+    @patch('requests.patch')
+    def test_update_grid_name_not_found_raises_http_error_unwrapped(self, mock_patch):
+        mock_patch.return_value = _error_response(404)
+
+        with pytest.raises(HTTPError) as exc_info:
+            service.update_grid_name(99, "NewName")
+        assert exc_info.type is HTTPError
+        assert "404" in str(exc_info.value)
+
+    @patch('requests.patch')
+    def test_update_grid_name_rejected_raises_http_error_unwrapped(self, mock_patch):
+        mock_patch.return_value = _error_response(400)
+
+        with pytest.raises(HTTPError) as exc_info:
+            service.update_grid_name(1, "x" * 256)
+        assert exc_info.type is HTTPError
+        assert "400" in str(exc_info.value)
+
+    @patch('requests.patch')
+    def test_update_grid_name_network_error_propagates_unwrapped(self, mock_patch):
+        mock_patch.side_effect = requests.exceptions.ConnectionError("connection refused")
+
+        with pytest.raises(requests.exceptions.ConnectionError) as exc_info:
+            service.update_grid_name(1, "NewName")
+        assert str(exc_info.value) == "connection refused"
+
+    @patch('requests.patch')
+    def test_update_grid_name_other_success_status_returns_false(self, mock_patch):
+        mock_response = Mock()
+        mock_response.status_code = 204
+        mock_patch.return_value = mock_response
+
+        assert service.update_grid_name(1, "NewName") is False
+
+    @patch('requests.patch')
+    def test_update_grid_name_sends_bearer_token(self, mock_patch):
+        authed_service = GridService("http://localhost", 9999, auth_token="test-token")
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_patch.return_value = mock_response
+
+        authed_service.update_grid_name(1, "NewName")
+
+        mock_patch.assert_called_once_with(
+            f"{BASE_URL}{API_PATH}/1/name",
+            json={"name": "NewName"},
+            headers={"Authorization": "Bearer test-token"},
+        )
+
+    # Current behaviour, which differs from EntityService: an empty (null) body is not mapped
+    # to None or [], so the model constructor or the list comprehension raises TypeError.
+    @patch('requests.get')
+    def test_get_grid_by_id_empty_body_raises_type_error(self, mock_get):
+        mock_response = Mock()
+        mock_response.json.return_value = None
+        mock_get.return_value = mock_response
+
+        with pytest.raises(TypeError):
+            service.get_grid_by_id(1)
+
+    @patch('requests.get')
+    def test_get_all_grids_empty_body_raises_type_error(self, mock_get):
+        mock_response = Mock()
+        mock_response.json.return_value = None
+        mock_get.return_value = mock_response
+
+        with pytest.raises(TypeError):
+            service.get_all_grids()
