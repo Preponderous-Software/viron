@@ -244,3 +244,158 @@ def test_get_all_environments_sends_bearer_token(mock_get):
         "http://localhost:9999/api/v1/environments",
         headers={"Authorization": "Bearer test-token"},
     )
+
+
+# Failure paths. Like GridService and unlike EntityService.update_entity_name, every
+# EnvironmentService method lets the error from requests or from raise_for_status propagate as
+# it is, so a caller can catch HTTPError on the writes as well as on the reads. None of the
+# methods guards an empty body.
+def _error_response(status):
+    response = Mock()
+    response.raise_for_status.side_effect = requests.exceptions.HTTPError(f"{status} Error")
+    return response
+
+
+@pytest.mark.parametrize("call", [
+    lambda: service.get_environment_by_id(99),
+    lambda: service.get_environment_by_name("missing"),
+    lambda: service.get_environment_of_entity(99),
+], ids=["by_id", "by_name", "of_entity"])
+@patch('requests.get')
+def test_lookup_not_found_raises_http_error_without_reading_body(mock_get, call):
+    mock_get.return_value = _error_response(404)
+
+    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+        call()
+    assert exc_info.type is requests.exceptions.HTTPError
+    assert "404" in str(exc_info.value)
+    mock_get.return_value.json.assert_not_called()
+
+
+@patch('requests.post')
+def test_create_environment_rejected_raises_http_error_unwrapped(mock_post):
+    mock_post.return_value = _error_response(400)
+
+    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+        service.create_environment('x' * 256, 1, 5)
+    assert exc_info.type is requests.exceptions.HTTPError
+    assert "400" in str(exc_info.value)
+    mock_post.return_value.json.assert_not_called()
+
+
+@patch('requests.post')
+def test_create_environment_network_error_propagates_unwrapped(mock_post):
+    mock_post.side_effect = requests.exceptions.ConnectionError("connection refused")
+
+    with pytest.raises(requests.exceptions.ConnectionError) as exc_info:
+        service.create_environment('TestEnv', 1, 5)
+    assert str(exc_info.value) == "connection refused"
+
+
+@patch('requests.delete')
+def test_delete_environment_not_found_raises_http_error(mock_delete):
+    mock_delete.return_value = _error_response(404)
+
+    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+        service.delete_environment(99)
+    assert "404" in str(exc_info.value)
+
+
+# The server answers a successful delete 204. The client never reads the status code, so any
+# status that raise_for_status lets through returns True.
+@patch('requests.delete')
+def test_delete_environment_returns_true_without_checking_status(mock_delete):
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_delete.return_value = mock_response
+
+    assert service.delete_environment(1) is True
+
+
+@pytest.mark.parametrize("status, name", [(404, "NewName"), (400, "x" * 256)], ids=["404", "400"])
+@patch('requests.patch')
+def test_update_environment_name_error_raises_http_error_unwrapped(mock_patch, status, name):
+    mock_patch.return_value = _error_response(status)
+
+    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+        service.update_environment_name(99, name)
+    assert exc_info.type is requests.exceptions.HTTPError
+    assert str(status) in str(exc_info.value)
+
+
+@patch('requests.patch')
+def test_update_environment_name_network_error_propagates_unwrapped(mock_patch):
+    mock_patch.side_effect = requests.exceptions.ConnectionError("connection refused")
+
+    with pytest.raises(requests.exceptions.ConnectionError) as exc_info:
+        service.update_environment_name(1, 'NewName')
+    assert str(exc_info.value) == "connection refused"
+
+
+# EnvironmentController.updateEnvironmentName is a void handler, so the server answers 200
+# today. Any other 2xx makes the client return False without raising.
+@patch('requests.patch')
+def test_update_environment_name_other_success_status_returns_false(mock_patch):
+    mock_response = Mock()
+    mock_response.status_code = 204
+    mock_patch.return_value = mock_response
+
+    assert service.update_environment_name(1, 'NewName') is False
+
+
+AUTH_HEADERS = {"Authorization": "Bearer test-token"}
+
+
+def _authed_service():
+    return EnvironmentService("http://localhost", 9999, auth_token="test-token")
+
+
+@patch('requests.post')
+def test_create_environment_sends_bearer_token(mock_post):
+    mock_post.return_value.json.return_value = {
+        'environmentId': 1, 'name': 'TestEnv', 'creationDate': '2024-01-01'
+    }
+
+    _authed_service().create_environment('TestEnv', 1, 5)
+
+    mock_post.assert_called_once_with(
+        "http://localhost:9999/api/v1/environments",
+        json={"name": "TestEnv", "numGrids": 1, "gridSize": 5},
+        headers=AUTH_HEADERS,
+    )
+
+
+@patch('requests.delete')
+def test_delete_environment_sends_bearer_token(mock_delete):
+    _authed_service().delete_environment(1)
+
+    mock_delete.assert_called_once_with("http://localhost:9999/api/v1/environments/1", headers=AUTH_HEADERS)
+
+
+@patch('requests.patch')
+def test_update_environment_name_sends_bearer_token(mock_patch):
+    mock_patch.return_value.status_code = 200
+
+    _authed_service().update_environment_name(1, 'NewName')
+
+    mock_patch.assert_called_once_with(
+        "http://localhost:9999/api/v1/environments/1/name",
+        json={"name": "NewName"},
+        headers=AUTH_HEADERS,
+    )
+
+
+# Current behaviour, which differs from EntityService: an empty (null) body is not mapped to
+# None or [], so the model constructor or the list comprehension raises TypeError.
+@pytest.mark.parametrize("call", [
+    lambda: service.get_environment_by_id(1),
+    lambda: service.get_environment_by_name("Environment1"),
+    lambda: service.get_environment_of_entity(1),
+    lambda: service.get_all_environments(),
+], ids=["by_id", "by_name", "of_entity", "all"])
+@patch('requests.get')
+def test_empty_body_raises_type_error(mock_get, call):
+    mock_get.return_value.json.return_value = None
+
+    with pytest.raises(TypeError):
+        call()
