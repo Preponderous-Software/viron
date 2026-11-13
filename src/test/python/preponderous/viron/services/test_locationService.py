@@ -1,4 +1,5 @@
 import pytest
+import requests
 from unittest.mock import patch, Mock
 from src.main.python.preponderous.viron.services.locationService import (
     LocationService
@@ -319,3 +320,197 @@ def test_get_all_locations_sends_bearer_token(mock_get):
         "http://localhost:9999/api/v1/locations",
         headers={"Authorization": "Bearer test-token"},
     )
+
+
+# Failure paths. Unlike GridService and EnvironmentService, LocationService checks a 404 (and, on
+# the two placement writes, a 409) itself before calling raise_for_status, and raises a plain
+# Exception with its own message. A caller catching requests.exceptions.HTTPError therefore misses
+# those answers. Every other error status, and every transport error, propagates from requests
+# unwrapped. None of the methods guards an empty body.
+def _status_response(status):
+    response = Mock()
+    response.status_code = status
+    return response
+
+
+def _error_response(status):
+    response = _status_response(status)
+    response.raise_for_status.side_effect = requests.exceptions.HTTPError(f"{status} Error")
+    return response
+
+
+@pytest.mark.parametrize("call, message", [
+    (lambda: service.get_location_by_id(99), "Location not found with id: 99"),
+    (lambda: service.get_neighbors(99), "Location not found with id: 99"),
+    (lambda: service.get_location_of_entity(99), "Location not found for entity: 99"),
+    (lambda: service.get_entity_ids_at_location(99), "Location not found with id: 99"),
+    (lambda: service.is_location_occupied(99), "Location not found with id: 99"),
+], ids=["by_id", "neighbors", "of_entity", "entity_ids", "occupied"])
+@patch('requests.get')
+def test_lookup_not_found_raises_plain_exception_without_reading_body(mock_get, call, message):
+    mock_get.return_value = _status_response(404)
+
+    with pytest.raises(Exception) as exc_info:
+        call()
+    assert exc_info.type is Exception
+    assert str(exc_info.value) == message
+    mock_get.return_value.raise_for_status.assert_not_called()
+    mock_get.return_value.json.assert_not_called()
+
+
+@pytest.mark.parametrize("call, method, message", [
+    (lambda: service.add_entity_to_location(5, 7), 'put', "Location or entity not found"),
+    (lambda: service.remove_entity_from_current_location(5), 'delete', "Entity not found"),
+    (lambda: service.move_entity_to_location(5, 7), 'put', "Entity or location not found"),
+], ids=["add", "remove_current", "move"])
+def test_write_not_found_raises_plain_exception(call, method, message):
+    with patch(f'requests.{method}') as mock_request:
+        mock_request.return_value = _status_response(404)
+
+        with pytest.raises(Exception) as exc_info:
+            call()
+    assert exc_info.type is Exception
+    assert str(exc_info.value) == message
+    mock_request.return_value.raise_for_status.assert_not_called()
+
+
+@pytest.mark.parametrize("call, message", [
+    (lambda: service.add_entity_to_location(5, 7), "Entity 5 is already placed at another location"),
+    (lambda: service.move_entity_to_location(5, 7), "Target location 7 is already occupied"),
+], ids=["add", "move"])
+@patch('requests.put')
+def test_placement_conflict_raises_plain_exception(mock_put, call, message):
+    mock_put.return_value = _status_response(409)
+
+    with pytest.raises(Exception) as exc_info:
+        call()
+    assert exc_info.type is Exception
+    assert str(exc_info.value) == message
+    mock_put.return_value.raise_for_status.assert_not_called()
+
+
+# The lists that have no 404 of their own (the server answers an unknown environment or grid with
+# an empty list) pass every error status through raise_for_status. A 400 is what the server's
+# @Min(1) validation answers for a zero id.
+@pytest.mark.parametrize("call", [
+    lambda: service.get_all_locations(),
+    lambda: service.get_locations_in_environment(0),
+    lambda: service.get_locations_in_grid(0),
+    lambda: service.get_unoccupied_locations_in_grid(0),
+    lambda: service.get_placements(0),
+], ids=["all", "in_environment", "in_grid", "unoccupied", "placements"])
+@patch('requests.get')
+def test_list_error_raises_http_error_without_reading_body(mock_get, call):
+    mock_get.return_value = _error_response(400)
+
+    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+        call()
+    assert exc_info.type is requests.exceptions.HTTPError
+    assert "400" in str(exc_info.value)
+    mock_get.return_value.json.assert_not_called()
+
+
+# environment_id is compared against None rather than tested for truth, so 0 is sent as a query
+# parameter (and rejected by the server) instead of being dropped.
+@patch('requests.get')
+def test_get_placements_sends_zero_environment_id(mock_get):
+    mock_get.return_value.json.return_value = []
+
+    service.get_placements(0)
+
+    mock_get.assert_called_once_with("http://localhost:9999/api/v1/locations/placements",
+                                     params={"environmentId": 0}, headers={})
+
+
+# The move's 400s (target in another grid, or not adjacent) and the 503 that a lock wait past its
+# bound is answered with are not mapped by the client.
+@pytest.mark.parametrize("status", [400, 503])
+@patch('requests.put')
+def test_move_entity_to_location_other_error_raises_http_error_unwrapped(mock_put, status):
+    mock_put.return_value = _error_response(status)
+
+    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+        service.move_entity_to_location(5, 7)
+    assert exc_info.type is requests.exceptions.HTTPError
+    assert str(status) in str(exc_info.value)
+
+
+@patch('requests.put')
+def test_add_entity_to_location_lock_wait_raises_http_error_unwrapped(mock_put):
+    mock_put.return_value = _error_response(503)
+
+    with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+        service.add_entity_to_location(5, 7)
+    assert exc_info.type is requests.exceptions.HTTPError
+    assert "503" in str(exc_info.value)
+
+
+@pytest.mark.parametrize("call, method", [
+    (lambda: service.get_location_by_id(1), 'get'),
+    (lambda: service.add_entity_to_location(5, 7), 'put'),
+    (lambda: service.remove_entity_from_location(5, 7), 'delete'),
+    (lambda: service.move_entity_to_location(5, 7), 'put'),
+], ids=["by_id", "add", "remove", "move"])
+def test_network_error_propagates_unwrapped(call, method):
+    with patch(f'requests.{method}') as mock_request:
+        mock_request.side_effect = requests.exceptions.ConnectionError("connection refused")
+
+        with pytest.raises(requests.exceptions.ConnectionError) as exc_info:
+            call()
+    assert str(exc_info.value) == "connection refused"
+
+
+AUTH_HEADERS = {"Authorization": "Bearer test-token"}
+
+
+def _authed_service():
+    return LocationService("http://localhost", 9999, auth_token="test-token")
+
+
+@pytest.mark.parametrize("call, method, url", [
+    (lambda s: s.add_entity_to_location(5, 7), 'put',
+     "http://localhost:9999/api/v1/locations/7/entity/5"),
+    (lambda s: s.remove_entity_from_location(5, 7), 'delete',
+     "http://localhost:9999/api/v1/locations/7/entity/5"),
+    (lambda s: s.remove_entity_from_current_location(5), 'delete',
+     "http://localhost:9999/api/v1/locations/entity/5"),
+    (lambda s: s.move_entity_to_location(5, 7), 'put',
+     "http://localhost:9999/api/v1/locations/7/entity/5/move"),
+], ids=["add", "remove", "remove_current", "move"])
+def test_write_sends_bearer_token(call, method, url):
+    with patch(f'requests.{method}') as mock_request:
+        mock_request.return_value.status_code = 204
+
+        call(_authed_service())
+
+    mock_request.assert_called_once_with(url, headers=AUTH_HEADERS)
+
+
+# The two scalar reads hand back the decoded body as it is: is_location_occupied does not coerce
+# it to bool, and neither maps a null body to a default.
+@patch('requests.get')
+def test_scalar_reads_return_body_unconverted(mock_get):
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = None
+
+    assert service.get_entity_ids_at_location(1) is None
+    assert service.is_location_occupied(1) is None
+
+
+@pytest.mark.parametrize("call", [
+    lambda: service.get_all_locations(),
+    lambda: service.get_location_by_id(1),
+    lambda: service.get_locations_in_environment(1),
+    lambda: service.get_locations_in_grid(1),
+    lambda: service.get_unoccupied_locations_in_grid(1),
+    lambda: service.get_neighbors(1),
+    lambda: service.get_location_of_entity(1),
+    lambda: service.get_placements(),
+], ids=["all", "by_id", "in_environment", "in_grid", "unoccupied", "neighbors", "of_entity", "placements"])
+@patch('requests.get')
+def test_empty_body_raises_type_error(mock_get, call):
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = None
+
+    with pytest.raises(TypeError):
+        call()
