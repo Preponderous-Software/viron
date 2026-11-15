@@ -131,5 +131,5 @@ When MVP is complete:
 ## 📌 Notes
 - Keep `/legacy` for reference until MVP is merged, then remove if unnecessary.
 - Start tests immediately with the first feature.
-- Keep debug tools behind `spring.profiles.active=debug` so they don’t ship to production.
+- Keep debug tools behind a switch that is off by default so they don’t ship to production. As built, this is the `viron.debug.enabled` property (environment variable `VIRON_DEBUG_ENABLED`, default `false`), which `DebugController` is conditional on; no Spring profile is involved.
 - This process ensures a **spec-aligned, maintainable** foundation without losing old work.
