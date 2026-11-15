@@ -129,7 +129,7 @@ viron/
  ├── src/main/python/        # Python client SDK  
  ├── src/test/java/...       # Unit and integration tests  
  ├── src/test/python/...     # Python client SDK tests (pytest)  
- ├── db-scripts/             # SQL schema setup scripts, and migrations for existing databases  
+ ├── db-scripts/             # SQL schema setup scripts, a teardown script that drops the tables, and migrations for existing databases  
  ├── docs/  
  │    ├── MVP.md             # Implementation checklist for MVP  
  │    ├── PLANNING.md        # MVP issue plan, grouped into milestones  
