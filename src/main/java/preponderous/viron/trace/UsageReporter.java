@@ -31,7 +31,8 @@ import preponderous.viron.VironApplication;
  * costs the service nothing but a dropped report. Reporting is on by default and is
  * configured through the {@code usage-reporting.*} properties in {@code application.properties}
  * (each with an environment override): set {@code usage-reporting.enabled=false} (or the
- * {@code USAGE_REPORTING_ENABLED=false} environment variable) to turn it off. A blank key
+ * {@code USAGE_REPORTING_ENABLED=false} environment variable) to turn it off; any value but
+ * {@code true}, {@code on}, {@code yes} or {@code 1}, blank included, also turns it off. A blank key
  * also disables it, and a malformed endpoint yields a disabled client rather than a failed
  * start-up. {@code TRACE_USAGE_REPORTING=off} and {@code DO_NOT_TRACK=1} in the environment
  * turn it off too: the client checks those two itself, before this program's own setting, so
@@ -56,12 +57,12 @@ public class UsageReporter {
     private final String version;
 
     public UsageReporter(
-            @Value("${usage-reporting.enabled:true}") boolean enabled,
+            @Value("${usage-reporting.enabled:true}") String enabled,
             @Value("${usage-reporting.endpoint:https://trace.danielstephenson.dev}") String endpoint,
             @Value("${usage-reporting.key:}") String key,
             @Value("${usage-reporting.version:}") String version) {
         this.version = resolveVersion(version);
-        this.client = buildClient(enabled, endpoint, key, this.version);
+        this.client = buildClient(settingAllows(enabled), endpoint, key, this.version);
         if (client.isEnabled()) {
             log.info("Usage reporting is on: a startup event (program name, version and service=true only) is sent to {}; "
                     + "set usage-reporting.enabled=false (USAGE_REPORTING_ENABLED=false) or TRACE_USAGE_REPORTING=off "
@@ -69,6 +70,16 @@ public class UsageReporter {
         } else {
             log.info("Usage reporting is off ({}).", disabledReason(client));
         }
+    }
+
+    /**
+     * Whether the operator's {@code usage-reporting.enabled} value allows reporting. Read as
+     * text and judged by the client so it fails closed: only {@code true}, {@code on},
+     * {@code yes} or {@code 1} keep reporting on; a blank value ({@code USAGE_REPORTING_ENABLED=}),
+     * a typo or anything else turns it off rather than being read as on.
+     */
+    static boolean settingAllows(String enabled) {
+        return TraceClient.allowsReporting(enabled);
     }
 
     /** Whether a startup event will actually be sent. */

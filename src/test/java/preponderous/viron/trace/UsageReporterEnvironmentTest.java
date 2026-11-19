@@ -41,7 +41,7 @@ class UsageReporterEnvironmentTest {
     @Test
     void doNotTrackDisablesReportingEvenWhenTheSettingSaysEnabled() {
         environment.put("DO_NOT_TRACK", "1");
-        UsageReporter reporter = new UsageReporter(true, ENDPOINT, "test-key", "1.0");
+        UsageReporter reporter = new UsageReporter("true", ENDPOINT, "test-key", "1.0");
         assertThat(reporter.isReporting()).as("DO_NOT_TRACK=1 switches reporting off").isFalse();
         reporter.close();
     }
@@ -49,24 +49,60 @@ class UsageReporterEnvironmentTest {
     @Test
     void traceUsageReportingOffDisablesReportingEvenWhenTheSettingSaysEnabled() {
         environment.put("TRACE_USAGE_REPORTING", "off");
-        UsageReporter reporter = new UsageReporter(true, ENDPOINT, "test-key", "1.0");
+        UsageReporter reporter = new UsageReporter("true", ENDPOINT, "test-key", "1.0");
         assertThat(reporter.isReporting()).as("TRACE_USAGE_REPORTING=off switches reporting off").isFalse();
         reporter.close();
     }
 
     @Test
+    void anUnclearTraceUsageReportingValueDisablesReporting() {
+        // Fails closed: anything but blank or a clear "on" is an opt-out, not a typo to ignore.
+        environment.put("TRACE_USAGE_REPORTING", "disabled");
+        UsageReporter reporter = new UsageReporter("true", ENDPOINT, "test-key", "1.0");
+        assertThat(reporter.isReporting()).as("TRACE_USAGE_REPORTING=disabled switches reporting off").isFalse();
+        reporter.close();
+    }
+
+    @Test
+    void anyDoNotTrackValueButAClearNoDisablesReporting() {
+        environment.put("DO_NOT_TRACK", "please");
+        UsageReporter reporter = new UsageReporter("true", ENDPOINT, "test-key", "1.0");
+        assertThat(reporter.isReporting()).as("DO_NOT_TRACK=please switches reporting off").isFalse();
+        reporter.close();
+    }
+
+    @Test
+    void aBlankOrUnclearSettingDisablesReporting() {
+        for (String off : new String[] {"", "\"false\"", "disabled", "flase"}) {
+            UsageReporter reporter = new UsageReporter(off, ENDPOINT, "test-key", "1.0");
+            assertThat(reporter.isReporting()).as("usage-reporting.enabled=%s", off).isFalse();
+            reporter.close();
+        }
+    }
+
+    @Test
+    void onlyAClearlyOnSettingAllowsReporting() {
+        for (String on : new String[] {"true", "TRUE", "on", "yes", "1", " true "}) {
+            assertThat(UsageReporter.settingAllows(on)).as("usage-reporting.enabled=%s", on).isTrue();
+        }
+        for (String off : new String[] {"false", "off", "no", "0", "", "  ", "\"false\"", "flase", "disabled", null}) {
+            assertThat(UsageReporter.settingAllows(off)).as("usage-reporting.enabled=%s", off).isFalse();
+        }
+    }
+
+    @Test
     void anEmptyEnvironmentLeavesTheSettingInCharge() {
-        UsageReporter on = new UsageReporter(true, ENDPOINT, "test-key", "1.0");
+        UsageReporter on = new UsageReporter("true", ENDPOINT, "test-key", "1.0");
         assertThat(on.isReporting()).isTrue();
         on.close();
-        UsageReporter off = new UsageReporter(false, ENDPOINT, "test-key", "1.0");
+        UsageReporter off = new UsageReporter("false", ENDPOINT, "test-key", "1.0");
         assertThat(off.isReporting()).isFalse();
         off.close();
     }
 
     @Test
     void aBlankEndpointStillYieldsADisabledReporterRatherThanAFailedStart() {
-        UsageReporter reporter = new UsageReporter(true, " ", "test-key", "1.0");
+        UsageReporter reporter = new UsageReporter("true", " ", "test-key", "1.0");
         assertThat(reporter.isReporting()).isFalse();
         reporter.close();
     }
