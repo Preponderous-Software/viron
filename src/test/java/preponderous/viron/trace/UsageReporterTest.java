@@ -19,8 +19,8 @@ class UsageReporterTest {
 
     @Test
     void carriesARandomInstallationIdOnlyWhileReportingIsOn() {
-        UsageReporter on = new UsageReporter(true, ENDPOINT, "a-key", "1.2.3");
-        UsageReporter off = new UsageReporter(false, ENDPOINT, "a-key", "1.2.3");
+        UsageReporter on = new UsageReporter("true", ENDPOINT, "a-key", "1.2.3");
+        UsageReporter off = new UsageReporter("false", ENDPOINT, "a-key", "1.2.3");
 
         assertThat(on.installId()).as("an enabled client carries a random installation ID").isNotBlank();
         assertThat(off.installId()).as("a disabled client never makes up an ID").isNull();
@@ -30,7 +30,7 @@ class UsageReporterTest {
 
     @Test
     void reportsWhenEnabledWithAKey() {
-        UsageReporter reporter = new UsageReporter(true, ENDPOINT, "a-key", "1.2.3");
+        UsageReporter reporter = new UsageReporter("true", ENDPOINT, "a-key", "1.2.3");
         try {
             assertThat(reporter.isReporting()).isTrue();
         } finally {
@@ -40,7 +40,7 @@ class UsageReporterTest {
 
     @Test
     void optOutDisablesReporting() {
-        UsageReporter reporter = new UsageReporter(false, ENDPOINT, "a-key", "1.2.3");
+        UsageReporter reporter = new UsageReporter("false", ENDPOINT, "a-key", "1.2.3");
         assertThat(reporter.isReporting()).isFalse();
         reporter.reportStartup(); // a no-op, must not throw
         reporter.close();
@@ -48,21 +48,21 @@ class UsageReporterTest {
 
     @Test
     void blankKeyDisablesReporting() {
-        UsageReporter reporter = new UsageReporter(true, ENDPOINT, "   ", "1.2.3");
+        UsageReporter reporter = new UsageReporter("true", ENDPOINT, "   ", "1.2.3");
         assertThat(reporter.isReporting()).isFalse();
         reporter.close();
     }
 
     @Test
     void malformedEndpointDisablesReportingInsteadOfFailingStartup() {
-        UsageReporter reporter = new UsageReporter(true, "   ", "a-key", "1.2.3");
+        UsageReporter reporter = new UsageReporter("true", "   ", "a-key", "1.2.3");
         assertThat(reporter.isReporting()).isFalse();
         reporter.close();
     }
 
     @Test
     void startupIsTaggedAsAServiceWithItsVersion() {
-        UsageReporter reporter = new UsageReporter(false, ENDPOINT, "a-key", " 0.7.0 ");
+        UsageReporter reporter = new UsageReporter("false", ENDPOINT, "a-key", " 0.7.0 ");
         assertThat(reporter.startupTags()).containsEntry("service", "true").hasSize(1);
         assertThat(reporter.version()).isEqualTo("0.7.0");
         reporter.close();
@@ -71,7 +71,7 @@ class UsageReporterTest {
     // Outside a Maven build the property keeps its unfilled placeholder; that must not be reported as a version.
     @Test
     void unfilledVersionPlaceholderIsNotReported() {
-        UsageReporter reporter = new UsageReporter(false, ENDPOINT, "a-key", "@project.version@");
+        UsageReporter reporter = new UsageReporter("false", ENDPOINT, "a-key", "@project.version@");
         assertThat(reporter.version()).isNotEqualTo("@project.version@").isNotBlank();
         assertThat(reporter.startupTags()).containsEntry("service", "true").doesNotContainKey("@project.version@");
         reporter.close();
@@ -79,7 +79,7 @@ class UsageReporterTest {
 
     @Test
     void closeIsIdempotent() {
-        UsageReporter reporter = new UsageReporter(true, ENDPOINT, "a-key", "1.2.3");
+        UsageReporter reporter = new UsageReporter("true", ENDPOINT, "a-key", "1.2.3");
         reporter.close();
         reporter.close();
     }

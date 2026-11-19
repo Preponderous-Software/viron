@@ -40,7 +40,9 @@ services:
       JWT_ISSUER: ${JWT_ISSUER:-userauth}
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       # One "startup" usage event goes to the trace service on start-up; false turns it off.
-      USAGE_REPORTING_ENABLED: ${USAGE_REPORTING_ENABLED:-true}
+      # `-` not `:-`: a blank USAGE_REPORTING_ENABLED= is passed through (and turns reporting
+      # off) instead of being replaced with true.
+      USAGE_REPORTING_ENABLED: ${USAGE_REPORTING_ENABLED-true}
       # No value: passed only when set in the shell or .env, and left unset in the container
       # otherwise. A ${VAR:-} empty string would not do: an empty endpoint or key turns
       # reporting off, while unset falls back to the defaults in application.properties.
