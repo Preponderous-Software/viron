@@ -137,7 +137,7 @@ viron/
  │    ├── diagrams/          # Class-usage diagram (draw.io source and rendered PNG)  
  │    └── openapi/  
  │         └── viron-api.json  # API specification  
- ├── postman/                # Postman collection generated from the API specification  
+ ├── postman/                # Postman collection generated from the API specification, held to it by PostmanCollectionDriftTest  
  ├── pom.xml                 # Maven configuration  
  └── README.md               # This file  
 
