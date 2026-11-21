@@ -108,6 +108,7 @@ The MVP implements the endpoints defined in `docs/openapi/viron-api.json` and do
 - JaCoCo (test coverage)
 - Planned: Flyway (future migrations); schema currently comes from `db-scripts/setup/`, with
   changes to an already-created schema kept as hand-run scripts in `db-scripts/migrations/`
+  (see [db-scripts/README.md](db-scripts/README.md) for the rules releases hold them to)
 
 ---
 
