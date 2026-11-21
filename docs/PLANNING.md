@@ -29,9 +29,13 @@ Establish the core building blocks: project structure, models, DTOs, mapping, re
 ---
 
 ### **M2 – Service Layer**
-Implement core service logic to support the REST API.
+Implement the `services/*Service.java` classes. As built, these are not a server-side layer beneath
+the controllers: the controllers call the repositories directly and map models to DTOs (the
+environment cascade delete runs in `EnvironmentController`), and each `*Service` is a
+`RestTemplate` client of this API — the Java counterpart of the Python client, used by the debug
+endpoints.
 
-11. **EnvironmentService** — Create, retrieve, update name, delete (cascade).  
+11. **EnvironmentService** — Create, retrieve, update name, delete (the cascade runs server-side).  
 12. **GridService** — Lookups by ID, environment, or entity; update name.  
 13. **LocationService** — Manage locations, add/remove entities, lookups.  
 14. **EntityService** — Create, retrieve, delete entities and handle detach.
@@ -62,7 +66,7 @@ Deliver GET endpoints for all resources.
 ### **M4 – Write APIs**
 Implement creation, update, and deletion endpoints.
 
-19. **POST /environments** — Create environment with grids and locations (JSON body: `name`, `numGrids`, `gridSize`).  
+19. **POST /environments** — Create environment with grids and locations (JSON body: `name`, `numGrids`, and grid dimensions as either `gridSize` or both `numRows` and `numColumns`).  
 20. **DELETE /environments/{id}** — Delete environment with related data.  
 21. **PATCH /environments/{id}/name** — Update environment name (JSON body: `name`).  
 31. **PUT /locations/{locationId}/entity/{entityId}** — Add entity to location.  
