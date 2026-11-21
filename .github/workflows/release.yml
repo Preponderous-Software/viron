@@ -1,0 +1,123 @@
+name: Release
+
+# Builds Viron's download and attaches it to the GitHub release for a version tag.
+#
+# - push of a tag X.Y.Z: build that tag, create the release "Viron X.Y.Z" if it does not exist,
+#   and upload the jar with its .sha256 sidecar (replacing any of the same name).
+# - workflow_dispatch with a tag: the same, for an existing tag.
+# - workflow_dispatch with no tag, or a pull request touching the release build: a dry run of the
+#   current commit. Builds and checks everything, keeps the jar as a workflow artifact, attaches
+#   nothing.
+#
+# Releases are made by the fleet's release automation. See docs/RELEASING.md.
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to release (X.Y.Z). Empty = dry run of the selected ref.'
+        required: false
+        default: ''
+  pull_request:
+    paths:
+      - '.github/workflows/release.yml'
+      - 'pom.xml'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build release download
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Resolve the tag
+        id: tag
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          case "$EVENT" in
+            push) TAG="$REF_NAME" ;;
+            workflow_dispatch) TAG="$INPUT_TAG" ;;
+            *) TAG="" ;;
+          esac
+          if [ -n "$TAG" ]; then
+            if ! printf '%s' "$TAG" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::tag '$TAG' is not of the form X.Y.Z"
+              exit 1
+            fi
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "ref=refs/tags/$TAG" >> "$GITHUB_OUTPUT"
+            echo "Releasing tag $TAG"
+          else
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            echo "ref=" >> "$GITHUB_OUTPUT"
+            echo "Dry run of $GITHUB_SHA: nothing will be attached"
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.ref }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Check the version file
+        id: version
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          version=$(./mvnw -B -q help:evaluate -Dexpression=project.version -DforceStdout)
+          echo "pom.xml: $version"
+          if [ -n "$TAG" ] && [ "$version" != "$TAG" ]; then
+            echo "::error::the pom.xml version ($version) does not equal the tag ($TAG)"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build and test
+        run: ./mvnw -B package
+
+      - name: Collect the download and its checksum
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir dist
+          cp "target/viron-$VERSION.jar" "dist/viron-$VERSION.jar"
+          cd dist
+          sha256sum "viron-$VERSION.jar" > "viron-$VERSION.jar.sha256"
+          sha256sum -c "viron-$VERSION.jar.sha256"
+          ls -l
+
+      - name: Keep the download (dry run)
+        if: steps.tag.outputs.tag == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: viron-${{ steps.version.outputs.version }}-dry-run
+          path: dist/
+          if-no-files-found: error
+
+      - name: Create the release if missing and upload the download
+        if: steps.tag.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --verify-tag --title "Viron $VERSION" \
+              --notes "Viron $VERSION. Download: viron-$VERSION.jar (Java 21) with its .sha256 checksum. Existing databases: run any new scripts in db-scripts/migrations/ (see db-scripts/README.md)."
+          fi
+          gh release upload "$TAG" dist/* --clobber
