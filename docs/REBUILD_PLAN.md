@@ -80,7 +80,7 @@ Commit in small, clear steps:
     git commit -am "chore: add devcontainer + docker-compose for local"
 
 ### 6. OpenAPI-First Contract
-- Place spec at `openapi/viron-api.json`.
+- Place spec at `docs/openapi/viron-api.json`.
 - Add OpenAPI Generator to produce DTOs & interfaces (server stubs).
 - Commit generated code:
 
@@ -89,7 +89,9 @@ Commit in small, clear steps:
 ### 7. Implement MVP Features (Follow PLANNING.md Milestones)
 - Follow **MVP.md** and **PLANNING.md** milestone order.
 - Implement one resource at a time:
-  - Controller → Service → Repository
+  - Controller → Repository (as built, controllers call the repositories directly and map
+    models to DTOs; `services/*Service.java` are `RestTemplate` clients of the API, not a layer
+    between the two)
   - Bean validation
   - Error model
   - Happy-path & edge-case tests
